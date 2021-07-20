@@ -1,79 +1,91 @@
-# javascript-action-template
+# trx-parser
 
-This template can be used to quickly start a new custom js action repository.  Click the `Use this template` button at the top to get started.
+This repository is based on [NasAmin/trx-parser](https://github.com/NasAmin/trx-parser).
 
-## TODOs
-- Readme
-  - [ ] Update the Inputs section with the correct action inputs
-  - [ ] Update the Outputs section with the correct action outputs
-  - [ ] Update the Example section with the correct usage   
-- package.json
-  - [ ] Update the `name` with the new action value
-- main.js
-  - [ ] Implement your custom javascript action
-- action.yml
-  - [ ] Fill in the correct name, description, inputs and outputs
-- .prettierrc.json
-  - [ ] Update any preferences you might have
-- CODEOWNERS
-  - [ ] Update as appropriate
-- Repository Settings
-  - [ ] On the *Options* tab check the box to *Automatically delete head branches*
-  - [ ] On the *Options* tab update the repository's visibility (must be done by an org owner)
-  - [ ] On the *Branches* tab add a branch protection rule
-    - [ ] Check *Require pull request reviews before merging*
-    - [ ] Check *Dismiss stale pull request approvals when new commits are pushed*
-    - [ ] Check *Require review from Code Owners*
-    - [ ] Check *Include Administrators*
-  - [ ] On the *Manage Access* tab add the appropriate groups
-- About Section (accessed on the main page of the repo, click the gear icon to edit)
-  - [ ] The repo should have a short description of what it is for
-  - [ ] Add one of the following topic tags:
-    | Topic Tag       | Usage                                    |
-    | --------------- | ---------------------------------------- |
-    | az              | For actions related to Azure             |
-    | code            | For actions related to building code     |
-    | certs           | For actions related to certificates      |
-    | db              | For actions related to databases         |
-    | git             | For actions related to Git               |
-    | iis             | For actions related to IIS               |
-    | microsoft-teams | For actions related to Microsoft Teams   |
-    | svc             | For actions related to Windows Services  |
-    | jira            | For actions related to Jira              |
-    | meta            | For actions related to running workflows |
-    | pagerduty       | For actions related to PagerDuty         |
-    | test            | For actions related to testing           |
-    | tf              | For actions related to Terraform         |
-  - [ ] Add any additional topics for an action if they apply    
-    
+GitHub Action that parses `dotnet test` results from `trx` files and creates a status check with the results. 
+Tests are not run as part of this action.  
+
+The outcome of this action is not affected if it encounters test failures but the status checks it creates are.  This behavior can be customized using the `ignore-failures-in-check` input.
+
+The status check can be seen as a new item on the workflow run and there should be one check created per `trx` file.  The check is named after the test project the `trx` was generated for.
+
+## Checks
+The Check that is generated can be seen on the workflow run.  The following screenshot is an example of a check with failed tests.
+
+<kbd><img src="./docs/failed_tests.png"></img></kbd>
+
 
 ## Inputs
-| Parameter | Is Required | Default | Description           |
-| --------- | ----------- | ------- | --------------------- |
-| `input-1` | true        |         | Description goes here |
-| `input-2` | false       |         | Description goes here |
+| Parameter                  | Is Required | Default                          | Description                                                                                                             |
+| -------------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `gh-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
+| `base-directory`           | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
+| `ignore-failures-in-check` | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
+| `timezone`                 | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
+
 
 ## Outputs
-| Output     | Description           |
-| ---------- | --------------------- |
-| `output-1` | Description goes here |
+| Output         | Description                             |
+| -------------- | --------------------------------------- |
+| `test-outcome` | Test outcome: *Failed,Passed*           |
+| `trx-files`    | List of `trx` files that were processed |
 
-## Example
+## Examples
 
+### Using the defaults
 ```yml
-# TODO: Fill in the correct usage
 jobs:
-  job1:
-    runs-on: [self-hosted, ubuntu-20.04]
+  ci:
+    runs-on: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v2
 
-      - name: Add Step Here
-        uses: im-open/this-repo@v1.0.0
+      - name: Test My Solution
+        run: dotnet test ./src/my-solution.sln --logger "trx" --configuration Release
+
+      - name: Parse trx reports with default
+        if: always()
+        uses: im-open/trx-parser@v1.0.0
         with:
-          input-1: 'abc'
-          input-2: '123
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+
+### Specifying additional behavior
+```yml
+jobs:
+  advanced-ci:
+    runs-on: [ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Test My Solution
+        continue-on-error: true
+        run: dotnet test ./src/my-solution.sln --logger "trx" --configuration Release --results-directory ../../test-results
+      
+      - name: Parse trx reports with default
+        id: parse-trx
+        uses: im-open/trx-parser@v1.0.0
+        with:
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          base-directory: './test-results'
+          ignore-failures-in-check: 'true'
+          timezone: 'america/denver'
+      
+      - run: ./do-other-advanced-things-in-the-build.sh
+
+      - name: Fail if there were test problems
+        if: steps.parse-trx.outputs.test-outcome == 'Failed'
+        run: |
+          echo "There were test failures."
+          exit 1
+```
+
+## GitHub Actions Limitations
+The following limitation information was taken from [NasAmin/trx-parser]
+>- The GitHub Checks API has a [limit] of `65535` characters. So if the test report exceeds this limit, GitHub will fail to create a check and fail your workflow. To mitigate this size limitation, the action will only report details about failing tests. 
+
+>- If you have multiple workflows triggered by the same event, currently GitHub Actions will randomly associate a check run to one of the workflows. [Only GitHub apps] are allowed to create a Check Suite and there is also no way to associate a custom check run with an existing check suite.  GitHub actions automatically creates a check suite for each workflow run. However, since check runs are associated with a commit and event, any custom check runs are randomly linked under one of the triggered workflows for the same commit.
+
 
 ## Recompiling
 
@@ -97,3 +109,7 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 ## License
 
 Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+
+[NasAmin/trx-parser]: https://github.com/NasAmin/trx-parser#%EF%B8%8F-github-actions-limitations-%EF%B8%8F
+[limit]: https://github.com/github/docs/issues/3765
+[Only GitHub apps]: https://docs.github.com/en/rest/reference/checks#check-suites
