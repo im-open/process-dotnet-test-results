@@ -68,7 +68,7 @@ async function transformTrxToJson(filePath) {
       IsEmpty: testData.TestRun.TestDefinitions ? false : true,
       ReportMetaData: {
         TrxFilePath: filePath,
-        ReportName: `${reportHeaders.reportName}-check`,
+        ReportName: `dotnet unit tests (${reportHeaders.reportName})`,
         ReportTitle: reportHeaders.reportTitle,
         TrxJSonString: JSON.stringify(jsonString),
         TrxXmlString: xmlData
