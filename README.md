@@ -2,12 +2,11 @@
 
 This repository is based on [NasAmin/trx-parser](https://github.com/NasAmin/trx-parser).
 
-GitHub Action that parses `dotnet test` results from `trx` files and creates a status check with the results. 
-Tests are not run as part of this action.  
+This GitHub Action parses `dotnet test` results from `trx` files and creates a status check with the results. 
 
-The outcome of this action is not affected if it encounters test failures but the status checks it creates are.  This behavior can be customized using the `ignore-failures-in-check` input.
+This action does not run the unit tests so it will not fail if the `trx` file contains test failures.  The status checks that it creates will be failing checks though if the `trx` files contain test failures.  If you do not want the status checks to be failing checks when they report test failures, set the `ignore-failures-in-check` input to `true`.  You may wish to do this if you do not want these checks to block PR merging.
 
-The status check can be seen as a new item on the workflow run and there should be one check created per `trx` file.  The check is named after the test project the `trx` was generated for.
+The status check can be seen as a new item on the workflow run or on the PR status check section.  There should be one status check created per `trx` file.  The check is named after the test project the `trx` was generated for.
 
 ## Viewing the Status Checks
 If there is a corresponding PR, the check can be viewed in the Status Checks section:
