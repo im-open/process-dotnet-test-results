@@ -12,8 +12,6 @@ async function createCheckRun(repoToken, ignoreTestFailures, reportData) {
     if (github.context.eventName === 'push') {
       core.info(`Creating status check for GitSha: ${git_sha} on a push event`);
     } else if (github.context.eventName === 'pull_request') {
-      core.info(`pr context sha: ${git_sha}`);
-      core.info(`pr payload sha: ${github.context.payload.pull_request.head.sha}`);
       git_sha = github.context.payload.pull_request.head.sha;
       core.info(`Creating status check for GitSha: ${git_sha} on a pull request event`);
     } else {

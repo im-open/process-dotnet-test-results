@@ -16172,8 +16172,6 @@ var require_github2 = __commonJS({
         if (github.context.eventName === 'push') {
           core2.info(`Creating status check for GitSha: ${git_sha} on a push event`);
         } else if (github.context.eventName === 'pull_request') {
-          core2.info(`pr context sha: ${git_sha}`);
-          core2.info(`pr payload sha: ${github.context.payload.pull_request.head.sha}`);
           git_sha = github.context.payload.pull_request.head.sha;
           core2.info(`Creating status check for GitSha: ${git_sha} on a pull request event`);
         } else {
