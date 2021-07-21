@@ -9,11 +9,13 @@ The outcome of this action is not affected if it encounters test failures but th
 
 The status check can be seen as a new item on the workflow run and there should be one check created per `trx` file.  The check is named after the test project the `trx` was generated for.
 
-## Checks
-The Check that is generated can be seen on the workflow run.  The following screenshot is an example of a check with failed tests.
+## Viewing the Status Checks
+If there is a corresponding PR, the check can be viewed in the Status Checks section:
+<kbd><img src="./docs/pr_check.png"></img></kbd>
 
+The status check can also be seen on the workflow run.  The following screenshot is an example of a check with failed tests:
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
-
+*One item to note is if you have multiple workflows triggered by the same `pull_request` or `push` event GitHub creates one checksuite for that commit, the checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite.  That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow than the workflow that created them.  See the [limitations](#github-actions-limitations) for further details.*
 
 ## Inputs
 | Parameter                  | Is Required | Default                          | Description                                                                                                             |
