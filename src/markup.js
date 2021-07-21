@@ -150,15 +150,16 @@ function getTestResultsMarkup(testData) {
   if (testData.IsEmpty) {
     return getNoResultsMarkup(testData);
   } else {
-    const unittests = testData.TrxData.TestRun.TestDefinitions.UnitTest;
-    if (Array.isArray(unittests)) {
-      for (const data of unittests) {
-        resultsMarkup += getSingleTestMarkup(data, testData);
+    let unitTests = testData.TrxData.TestRun.TestDefinitions.UnitTest;
+    let unitTestResults = testData.TrxData.TestRun.Results.UnitTestResult;
+
+    for (const data of unitTests) {
+      const testResult = unitTestResults.find(x => x._testId === data._id);
+      if (testResult && testResult._outcome === 'Failed') {
+        resultsMarkup += getFailedTestMarkup(data, testResult);
       }
-      return resultsMarkup.trim();
-    } else {
-      return getSingleTestMarkup(unittests, testData);
     }
+    return resultsMarkup.trim();
   }
 }
 
@@ -187,27 +188,25 @@ function getTestOutcomeIcon(testOutcome) {
   return ':grey_question:';
 }
 
-function getSingleTestMarkup(data, testData) {
+function getFailedTestMarkup(data, testResult) {
   core.debug(`Processing ${data._name}`);
 
-  let resultsMarkup = '';
-  const testResult = getUnitTestResult(data._id, testData.TrxData.TestRun.Results);
-  if (testResult && testResult._outcome === 'Failed') {
-    const testResultIcon = getTestOutcomeIcon(testResult._outcome);
-    let stacktrace = '';
-    let errorMessage = '';
-    if (testResult && testResult.Output) {
-      stacktrace = `<tr>
+  const testResultIcon = getTestOutcomeIcon(testResult._outcome);
+  let stacktrace = '';
+  let errorMessage = '';
+  if (testResult && testResult.Output) {
+    stacktrace = `<tr>
         <th>Stack Trace:</th>
         <td><pre>${testResult.Output.ErrorInfo.StackTrace}</pre></td>
       </tr>`;
 
-      errorMessage = `<tr>
+    errorMessage = `<tr>
         <th>Error Message:</th>
         <td><pre>${testResult.Output.ErrorInfo.Message}</pre></td>
       </tr>`;
-    }
-    let testMarkup = `
+  }
+
+  return `
   <details>
     <summary>${testResultIcon} ${data._name}</summary>    
     <table>
@@ -246,22 +245,8 @@ function getSingleTestMarkup(data, testData) {
       ${errorMessage}
       ${stacktrace}
     </table>
-  `;
-    resultsMarkup += testMarkup;
-    resultsMarkup += `
   </details>
-  `;
-  }
-  return resultsMarkup.trim();
-}
-
-function getUnitTestResult(unitTestId, testResults) {
-  const unitTestResults = testResults.UnitTestResult;
-
-  if (Array.isArray(unitTestResults)) {
-    return testResults.UnitTestResult.find(x => x._testId === unitTestId);
-  }
-  return unitTestResults;
+  `.trim();
 }
 
 module.exports = {

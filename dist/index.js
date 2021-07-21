@@ -7794,64 +7794,74 @@ var require_utils2 = __commonJS({
         stopNodes: ['parse-me-as-string']
       };
       if (xmlParser.validate(xmlData.toString()) === true) {
-        const jsonString = xmlParser.parse(xmlData, options, true);
-        const testData = jsonString;
-        const runInfos = testData.TestRun.ResultSummary.RunInfos;
+        const parsedTrx = xmlParser.parse(xmlData, options, true);
+        const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
         if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
           core2.warning('There is trouble');
         }
-        const reportHeaders = getReportHeaders(testData);
+        const testDefinitionsAreEmpty = parsedTrx && parsedTrx.TestRun && parsedTrx.TestRun.TestDefinitions ? false : true;
+        populateAndFormatObjects(parsedTrx);
+        const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
         trxDataWrapper = {
-          TrxData: jsonString,
-          IsEmpty: testData.TestRun.TestDefinitions ? false : true,
+          TrxData: parsedTrx,
+          IsEmpty: testDefinitionsAreEmpty,
           ReportMetaData: {
             TrxFilePath: filePath,
-            ReportName: `dotnet unit tests (${reportHeaders.reportName})`,
-            ReportTitle: reportHeaders.reportTitle,
-            TrxJSonString: JSON.stringify(jsonString),
+            ReportName: `dotnet unit tests (${reportTitle})`,
+            ReportTitle: reportTitle,
+            TrxJSonString: JSON.stringify(parsedTrx),
             TrxXmlString: xmlData
           }
         };
       }
       return trxDataWrapper;
     }
-    function getReportHeaders(data) {
+    function populateAndFormatObjects(parsedTrx) {
+      if (!parsedTrx.TestRun) {
+        parsedTrx.TestRun = {
+          Results: {
+            UnitTestResult: []
+          },
+          TestDefinitions: {
+            UnitTest: []
+          }
+        };
+      } else {
+        if (!parsedTrx.TestRun.Results) {
+          parsedTrx.TestRun.Results = {
+            UnitTestResult: []
+          };
+        } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
+          parsedTrx.TestRun.Results.UnitTestResult = [];
+        }
+        if (!parsedTrx.TestRun.TestDefinitions) {
+          parsedTrx.TestRun.TestDefinitions = {
+            UnitTest: []
+          };
+        } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
+          parsedTrx.TestRun.TestDefinitions.UnitTest = [];
+        }
+      }
+      if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
+        parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
+      }
+      if (!Array.isArray(parsedTrx.TestRun.TestDefinitions.UnitTest)) {
+        parsedTrx.TestRun.TestDefinitions.UnitTest = [parsedTrx.TestRun.TestDefinitions.UnitTest];
+      }
+    }
+    function getReportTitle(data, isEmpty) {
       let reportTitle = '';
-      let reportName = '';
-      const isEmpty = data && data.TestRun && data.TestRun.TestDefinitions ? false : true;
       if (isEmpty) {
         reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
-        reportName = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName.toUpperCase();
       } else {
-        const unittests =
-          data.TestRun && data.TestRun.TestDefinitions && data.TestRun.TestDefinitions.UnitTest
-            ? data.TestRun.TestDefinitions.UnitTest
-            : '';
-        const storage = getAssemblyName(unittests);
+        const unitTests = data.TestRun.TestDefinitions.UnitTest;
+        const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
         const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
         if (dllName) {
           reportTitle = dllName;
-          reportName = dllName;
         }
       }
-      return {
-        reportName,
-        reportTitle
-      };
-    }
-    function getAssemblyName(unittests) {
-      if (Array.isArray(unittests)) {
-        core2.debug('Its an array');
-        return unittests[0]._storage;
-      } else {
-        const ut = unittests;
-        if (ut) {
-          core2.debug(`Its not an array: ${ut._storage}`);
-          return ut._storage;
-        } else {
-          return 'NOT FOUND';
-        }
-      }
+      return reportTitle;
     }
     function areThereAnyFailingTests2(trxJsonReports) {
       core2.info(`Checking for failing tests..`);
@@ -16047,15 +16057,15 @@ var require_markup = __commonJS({
       if (testData.IsEmpty) {
         return getNoResultsMarkup(testData);
       } else {
-        const unittests = testData.TrxData.TestRun.TestDefinitions.UnitTest;
-        if (Array.isArray(unittests)) {
-          for (const data of unittests) {
-            resultsMarkup += getSingleTestMarkup(data, testData);
+        let unitTests = testData.TrxData.TestRun.TestDefinitions.UnitTest;
+        let unitTestResults = testData.TrxData.TestRun.Results.UnitTestResult;
+        for (const data of unitTests) {
+          const testResult = unitTestResults.find(x => x._testId === data._id);
+          if (testResult && testResult._outcome === 'Failed') {
+            resultsMarkup += getFailedTestMarkup(data, testResult);
           }
-          return resultsMarkup.trim();
-        } else {
-          return getSingleTestMarkup(unittests, testData);
         }
+        return resultsMarkup.trim();
       }
     }
     function getNoResultsMarkup(testData) {
@@ -16080,25 +16090,22 @@ var require_markup = __commonJS({
       if (testOutcome === 'NotExecuted') return ':radio_button:';
       return ':grey_question:';
     }
-    function getSingleTestMarkup(data, testData) {
+    function getFailedTestMarkup(data, testResult) {
       core2.debug(`Processing ${data._name}`);
-      let resultsMarkup = '';
-      const testResult = getUnitTestResult(data._id, testData.TrxData.TestRun.Results);
-      if (testResult && testResult._outcome === 'Failed') {
-        const testResultIcon = getTestOutcomeIcon(testResult._outcome);
-        let stacktrace = '';
-        let errorMessage = '';
-        if (testResult && testResult.Output) {
-          stacktrace = `<tr>
+      const testResultIcon = getTestOutcomeIcon(testResult._outcome);
+      let stacktrace = '';
+      let errorMessage = '';
+      if (testResult && testResult.Output) {
+        stacktrace = `<tr>
         <th>Stack Trace:</th>
         <td><pre>${testResult.Output.ErrorInfo.StackTrace}</pre></td>
       </tr>`;
-          errorMessage = `<tr>
+        errorMessage = `<tr>
         <th>Error Message:</th>
         <td><pre>${testResult.Output.ErrorInfo.Message}</pre></td>
       </tr>`;
-        }
-        let testMarkup = `
+      }
+      return `
   <details>
     <summary>${testResultIcon} ${data._name}</summary>    
     <table>
@@ -16137,20 +16144,8 @@ var require_markup = __commonJS({
       ${errorMessage}
       ${stacktrace}
     </table>
-  `;
-        resultsMarkup += testMarkup;
-        resultsMarkup += `
   </details>
-  `;
-      }
-      return resultsMarkup.trim();
-    }
-    function getUnitTestResult(unitTestId, testResults) {
-      const unitTestResults = testResults.UnitTestResult;
-      if (Array.isArray(unitTestResults)) {
-        return testResults.UnitTestResult.find(x => x._testId === unitTestId);
-      }
-      return unitTestResults;
+  `.trim();
     }
     module2.exports = {
       getMarkupForTrx
@@ -16177,6 +16172,10 @@ var require_github2 = __commonJS({
         } else {
           core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event`);
         }
+        let conclusion = 'success';
+        if (reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures2 ? 'neutral' : 'failure';
+        }
         const markupData = getMarkupForTrx(reportData);
         const checkTime = new Date().toUTCString();
         core2.info(`Check time is: ${checkTime}`);
@@ -16186,12 +16185,7 @@ var require_github2 = __commonJS({
           name: reportData.ReportMetaData.ReportName.toLowerCase(),
           head_sha: git_sha,
           status: 'completed',
-          conclusion:
-            reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed'
-              ? ignoreTestFailures2
-                ? 'neutral'
-                : 'failure'
-              : 'success',
+          conclusion,
           output: {
             title: reportData.ReportMetaData.ReportTitle,
             summary: `This test run completed at \`${checkTime}\``,

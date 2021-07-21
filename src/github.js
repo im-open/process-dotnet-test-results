@@ -18,6 +18,11 @@ async function createCheckRun(repoToken, ignoreTestFailures, reportData) {
       core.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event`);
     }
 
+    let conclusion = 'success';
+    if (reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+      conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+    }
+
     const markupData = getMarkupForTrx(reportData);
     const checkTime = new Date().toUTCString();
     core.info(`Check time is: ${checkTime}`);
@@ -27,12 +32,7 @@ async function createCheckRun(repoToken, ignoreTestFailures, reportData) {
       name: reportData.ReportMetaData.ReportName.toLowerCase(),
       head_sha: git_sha,
       status: 'completed',
-      conclusion:
-        reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed'
-          ? ignoreTestFailures
-            ? 'neutral'
-            : 'failure'
-          : 'success',
+      conclusion: conclusion,
       output: {
         title: reportData.ReportMetaData.ReportTitle,
         summary: `This test run completed at \`${checkTime}\``,
