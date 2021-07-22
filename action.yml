@@ -1,18 +1,30 @@
-name: 'JavaScript Action Template'
+name: 'trx-parser'
 
-description: 'Add description here'
+description: |
+  Action that parses .trx reports and creates a status check with the results.
+  Tests are not run as part of these action.
+  The results can be seen on the workflow run.  One check is created per trx report.
 
 inputs:
-  input-1:
-    description: 'Add a description here'
+  gh-token:
+    description: 'Used for the GitHub Checks API.  Generally secrets.GITHUB_TOKEN.'
     required: true
-  input-2:
-    description: 'Add a description here'
+  base-directory:
+    description: 'The base directory of where to look for .trx files.  Defaults to the root directory of the repository.'
+    required: false
+  ignore-failures-in-check:
+    description: 'When set to true the check status is set to Neutral when there are test failures and it will not block pull requests.'
+    required: false
+    default: 'false'
+  timezone:
+    description: 'IANA time zone name (e.g. America/Denver) to display dates in.  If timezone is not provided, dates will be shown in UTC.'
     required: false
 
 outputs:
-  output-1:
-    description: 'Add a description here'
+  test-outcome:
+    description: 'Test outcome: Failed|Passed'
+  trx-files:
+    description: 'List of trx files that were processed'
 
 runs:
   using: 'node12'
