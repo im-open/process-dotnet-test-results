@@ -1,35 +1,52 @@
-# trx-parser
+# process-dot-net-test-results
 
-This repository is based on [NasAmin/trx-parser](https://github.com/NasAmin/trx-parser).
+This repository is based on [NasAmin/trx-parser]
 
-This GitHub Action parses `dotnet test` results from `trx` files and creates a status check with the results. 
+This action works in conjunction with another step that runs `dotnet test` and it parses test results from `trx` files.  This action will take the parsed results and create a Status Check or PR Comment depending on the flags set. This action does not run the tests itself.
 
-This action does not run the unit tests so it will not fail if the `trx` file contains test failures.  The status checks that it creates will be failing checks though if the `trx` files contain test failures.  If you do not want the status checks to be failing checks when they report test failures, set the `ignore-failures-in-check` input to `true`.  You may wish to do this if you do not want these checks to block PR merging.
+There should be one status check created per `trx` file.  For comments, one will be created for all `trx` files.  The check and comment headings are named after the test project the `trx` was generated for.
 
-The status check can be seen as a new item on the workflow run or on the PR status check section.  There should be one status check created per `trx` file.  The check is named after the test project the `trx` was generated for.
+## Failures
+The status check can be seen as a new item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a failure though.
 
-## Viewing the Status Checks
-If there is a corresponding PR, the check can be viewed in the Status Checks section:
-<kbd><img src="./docs/pr_check.png"></img></kbd>
+## Limitations
+GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment.  This action will fail if the test results exceed the GitHub limit.  To mitigate this size issue only failed tests are included in the output.
 
-The status check can also be seen on the workflow run.  The following screenshot is an example of a check with failed tests:
+If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit.  The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
+
+## Action Outputs
+### Pull Request Comment
+This is shown on the pull request when the `create-pr-comment` is set to `true` and there is a PR associated with the commit.
+<kbd><img src="./docs/pr_comment.png"></img></kbd>
+
+### Pull Request Status Check
+This is shown on the pull request when the `create-status-check` is set to `true` and there is a PR associated with the commit.
+<kbd><img src="./docs/pr_status_check.png"></img></kbd>
+
+### Workflow Run
+This is shown on the workflow run when the `create-status-check` is set to `true`.
+<kbd><img src="./docs/workflow_status_check.png"></img></kbd>
+
+### Failed Test Details
+For failed test runs you can expand each failed test and view more details about the failure
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
-*One item to note is if you have multiple workflows triggered by the same `pull_request` or `push` event GitHub creates one checksuite for that commit, the checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite.  That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow than the workflow that created them.  See the [limitations](#github-actions-limitations) for further details.*
 
 ## Inputs
-| Parameter                  | Is Required | Default                          | Description                                                                                                             |
-| -------------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `gh-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
-| `base-directory`           | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
-| `ignore-failures-in-check` | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
-| `timezone`                 | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
+| Parameter              | Is Required | Default                          | Description                                                                                                             |
+| ---------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `gh-token`             | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
+| `base-directory`       | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
+| `create-status-check`  | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                  |
+| `create-pr-comment`    | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated.                                    |
+| `ignore-test-failures` | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
+| `timezone`             | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
 
 
 ## Outputs
-| Output         | Description                             |
-| -------------- | --------------------------------------- |
-| `test-outcome` | Test outcome: *Failed,Passed*           |
-| `trx-files`    | List of `trx` files that were processed |
+| Output         | Description                                                                                                                                                           |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test-outcome` | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
+| `trx-files`    | List of `trx` files that were processed                                                                                                                               |
 
 ## Examples
 
@@ -41,12 +58,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Test My Solution
-        run: dotnet test ./src/my-solution.sln --logger "trx" --configuration Release
+      - name: dotnet test with coverage
+        run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
 
       - name: Parse trx reports with default
         if: always()
-        uses: im-open/trx-parser@v1.0.0
+        uses: im-open/process-dot-net-test-results@v1.0.1
         with:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -65,12 +82,14 @@ jobs:
       
       - name: Parse trx reports with default
         id: parse-trx
-        uses: im-open/trx-parser@v1.0.0
+        uses: im-open/process-dot-net-test-results@v1.0.1
         with:
           gh-token: ${{ secrets.GITHUB_TOKEN }}
-          base-directory: './test-results'
-          ignore-failures-in-check: 'true'
-          timezone: 'america/denver'
+          base-directory: './test-results'              # Default: .
+          create-status-check: true                     # Default: true
+          create-pr-comment: true                       # Default: true
+          ignore-test-failures: true                    # Default: false
+          timezone: 'america/denver'                    # Default: UTC
       
       - run: ./do-other-advanced-things-in-the-build.sh
 
@@ -80,13 +99,6 @@ jobs:
           echo "There were test failures."
           exit 1
 ```
-
-## GitHub Actions Limitations
-The following limitation information was taken from [NasAmin/trx-parser]
->- The GitHub Checks API has a [limit] of `65535` characters. So if the test report exceeds this limit, GitHub will fail to create a check and fail your workflow. To mitigate this size limitation, the action will only report details about failing tests. 
-
->- If you have multiple workflows triggered by the same event, currently GitHub Actions will randomly associate a check run to one of the workflows. [Only GitHub apps] are allowed to create a Check Suite and there is also no way to associate a custom check run with an existing check suite.  GitHub actions automatically creates a check suite for each workflow run. However, since check runs are associated with a commit and event, any custom check runs are randomly linked under one of the triggered workflows for the same commit.
-
 
 ## Recompiling
 
