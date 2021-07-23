@@ -1,29 +1,15 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const { getMarkupForTrx } = require('./markup');
 
-async function createCheckRun(repoToken, ignoreTestFailures, reportData) {
+async function createStatusCheck(repoToken, reportData, markupData, conclusion) {
   try {
-    core.info(`Creating PR check for ${reportData.ReportMetaData.ReportTitle}...`);
+    core.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
     const octokit = github.getOctokit(repoToken);
 
-    let git_sha = github.context.sha;
+    let git_sha =
+      github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
+    core.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
 
-    if (github.context.eventName === 'push') {
-      core.info(`Creating status check for GitSha: ${git_sha} on a push event`);
-    } else if (github.context.eventName === 'pull_request') {
-      git_sha = github.context.payload.pull_request.head.sha;
-      core.info(`Creating status check for GitSha: ${git_sha} on a pull request event`);
-    } else {
-      core.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event`);
-    }
-
-    let conclusion = 'success';
-    if (reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-      conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-    }
-
-    const markupData = getMarkupForTrx(reportData);
     const checkTime = new Date().toUTCString();
     core.info(`Check time is: ${checkTime}`);
     const response = await octokit.rest.checks.create({
@@ -50,6 +36,33 @@ async function createCheckRun(repoToken, ignoreTestFailures, reportData) {
   }
 }
 
+async function createPrComment(repoToken, markupData) {
+  try {
+    if (github.context.eventName != 'pull_request') {
+      core.info('This event was not triggered by a pull_request.  No comment will be created.');
+    }
+
+    core.info(`Creating PR Comment...`);
+    const octokit = github.getOctokit(repoToken);
+
+    const response = await octokit.rest.issues.createComment({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      issue_number: github.context.payload.pull_request.number,
+      body: markupData
+    });
+
+    if (response.status !== 201) {
+      core.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+    } else {
+      core.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+    }
+  } catch (error) {
+    core.setFailed(`An error occurred trying to create the PR comment: ${error}`);
+  }
+}
+
 module.exports = {
-  createCheckRun
+  createStatusCheck,
+  createPrComment
 };

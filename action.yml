@@ -1,4 +1,4 @@
-name: 'trx-parser'
+name: 'process-dot-net-test-results'
 
 description: |
   Action that parses .trx reports and creates a status check with the results.
@@ -12,17 +12,25 @@ inputs:
   base-directory:
     description: 'The base directory of where to look for .trx files.  Defaults to the root directory of the repository.'
     required: false
-  ignore-failures-in-check:
-    description: 'When set to true the check status is set to Neutral when there are test failures and it will not block pull requests.'
+  ignore-test-failures:
+    description: 'When set to true the status check is set to neutral when there are test failures and it will not block pull requests.'
     required: false
     default: 'false'
+  create-status-check:
+    description: 'Flag indicating whether a status check with test results should be generated.'
+    required: true
+    default: 'true'
+  create-pr-comment:
+    description: 'Flag indicating whether a PR comment with test results should be generated.'
+    required: true
+    default: 'true'
   timezone:
     description: 'IANA time zone name (e.g. America/Denver) to display dates in.  If timezone is not provided, dates will be shown in UTC.'
     required: false
 
 outputs:
   test-outcome:
-    description: 'Test outcome: Failed|Passed'
+    description: 'Test outcome based on presence of failing tests: Failed|Passed.  If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.'
   trx-files:
     description: 'List of trx files that were processed'
 

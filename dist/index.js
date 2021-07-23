@@ -13061,6 +13061,71 @@ var require_github = __commonJS({
   }
 });
 
+// src/github.js
+var require_github2 = __commonJS({
+  'src/github.js'(exports2, module2) {
+    var core2 = require_core();
+    var github = require_github();
+    async function createStatusCheck2(repoToken, reportData, markupData, conclusion) {
+      try {
+        core2.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
+        const octokit = github.getOctokit(repoToken);
+        let git_sha =
+          github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
+        core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
+        const checkTime = new Date().toUTCString();
+        core2.info(`Check time is: ${checkTime}`);
+        const response = await octokit.rest.checks.create({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          name: reportData.ReportMetaData.ReportName.toLowerCase(),
+          head_sha: git_sha,
+          status: 'completed',
+          conclusion,
+          output: {
+            title: reportData.ReportMetaData.ReportTitle,
+            summary: `This test run completed at \`${checkTime}\``,
+            text: markupData
+          }
+        });
+        if (response.status !== 201) {
+          throw new Error(`Failed to create status check. Error code: ${response.status}`);
+        } else {
+          core2.info(`Created check: ${response.data.name} with response status ${response.status}`);
+        }
+      } catch (error) {
+        core2.setFailed(error.message);
+      }
+    }
+    async function createPrComment2(repoToken, markupData) {
+      try {
+        if (github.context.eventName != 'pull_request') {
+          core2.info('This event was not triggered by a pull_request.  No comment will be created.');
+        }
+        core2.info(`Creating PR Comment...`);
+        const octokit = github.getOctokit(repoToken);
+        const response = await octokit.rest.issues.createComment({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          issue_number: github.context.payload.pull_request.number,
+          body: markupData
+        });
+        if (response.status !== 201) {
+          core2.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+        } else {
+          core2.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+        }
+      } catch (error) {
+        core2.setFailed(`An error occurred trying to create the PR comment: ${error}`);
+      }
+    }
+    module2.exports = {
+      createStatusCheck: createStatusCheck2,
+      createPrComment: createPrComment2
+    };
+  }
+});
+
 // node_modules/date-fns/_lib/requiredArgs/index.js
 var require_requiredArgs = __commonJS({
   'node_modules/date-fns/_lib/requiredArgs/index.js'(exports2, module2) {
@@ -15919,11 +15984,10 @@ var require_markup = __commonJS({
     var core2 = require_core();
     var { format, utcToZonedTime } = require_date_fns_tz();
     var timezone = core2.getInput('timezone') || 'Etc/UTC';
-    function getMarkupForTrx(testData) {
+    function getMarkupForTrx2(testData) {
       return `
-  ${getBadge(testData)}
-  
   # ${testData.ReportMetaData.ReportTitle}
+  ${getBadge(testData)}
   ${getTestTimes(testData)}
   ${getTestCounters(testData)}
   ${getTestResultsMarkup(testData)}
@@ -15980,6 +16044,21 @@ var require_markup = __commonJS({
   `;
     }
     function getTestCounters(testData) {
+      let extraProps = getTableRowIfHasValue('Error:', testData.TrxData.TestRun.ResultSummary.Counters._error);
+      extraProps += getTableRowIfHasValue('Timeout:', testData.TrxData.TestRun.ResultSummary.Counters._timeout);
+      extraProps += getTableRowIfHasValue('Aborted:', testData.TrxData.TestRun.ResultSummary.Counters._aborted);
+      extraProps += getTableRowIfHasValue('Inconclusive:', testData.TrxData.TestRun.ResultSummary.Counters._inconclusive);
+      extraProps += getTableRowIfHasValue(
+        'PassedButRunAborted:',
+        testData.TrxData.TestRun.ResultSummary.Counters._passedButRunAborted
+      );
+      extraProps += getTableRowIfHasValue('NotRunnable:', testData.TrxData.TestRun.ResultSummary.Counters._notRunnable);
+      extraProps += getTableRowIfHasValue('NotExecuted:', testData.TrxData.TestRun.ResultSummary.Counters._notExecuted);
+      extraProps += getTableRowIfHasValue('Disconnected:', testData.TrxData.TestRun.ResultSummary.Counters._disconnected);
+      extraProps += getTableRowIfHasValue('Warning:', testData.TrxData.TestRun.ResultSummary.Counters._warning);
+      extraProps += getTableRowIfHasValue('Completed:', testData.TrxData.TestRun.ResultSummary.Counters._completed);
+      extraProps += getTableRowIfHasValue('InProgress:', testData.TrxData.TestRun.ResultSummary.Counters._inProgress);
+      extraProps += getTableRowIfHasValue('Pending:', testData.TrxData.TestRun.ResultSummary.Counters._pending);
       return `
   <details>
     <summary> Outcome: ${testData.TrxData.TestRun.ResultSummary._outcome} | Total Tests: ${testData.TrxData.TestRun.ResultSummary.Counters._total} | Passed: ${testData.TrxData.TestRun.ResultSummary.Counters._passed} | Failed: ${testData.TrxData.TestRun.ResultSummary.Counters._failed} </summary>
@@ -15999,58 +16078,21 @@ var require_markup = __commonJS({
       <tr>
          <th>Failed:</th>
          <td>${testData.TrxData.TestRun.ResultSummary.Counters._failed}</td>    
-      </tr>
-      <tr>
-         <th>Error:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._error}</td>
-      </tr>
-      <tr>
-         <th>Timeout:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._timeout}</td>
-      </tr>
-      <tr>
-         <th>Aborted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._aborted}</td>
-      </tr>
-      <tr>
-         <th>Inconclusive:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._inconclusive}</td>
-      </tr>
-      <tr>
-         <th>PassedButRunAborted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._passedButRunAborted}</td>
-      </tr>
-      <tr>
-         <th>NotRunnable:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._notRunnable}</td>
-      </tr>
-      <tr>
-         <th>NotExecuted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._notExecuted}</td>
-      </tr>
-      <tr>
-         <th>Disconnected:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._disconnected}</td>
-      </tr>
-      <tr>
-         <th>Warning:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._warning}</td>
-      </tr>
-      <tr>
-         <th>Completed:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._completed}</td>
-      </tr>
-      <tr>
-         <th>InProgress:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._inProgress}</td>
-      </tr>
-      <tr>
-         <th>Pending:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._pending}</td>
-      </tr>
+      </tr>${extraProps}
     </table>
   </details>
+
   `;
+    }
+    function getTableRowIfHasValue(heading, data) {
+      if (data && data.length > 0 && parseInt(data) > 0) {
+        return `
+<tr>
+  <th>${heading}</th>
+    <td>${data}</td>
+</tr>`;
+      }
+      return '';
     }
     function getTestResultsMarkup(testData) {
       let resultsMarkup = '';
@@ -16148,61 +16190,7 @@ var require_markup = __commonJS({
   `.trim();
     }
     module2.exports = {
-      getMarkupForTrx
-    };
-  }
-});
-
-// src/github.js
-var require_github2 = __commonJS({
-  'src/github.js'(exports2, module2) {
-    var core2 = require_core();
-    var github = require_github();
-    var { getMarkupForTrx } = require_markup();
-    async function createCheckRun2(repoToken, ignoreTestFailures2, reportData) {
-      try {
-        core2.info(`Creating PR check for ${reportData.ReportMetaData.ReportTitle}...`);
-        const octokit = github.getOctokit(repoToken);
-        let git_sha = github.context.sha;
-        if (github.context.eventName === 'push') {
-          core2.info(`Creating status check for GitSha: ${git_sha} on a push event`);
-        } else if (github.context.eventName === 'pull_request') {
-          git_sha = github.context.payload.pull_request.head.sha;
-          core2.info(`Creating status check for GitSha: ${git_sha} on a pull request event`);
-        } else {
-          core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event`);
-        }
-        let conclusion = 'success';
-        if (reportData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-          conclusion = ignoreTestFailures2 ? 'neutral' : 'failure';
-        }
-        const markupData = getMarkupForTrx(reportData);
-        const checkTime = new Date().toUTCString();
-        core2.info(`Check time is: ${checkTime}`);
-        const response = await octokit.rest.checks.create({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          name: reportData.ReportMetaData.ReportName.toLowerCase(),
-          head_sha: git_sha,
-          status: 'completed',
-          conclusion,
-          output: {
-            title: reportData.ReportMetaData.ReportTitle,
-            summary: `This test run completed at \`${checkTime}\``,
-            text: markupData
-          }
-        });
-        if (response.status !== 201) {
-          throw new Error(`Failed to create status check. Error code: ${response.status}`);
-        } else {
-          core2.info(`Created check: ${response.data.name} with response status ${response.status}`);
-        }
-      } catch (error) {
-        core2.setFailed(error.message);
-      }
-    }
-    module2.exports = {
-      createCheckRun: createCheckRun2
+      getMarkupForTrx: getMarkupForTrx2
     };
   }
 });
@@ -16210,26 +16198,45 @@ var require_github2 = __commonJS({
 // src/main.js
 var core = require_core();
 var { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests } = require_utils2();
-var { createCheckRun } = require_github2();
+var { createStatusCheck, createPrComment } = require_github2();
+var { getMarkupForTrx } = require_markup();
 var token = core.getInput('gh-token');
 var baseDir = core.getInput('base-directory') || '.';
-var ignoreTestFailures = core.getInput('ignore-failures-in-check') == 'true';
+var ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
+var shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
+var shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
     const trxToJson = await transformAllTrxToJson(trxFiles);
     const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    let markupForComment = [];
     for (const data of trxToJson) {
-      await createCheckRun(token, ignoreTestFailures, data);
+      const markupData = getMarkupForTrx(data);
+      let conclusion = 'success';
+      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+      }
+      if (shouldCreateStatusCheck) {
+        await createStatusCheck(token, data, markupData, conclusion);
+      }
+      if (shouldCreatePRComment) {
+        markupForComment.push(markupData);
+      }
+    }
+    if (markupForComment.length > 0) {
+      await createPrComment(token, markupForComment.join('\n'));
     }
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     core.setOutput('trx-files', trxFiles);
   } catch (error) {
     if (error instanceof RangeError) {
       core.info(error.message);
+      core.setOutput('test-outcome', 'Failed');
       return;
     } else {
       core.setFailed(`An error occurred processing the trx files: ${error.message}`);
+      core.setOutput('test-outcome', 'Failed');
     }
   }
 }

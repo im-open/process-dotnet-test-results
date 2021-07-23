@@ -4,9 +4,8 @@ const timezone = core.getInput('timezone') || 'Etc/UTC';
 
 function getMarkupForTrx(testData) {
   return `
-  ${getBadge(testData)}
-  
   # ${testData.ReportMetaData.ReportTitle}
+  ${getBadge(testData)}
   ${getTestTimes(testData)}
   ${getTestCounters(testData)}
   ${getTestResultsMarkup(testData)}
@@ -72,6 +71,21 @@ function getTestTimes(testData) {
 }
 
 function getTestCounters(testData) {
+  let extraProps = getTableRowIfHasValue('Error:', testData.TrxData.TestRun.ResultSummary.Counters._error);
+  extraProps += getTableRowIfHasValue('Timeout:', testData.TrxData.TestRun.ResultSummary.Counters._timeout);
+  extraProps += getTableRowIfHasValue('Aborted:', testData.TrxData.TestRun.ResultSummary.Counters._aborted);
+  extraProps += getTableRowIfHasValue('Inconclusive:', testData.TrxData.TestRun.ResultSummary.Counters._inconclusive);
+  extraProps += getTableRowIfHasValue(
+    'PassedButRunAborted:',
+    testData.TrxData.TestRun.ResultSummary.Counters._passedButRunAborted
+  );
+  extraProps += getTableRowIfHasValue('NotRunnable:', testData.TrxData.TestRun.ResultSummary.Counters._notRunnable);
+  extraProps += getTableRowIfHasValue('NotExecuted:', testData.TrxData.TestRun.ResultSummary.Counters._notExecuted);
+  extraProps += getTableRowIfHasValue('Disconnected:', testData.TrxData.TestRun.ResultSummary.Counters._disconnected);
+  extraProps += getTableRowIfHasValue('Warning:', testData.TrxData.TestRun.ResultSummary.Counters._warning);
+  extraProps += getTableRowIfHasValue('Completed:', testData.TrxData.TestRun.ResultSummary.Counters._completed);
+  extraProps += getTableRowIfHasValue('InProgress:', testData.TrxData.TestRun.ResultSummary.Counters._inProgress);
+  extraProps += getTableRowIfHasValue('Pending:', testData.TrxData.TestRun.ResultSummary.Counters._pending);
   return `
   <details>
     <summary> Outcome: ${testData.TrxData.TestRun.ResultSummary._outcome} | Total Tests: ${testData.TrxData.TestRun.ResultSummary.Counters._total} | Passed: ${testData.TrxData.TestRun.ResultSummary.Counters._passed} | Failed: ${testData.TrxData.TestRun.ResultSummary.Counters._failed} </summary>
@@ -91,58 +105,22 @@ function getTestCounters(testData) {
       <tr>
          <th>Failed:</th>
          <td>${testData.TrxData.TestRun.ResultSummary.Counters._failed}</td>    
-      </tr>
-      <tr>
-         <th>Error:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._error}</td>
-      </tr>
-      <tr>
-         <th>Timeout:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._timeout}</td>
-      </tr>
-      <tr>
-         <th>Aborted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._aborted}</td>
-      </tr>
-      <tr>
-         <th>Inconclusive:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._inconclusive}</td>
-      </tr>
-      <tr>
-         <th>PassedButRunAborted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._passedButRunAborted}</td>
-      </tr>
-      <tr>
-         <th>NotRunnable:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._notRunnable}</td>
-      </tr>
-      <tr>
-         <th>NotExecuted:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._notExecuted}</td>
-      </tr>
-      <tr>
-         <th>Disconnected:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._disconnected}</td>
-      </tr>
-      <tr>
-         <th>Warning:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._warning}</td>
-      </tr>
-      <tr>
-         <th>Completed:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._completed}</td>
-      </tr>
-      <tr>
-         <th>InProgress:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._inProgress}</td>
-      </tr>
-      <tr>
-         <th>Pending:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._pending}</td>
-      </tr>
+      </tr>${extraProps}
     </table>
   </details>
+
   `;
+}
+
+function getTableRowIfHasValue(heading, data) {
+  if (data && data.length > 0 && parseInt(data) > 0) {
+    return `
+<tr>
+  <th>${heading}</th>
+    <td>${data}</td>
+</tr>`;
+  }
+  return '';
 }
 
 function getTestResultsMarkup(testData) {
