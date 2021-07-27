@@ -15,7 +15,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
     const response = await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      name: reportData.ReportMetaData.ReportName.toLowerCase(),
+      name: `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`,
       head_sha: git_sha,
       status: 'completed',
       conclusion: conclusion,
