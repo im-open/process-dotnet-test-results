@@ -1,12 +1,12 @@
-name: 'process-dot-net-test-results'
+name: 'process-dotnet-test-results'
 
 description: |
-  Action that parses .trx reports and creates a status check with the results.
+  Action that parses .trx reports and creates a status check or PR comment with the results.
   Tests are not run as part of these action.
-  The results can be seen on the workflow run.  One check is created per trx report.
+  The results can be seen on the workflow run or a PR.  One check is created per trx report.
 
 inputs:
-  gh-token:
+  github-token:
     description: 'Used for the GitHub Checks API.  Generally secrets.GITHUB_TOKEN.'
     required: true
   base-directory:

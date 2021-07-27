@@ -117,7 +117,7 @@ function getTableRowIfHasValue(heading, data) {
     return `
 <tr>
   <th>${heading}</th>
-    <td>${data}</td>
+  <td>${data}</td>
 </tr>`;
   }
   return '';
