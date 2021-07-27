@@ -16089,7 +16089,7 @@ var require_markup = __commonJS({
         return `
 <tr>
   <th>${heading}</th>
-    <td>${data}</td>
+  <td>${data}</td>
 </tr>`;
       }
       return '';
@@ -16200,7 +16200,7 @@ var core = require_core();
 var { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests } = require_utils2();
 var { createStatusCheck, createPrComment } = require_github2();
 var { getMarkupForTrx } = require_markup();
-var token = core.getInput('gh-token');
+var token = core.getInput('github-token');
 var baseDir = core.getInput('base-directory') || '.';
 var ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 var shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';

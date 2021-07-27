@@ -1,4 +1,4 @@
-# process-dot-net-test-results
+# process-dotnet-test-results
 
 This repository is based on [NasAmin/trx-parser]
 
@@ -34,7 +34,7 @@ For failed test runs you can expand each failed test and view more details about
 ## Inputs
 | Parameter              | Is Required | Default                          | Description                                                                                                             |
 | ---------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `gh-token`             | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
+| `github-token`         | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
 | `base-directory`       | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
 | `create-status-check`  | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                  |
 | `create-pr-comment`    | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated.                                    |
@@ -61,11 +61,11 @@ jobs:
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
 
-      - name: Parse trx reports with default
+      - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dot-net-test-results@v1.0.1
+        uses: im-open/process-dotnet-test-results@v1.0.2
         with:
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Specifying additional behavior
@@ -80,11 +80,11 @@ jobs:
         continue-on-error: true
         run: dotnet test ./src/my-solution.sln --logger "trx" --configuration Release --results-directory ../../test-results
       
-      - name: Parse trx reports with default
-        id: parse-trx
-        uses: im-open/process-dot-net-test-results@v1.0.1
+      - name: Process trx reports
+        id: process-trx
+        uses: im-open/process-dotnet-test-results@v1.0.2
         with:
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
           create-status-check: true                     # Default: true
           create-pr-comment: true                       # Default: true
@@ -94,7 +94,7 @@ jobs:
       - run: ./do-other-advanced-things-in-the-build.sh
 
       - name: Fail if there were test problems
-        if: steps.parse-trx.outputs.test-outcome == 'Failed'
+        if: steps.process-trx.outputs.test-outcome == 'Failed'
         run: |
           echo "There were test failures."
           exit 1
