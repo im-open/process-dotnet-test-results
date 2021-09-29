@@ -4677,13 +4677,13 @@ var require_http_client = __commonJS({
         let info = this._prepareRequest(verb, parsedUrl, headers);
         let maxTries = this._allowRetries && RetryableHttpVerbs.indexOf(verb) != -1 ? this._maxRetries + 1 : 1;
         let numTries = 0;
-        let response2;
+        let response;
         while (numTries < maxTries) {
-          response2 = await this.requestRaw(info, data);
-          if (response2 && response2.message && response2.message.statusCode === HttpCodes.Unauthorized) {
+          response = await this.requestRaw(info, data);
+          if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
             let authenticationHandler;
             for (let i = 0; i < this.handlers.length; i++) {
-              if (this.handlers[i].canHandleAuthentication(response2)) {
+              if (this.handlers[i].canHandleAuthentication(response)) {
                 authenticationHandler = this.handlers[i];
                 break;
               }
@@ -4691,12 +4691,12 @@ var require_http_client = __commonJS({
             if (authenticationHandler) {
               return authenticationHandler.handleAuthentication(this, info, data);
             } else {
-              return response2;
+              return response;
             }
           }
           let redirectsRemaining = this._maxRedirects;
-          while (HttpRedirectCodes.indexOf(response2.message.statusCode) != -1 && this._allowRedirects && redirectsRemaining > 0) {
-            const redirectUrl = response2.message.headers["location"];
+          while (HttpRedirectCodes.indexOf(response.message.statusCode) != -1 && this._allowRedirects && redirectsRemaining > 0) {
+            const redirectUrl = response.message.headers["location"];
             if (!redirectUrl) {
               break;
             }
@@ -4704,7 +4704,7 @@ var require_http_client = __commonJS({
             if (parsedUrl.protocol == "https:" && parsedUrl.protocol != parsedRedirectUrl.protocol && !this._allowRedirectDowngrade) {
               throw new Error("Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.");
             }
-            await response2.readBody();
+            await response.readBody();
             if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
               for (let header in headers) {
                 if (header.toLowerCase() === "authorization") {
@@ -4713,19 +4713,19 @@ var require_http_client = __commonJS({
               }
             }
             info = this._prepareRequest(verb, parsedRedirectUrl, headers);
-            response2 = await this.requestRaw(info, data);
+            response = await this.requestRaw(info, data);
             redirectsRemaining--;
           }
-          if (HttpResponseRetryCodes.indexOf(response2.message.statusCode) == -1) {
-            return response2;
+          if (HttpResponseRetryCodes.indexOf(response.message.statusCode) == -1) {
+            return response;
           }
           numTries += 1;
           if (numTries < maxTries) {
-            await response2.readBody();
+            await response.readBody();
             await this._performExponentialBackoff(numTries);
           }
         }
-        return response2;
+        return response;
       }
       dispose() {
         if (this._agent) {
@@ -4901,13 +4901,13 @@ var require_http_client = __commonJS({
       async _processResponse(res, options) {
         return new Promise(async (resolve, reject) => {
           const statusCode = res.message.statusCode;
-          const response2 = {
+          const response = {
             statusCode,
             result: null,
             headers: {}
           };
           if (statusCode == HttpCodes.NotFound) {
-            resolve(response2);
+            resolve(response);
           }
           let obj;
           let contents;
@@ -4919,9 +4919,9 @@ var require_http_client = __commonJS({
               } else {
                 obj = JSON.parse(contents);
               }
-              response2.result = obj;
+              response.result = obj;
             }
-            response2.headers = res.message.headers;
+            response.headers = res.message.headers;
           } catch (err) {
           }
           if (statusCode > 299) {
@@ -4934,10 +4934,10 @@ var require_http_client = __commonJS({
               msg = "Failed request: (" + statusCode + ")";
             }
             let err = new HttpClientError(msg, statusCode);
-            err.result = response2.result;
+            err.result = response.result;
             reject(err);
           } else {
-            resolve(response2);
+            resolve(response);
           }
         });
       }
@@ -6362,16 +6362,16 @@ var require_lib = __commonJS({
         const options = getNodeRequestOptions(request);
         const send = (options.protocol === "https:" ? https : http).request;
         const signal = request.signal;
-        let response2 = null;
+        let response = null;
         const abort = function abort2() {
           let error = new AbortError("The user aborted a request.");
           reject(error);
           if (request.body && request.body instanceof Stream.Readable) {
             request.body.destroy(error);
           }
-          if (!response2 || !response2.body)
+          if (!response || !response.body)
             return;
-          response2.body.emit("error", error);
+          response.body.emit("error", error);
         };
         if (signal && signal.aborted) {
           abort();
@@ -6476,8 +6476,8 @@ var require_lib = __commonJS({
           };
           const codings = headers.get("Content-Encoding");
           if (!request.compress || request.method === "HEAD" || codings === null || res.statusCode === 204 || res.statusCode === 304) {
-            response2 = new Response(body, response_options);
-            resolve(response2);
+            response = new Response(body, response_options);
+            resolve(response);
             return;
           }
           const zlibOptions = {
@@ -6486,8 +6486,8 @@ var require_lib = __commonJS({
           };
           if (codings == "gzip" || codings == "x-gzip") {
             body = body.pipe(zlib.createGunzip(zlibOptions));
-            response2 = new Response(body, response_options);
-            resolve(response2);
+            response = new Response(body, response_options);
+            resolve(response);
             return;
           }
           if (codings == "deflate" || codings == "x-deflate") {
@@ -6498,19 +6498,19 @@ var require_lib = __commonJS({
               } else {
                 body = body.pipe(zlib.createInflateRaw());
               }
-              response2 = new Response(body, response_options);
-              resolve(response2);
+              response = new Response(body, response_options);
+              resolve(response);
             });
             return;
           }
           if (codings == "br" && typeof zlib.createBrotliDecompress === "function") {
             body = body.pipe(zlib.createBrotliDecompress());
-            response2 = new Response(body, response_options);
-            resolve(response2);
+            response = new Response(body, response_options);
+            resolve(response);
             return;
           }
-          response2 = new Response(body, response_options);
-          resolve(response2);
+          response = new Response(body, response_options);
+          resolve(response);
         });
         writeToStream(req, request);
       });
@@ -6615,8 +6615,8 @@ var require_dist_node5 = __commonJS({
     var nodeFetch = _interopDefault(require_lib());
     var requestError = require_dist_node4();
     var VERSION = "5.6.0";
-    function getBufferResponse(response2) {
-      return response2.arrayBuffer();
+    function getBufferResponse(response) {
+      return response.arrayBuffer();
     }
     function fetchWrapper(requestOptions) {
       const log = requestOptions.request && requestOptions.request.log ? requestOptions.request.log : console;
@@ -6632,10 +6632,10 @@ var require_dist_node5 = __commonJS({
         body: requestOptions.body,
         headers: requestOptions.headers,
         redirect: requestOptions.redirect
-      }, requestOptions.request)).then(async (response2) => {
-        url = response2.url;
-        status = response2.status;
-        for (const keyAndValue of response2.headers) {
+      }, requestOptions.request)).then(async (response) => {
+        url = response.url;
+        status = response.status;
+        for (const keyAndValue of response.headers) {
           headers[keyAndValue[0]] = keyAndValue[1];
         }
         if ("deprecation" in headers) {
@@ -6650,7 +6650,7 @@ var require_dist_node5 = __commonJS({
           if (status < 400) {
             return;
           }
-          throw new requestError.RequestError(response2.statusText, status, {
+          throw new requestError.RequestError(response.statusText, status, {
             response: {
               url,
               status,
@@ -6666,13 +6666,13 @@ var require_dist_node5 = __commonJS({
               url,
               status,
               headers,
-              data: await getResponseData(response2)
+              data: await getResponseData(response)
             },
             request: requestOptions
           });
         }
         if (status >= 400) {
-          const data = await getResponseData(response2);
+          const data = await getResponseData(response);
           const error = new requestError.RequestError(toErrorMessage(data), status, {
             response: {
               url,
@@ -6684,7 +6684,7 @@ var require_dist_node5 = __commonJS({
           });
           throw error;
         }
-        return getResponseData(response2);
+        return getResponseData(response);
       }).then((data) => {
         return {
           status,
@@ -6700,15 +6700,15 @@ var require_dist_node5 = __commonJS({
         });
       });
     }
-    async function getResponseData(response2) {
-      const contentType = response2.headers.get("content-type");
+    async function getResponseData(response) {
+      const contentType = response.headers.get("content-type");
       if (/application\/json/.test(contentType)) {
-        return response2.json();
+        return response.json();
       }
       if (!contentType || /^text\/|charset=utf-8$/.test(contentType)) {
-        return response2.text();
+        return response.text();
       }
-      return getBufferResponse(response2);
+      return getBufferResponse(response);
     }
     function toErrorMessage(data) {
       if (typeof data === "string")
@@ -6760,12 +6760,12 @@ var require_dist_node6 = __commonJS({
     var universalUserAgent = require_dist_node();
     var VERSION = "4.6.4";
     var GraphqlError = class extends Error {
-      constructor(request2, response2) {
-        const message = response2.data.errors[0].message;
+      constructor(request2, response) {
+        const message = response.data.errors[0].message;
         super(message);
-        Object.assign(this, response2.data);
+        Object.assign(this, response.data);
         Object.assign(this, {
-          headers: response2.headers
+          headers: response.headers
         });
         this.name = "GraphqlError";
         this.request = request2;
@@ -6806,18 +6806,18 @@ var require_dist_node6 = __commonJS({
       if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
         requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
       }
-      return request2(requestOptions).then((response2) => {
-        if (response2.data.errors) {
+      return request2(requestOptions).then((response) => {
+        if (response.data.errors) {
           const headers = {};
-          for (const key of Object.keys(response2.headers)) {
-            headers[key] = response2.headers[key];
+          for (const key of Object.keys(response.headers)) {
+            headers[key] = response.headers[key];
           }
           throw new GraphqlError(requestOptions, {
             headers,
-            data: response2.data
+            data: response.data
           });
         }
-        return response2.data.data;
+        return response.data.data;
       });
     }
     function withDefaults(request$1, newDefaults) {
@@ -8298,32 +8298,32 @@ var require_dist_node10 = __commonJS({
       }
       return obj;
     }
-    function normalizePaginatedListResponse(response2) {
-      if (!response2.data) {
-        return _objectSpread2(_objectSpread2({}, response2), {}, {
+    function normalizePaginatedListResponse(response) {
+      if (!response.data) {
+        return _objectSpread2(_objectSpread2({}, response), {}, {
           data: []
         });
       }
-      const responseNeedsNormalization = "total_count" in response2.data && !("url" in response2.data);
+      const responseNeedsNormalization = "total_count" in response.data && !("url" in response.data);
       if (!responseNeedsNormalization)
-        return response2;
-      const incompleteResults = response2.data.incomplete_results;
-      const repositorySelection = response2.data.repository_selection;
-      const totalCount = response2.data.total_count;
-      delete response2.data.incomplete_results;
-      delete response2.data.repository_selection;
-      delete response2.data.total_count;
-      const namespaceKey = Object.keys(response2.data)[0];
-      const data = response2.data[namespaceKey];
-      response2.data = data;
+        return response;
+      const incompleteResults = response.data.incomplete_results;
+      const repositorySelection = response.data.repository_selection;
+      const totalCount = response.data.total_count;
+      delete response.data.incomplete_results;
+      delete response.data.repository_selection;
+      delete response.data.total_count;
+      const namespaceKey = Object.keys(response.data)[0];
+      const data = response.data[namespaceKey];
+      response.data = data;
       if (typeof incompleteResults !== "undefined") {
-        response2.data.incomplete_results = incompleteResults;
+        response.data.incomplete_results = incompleteResults;
       }
       if (typeof repositorySelection !== "undefined") {
-        response2.data.repository_selection = repositorySelection;
+        response.data.repository_selection = repositorySelection;
       }
-      response2.data.total_count = totalCount;
-      return response2;
+      response.data.total_count = totalCount;
+      return response;
     }
     function iterator(octokit, route, parameters) {
       const options = typeof route === "function" ? route.endpoint(parameters) : octokit.request.endpoint(route, parameters);
@@ -8339,12 +8339,12 @@ var require_dist_node10 = __commonJS({
                 done: true
               };
             try {
-              const response2 = await requestMethod({
+              const response = await requestMethod({
                 method,
                 url,
                 headers
               });
-              const normalizedResponse = normalizePaginatedListResponse(response2);
+              const normalizedResponse = normalizePaginatedListResponse(response);
               url = ((normalizedResponse.headers.link || "").match(/<([^>]+)>;\s*rel="next"/) || [])[1];
               return {
                 value: normalizedResponse
@@ -8531,7 +8531,7 @@ var require_github2 = __commonJS({
         core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
         const checkTime = new Date().toUTCString();
         core2.info(`Check time is: ${checkTime}`);
-        const response2 = await octokit.rest.checks.create({
+        const response = await octokit.rest.checks.create({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
           name: `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`,
@@ -8544,57 +8544,69 @@ var require_github2 = __commonJS({
             text: markupData
           }
         });
-        if (response2.status !== 201) {
-          throw new Error(`Failed to create status check. Error code: ${response2.status}`);
+        if (response.status !== 201) {
+          throw new Error(`Failed to create status check. Error code: ${response.status}`);
         } else {
-          core2.info(`Created check: ${response2.data.name} with response status ${response2.status}`);
+          core2.info(`Created check: ${response.data.name} with response status ${response.status}`);
         }
       } catch (error) {
         core2.setFailed(error.message);
       }
     }
-    async function createPrComment2(repoToken, markupData) {
+    async function createComment(octokit, markupData) {
+      core2.info(`Creating PR Comment...`);
+      const response = await octokit.rest.issues.createComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: github.context.payload.pull_request.number,
+        body: markupData
+      });
+      if (response.status !== 201) {
+        core2.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+      } else {
+        core2.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+      }
+    }
+    async function createOrUpdateComment(octokit, markupData) {
+      const commentsResponse = await octokit.rest.issues.listComments({
+        issue_number: github.context.issue.number,
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo
+      });
+      if (commentsResponse.status !== 200) {
+        core2.setFailed(`Failed to list PR comments. Error code: ${commentsResponse.status}`);
+        return;
+      }
+      const prefixedMarkupData = "<!-- im-open/process-dotnet-test-results -->" + markupData;
+      const existingComment = commentsResponse.data.find((comment) => comment.body.startsWith(prefixedMarkupData));
+      if (existingComment === void 0) {
+        await createComment(octokit, prefixedMarkupData);
+      } else {
+        core2.info(`Updating PR Comment...`);
+        const response = await octokit.rest.issues.updateComment({
+          comment_id: existingComment.id,
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          body: prefixedMarkupData
+        });
+        if (response.status !== 200) {
+          core2.setFailed(`Failed to update PR comment. Error code: ${response.status}`);
+        } else {
+          core2.info(`Updated PR comment: ${response.data.id} with response status ${response.status}`);
+        }
+      }
+    }
+    async function createPrComment2(repoToken, markupData, shouldUpdateCommentOnChange2) {
       try {
         if (github.context.eventName != "pull_request") {
           core2.info("This event was not triggered by a pull_request.  No comment will be created.");
-        }
-        core2.info(`Creating PR Comment...`);
-        const octokit = github.getOctokit(repoToken);
-        const markupDataPrefix = "<!-- im-open/process-dotnet-test-results -->";
-        const commentsResponse = await octokit.rest.issues.listComments({
-          issue_number: github.context.issue.number,
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo
-        });
-        if (commentsResponse.status !== 200) {
-          core2.setFailed(`Failed to list PR comments. Error code: ${response.status}`);
           return;
         }
-        const existingComment = commentsResponse.data.find((comment) => comment.body.startsWith(markupDataPrefix));
-        if (existingComment === void 0) {
-          const response2 = await octokit.rest.issues.createComment({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: github.context.payload.pull_request.number,
-            body: markupDataPrefix + markupData
-          });
-          if (response2.status !== 201) {
-            core2.setFailed(`Failed to create PR comment. Error code: ${response2.status}`);
-          } else {
-            core2.info(`Created PR comment: ${response2.data.id} with response status ${response2.status}`);
-          }
+        const octokit = github.getOctokit(repoToken);
+        if (shouldUpdateCommentOnChange2) {
+          await createOrUpdateComment(octokit, markupData);
         } else {
-          const response2 = await octokit.rest.issues.updateComment({
-            comment_id: existingComment.id,
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            body: markupDataPrefix + markupData
-          });
-          if (response2.status !== 200) {
-            core2.setFailed(`Failed to update PR comment. Error code: ${response2.status}`);
-          } else {
-            core2.info(`Updated PR comment: ${response2.data.id} with response status ${response2.status}`);
-          }
+          await createComment(octokit, markupData);
         }
       } catch (error) {
         core2.setFailed(`An error occurred trying to create the PR comment: ${error}`);
@@ -11593,6 +11605,7 @@ var baseDir = core.getInput("base-directory") || ".";
 var ignoreTestFailures = core.getInput("ignore-test-failures") == "true";
 var shouldCreateStatusCheck = core.getInput("create-status-check") == "true";
 var shouldCreatePRComment = core.getInput("create-pr-comment") == "true";
+var shouldUpdateCommentOnChange = core.getInput("update-pr-comment-on-change") == "true";
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
@@ -11613,7 +11626,7 @@ async function run() {
       }
     }
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join("\n"));
+      await createPrComment(token, markupForComment.join("\n"), shouldUpdateCommentOnChange);
     }
     core.setOutput("test-outcome", failingTestsFound ? "Failed" : "Passed");
     core.setOutput("trx-files", trxFiles);

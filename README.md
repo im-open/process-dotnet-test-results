@@ -42,14 +42,15 @@ For failed test runs you can expand each failed test and view more details about
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
-| Parameter              | Is Required | Default                          | Description                                                                                                             |
-| ---------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `github-token`         | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
-| `base-directory`       | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
-| `create-status-check`  | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                  |
-| `create-pr-comment`    | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated.                                    |
-| `ignore-test-failures` | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
-| `timezone`             | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
+| Parameter                     | Is Required | Default                          | Description                                                                                                             |
+|-------------------------------|-------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `github-token`                | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
+| `base-directory`              | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
+| `create-status-check`         | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                  |
+| `create-pr-comment`           | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated.                                    |
+| `update-pr-comment-on-change` | false       | false                            | Flag indicating whether the PR comment should be updated upon changes.                                                  |
+| `ignore-test-failures`        | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
+| `timezone`                    | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          | | | |
 
 
 ## Outputs
@@ -98,6 +99,7 @@ jobs:
           base-directory: './test-results'              # Default: .
           create-status-check: true                     # Default: true
           create-pr-comment: true                       # Default: true
+          update-pr-comment-on-change: true             # Default: false
           ignore-test-failures: true                    # Default: false
           timezone: 'america/denver'                    # Default: UTC
       

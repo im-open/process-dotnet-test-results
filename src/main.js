@@ -8,6 +8,7 @@ const baseDir = core.getInput('base-directory') || '.';
 const ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 const shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 const shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
+const shouldUpdateCommentOnChange = core.getInput('update-pr-comment-on-change') == 'true';
 
 async function run() {
   try {
@@ -31,7 +32,7 @@ async function run() {
     }
 
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join('\n'));
+      await createPrComment(token, markupForComment.join('\n'), shouldUpdateCommentOnChange);
     }
 
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
