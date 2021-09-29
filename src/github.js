@@ -74,7 +74,7 @@ async function createPrComment(repoToken, markupData) {
         core.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
       }
     } else {
-      const response = await octokit.rest.issue.updateComment({
+      const response = await octokit.rest.issues.updateComment({
         comment_id: existingComment.id,
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,

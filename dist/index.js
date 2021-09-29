@@ -8584,7 +8584,7 @@ var require_github2 = __commonJS({
             core2.info(`Created PR comment: ${response2.data.id} with response status ${response2.status}`);
           }
         } else {
-          const response2 = await octokit.rest.issue.updateComment({
+          const response2 = await octokit.rest.issues.updateComment({
             comment_id: existingComment.id,
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
