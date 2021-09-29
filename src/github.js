@@ -50,9 +50,9 @@ async function createPrComment(repoToken, markupData) {
     `;
 
     const commentsResponse = await octokit.rest.issues.listComments({
-      issue_number: context.issue.number,
-      owner: context.repo.owner,
-      repo: context.repo.repo
+      issue_number: github.context.issue.number,
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo
     });
 
     if (commentsResponse.status !== 200) {
