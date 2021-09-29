@@ -46,39 +46,48 @@ async function createPrComment(repoToken, markupData) {
     const octokit = github.getOctokit(repoToken);
 
     const markupDataPrefix = `<!-- im-open/process-dotnet-test-results -->
+
     `;
 
-    const comments = await octokit.rest.issues.listComments({
+    const commentsResponse = await octokit.rest.issues.listComments({
       issue_number: context.issue.number,
       owner: context.repo.owner,
       repo: context.repo.repo
     });
 
-    if (response.status !== 200) {
+    if (commentsResponse.status !== 200) {
       core.setFailed(`Failed to list PR comments. Error code: ${response.status}`);
       return;
     }
   
-    const existingComment = comments.data.find(comment => comment.body.startsWith(markupDataPrefix));
+    const existingComment = commentsResponse.data.find(comment => comment.body.startsWith(markupDataPrefix));
 
-    const response = existingComment === undefined 
-    ? await octokit.rest.issues.createComment({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      issue_number: github.context.payload.pull_request.number,
-      body: markupDataPrefix + markupData,
-    })
-    : await octokit.rest.issue.updateComment({
-      comment_id: existingComment.id,
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      body: markupDataPrefix + markupData,
-    });
+    if(existingComment === undefined){
+      const response = await octokit.rest.issues.createComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: github.context.payload.pull_request.number,
+        body: markupDataPrefix + markupData,
+      });
 
-    if (response.status !== 201) {
-      core.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+      if (response.status !== 201) {
+        core.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+      } else {
+        core.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+      }
     } else {
-      core.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+      const response = await octokit.rest.issue.updateComment({
+        comment_id: existingComment.id,
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        body: markupDataPrefix + markupData,
+      });
+
+      if (response.status !== 201) {
+        core.setFailed(`Failed to update PR comment. Error code: ${response.status}`);
+      } else {
+        core.info(`Updated PR comment: ${response.data.id} with response status ${response.status}`);
+      }
     }
   } catch (error) {
     core.setFailed(`An error occurred trying to create the PR comment: ${error}`);
