@@ -45,9 +45,7 @@ async function createPrComment(repoToken, markupData) {
     core.info(`Creating PR Comment...`);
     const octokit = github.getOctokit(repoToken);
 
-    const markupDataPrefix = `<!-- im-open/process-dotnet-test-results -->
-
-    `;
+    const markupDataPrefix = '<!-- im-open/process-dotnet-test-results -->';
 
     const commentsResponse = await octokit.rest.issues.listComments({
       issue_number: github.context.issue.number,
