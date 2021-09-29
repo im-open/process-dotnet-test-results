@@ -8590,7 +8590,7 @@ var require_github2 = __commonJS({
             repo: github.context.repo.repo,
             body: markupDataPrefix + markupData
           });
-          if (response2.status !== 201) {
+          if (response2.status !== 200) {
             core2.setFailed(`Failed to update PR comment. Error code: ${response2.status}`);
           } else {
             core2.info(`Updated PR comment: ${response2.data.id} with response status ${response2.status}`);

@@ -81,7 +81,7 @@ async function createPrComment(repoToken, markupData) {
         body: markupDataPrefix + markupData
       });
 
-      if (response.status !== 201) {
+      if (response.status !== 200) {
         core.setFailed(`Failed to update PR comment. Error code: ${response.status}`);
       } else {
         core.info(`Updated PR comment: ${response.data.id} with response status ${response.status}`);
