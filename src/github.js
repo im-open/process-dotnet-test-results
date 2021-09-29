@@ -54,7 +54,7 @@ async function createPrComment(repoToken, markupData) {
       repo: context.repo.repo
     });
 
-    if (response.status !== 201) {
+    if (response.status !== 200) {
       core.setFailed(`Failed to list PR comments. Error code: ${response.status}`);
       return;
     }
