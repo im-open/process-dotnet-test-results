@@ -45,11 +45,34 @@ async function createPrComment(repoToken, markupData) {
     core.info(`Creating PR Comment...`);
     const octokit = github.getOctokit(repoToken);
 
-    const response = await octokit.rest.issues.createComment({
+    const markupDataPrefix = `<!-- im-open/process-dotnet-test-results -->
+    `;
+
+    const comments = await octokit.rest.issues.listComments({
+      issue_number: context.issue.number,
+      owner: context.repo.owner,
+      repo: context.repo.repo
+    });
+
+    if (response.status !== 201) {
+      core.setFailed(`Failed to list PR comments. Error code: ${response.status}`);
+      return;
+    }
+  
+    const existingComment = comments.data.find(comment => comment.body.startsWith(markupDataPrefix));
+
+    const response = existingComment === undefined 
+    ? await octokit.rest.issues.createComment({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       issue_number: github.context.payload.pull_request.number,
-      body: markupData
+      body: markupDataPrefix + markupData,
+    })
+    : await octokit.rest.issue.updateComment({
+      comment_id: existingComment.id,
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      body: markupDataPrefix + markupData,
     });
 
     if (response.status !== 201) {
