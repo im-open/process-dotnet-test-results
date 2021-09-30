@@ -69,7 +69,7 @@ async function createOrUpdateComment(octokit, markupData) {
   const existingComment = commentsResponse.data.find(comment => comment.body.startsWith(prefixedMarkupData));
 
   if (existingComment === undefined) {
-    await createComment(octokit, prefixedMarkupData)
+    await createComment(octokit, prefixedMarkupData);
   } else {
     core.info(`Updating PR Comment...`);
     const response = await octokit.rest.issues.updateComment({
@@ -98,7 +98,7 @@ async function createPrComment(repoToken, markupData, shouldUpdateCommentOnChang
     if (shouldUpdateCommentOnChange) {
       await createOrUpdateComment(octokit, markupData);
     } else {
-      await createComment(octokit, markupData)
+      await createComment(octokit, markupData);
     }
   } catch (error) {
     core.setFailed(`An error occurred trying to create the PR comment: ${error}`);
