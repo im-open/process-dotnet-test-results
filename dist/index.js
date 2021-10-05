@@ -13097,23 +13097,60 @@ var require_github2 = __commonJS({
         core2.setFailed(error.message);
       }
     }
-    async function createPrComment2(repoToken, markupData) {
+    async function createComment(octokit, markupData) {
+      core2.info(`Creating PR Comment...`);
+      const response = await octokit.rest.issues.createComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: github.context.payload.pull_request.number,
+        body: markupData
+      });
+      if (response.status !== 201) {
+        core2.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+      } else {
+        core2.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+      }
+    }
+    async function createOrUpdateComment(octokit, markupData) {
+      const commentsResponse = await octokit.rest.issues.listComments({
+        issue_number: github.context.issue.number,
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo
+      });
+      if (commentsResponse.status !== 200) {
+        core2.setFailed(`Failed to list PR comments. Error code: ${commentsResponse.status}`);
+        return;
+      }
+      const prefixedMarkupData = '<!-- im-open/process-dotnet-test-results -->\n' + markupData;
+      const existingComment = commentsResponse.data.find(comment => comment.body.startsWith(prefixedMarkupData));
+      if (existingComment === void 0) {
+        await createComment(octokit, prefixedMarkupData);
+      } else {
+        core2.info(`Updating PR Comment...`);
+        const response = await octokit.rest.issues.updateComment({
+          comment_id: existingComment.id,
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          body: prefixedMarkupData
+        });
+        if (response.status !== 200) {
+          core2.setFailed(`Failed to update PR comment. Error code: ${response.status}`);
+        } else {
+          core2.info(`Updated PR comment: ${response.data.id} with response status ${response.status}`);
+        }
+      }
+    }
+    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2) {
       try {
         if (github.context.eventName != 'pull_request') {
           core2.info('This event was not triggered by a pull_request.  No comment will be created.');
+          return;
         }
-        core2.info(`Creating PR Comment...`);
         const octokit = github.getOctokit(repoToken);
-        const response = await octokit.rest.issues.createComment({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          issue_number: github.context.payload.pull_request.number,
-          body: markupData
-        });
-        if (response.status !== 201) {
-          core2.setFailed(`Failed to create PR comment. Error code: ${response.status}`);
+        if (updateCommentIfOneExists2) {
+          await createOrUpdateComment(octokit, markupData);
         } else {
-          core2.info(`Created PR comment: ${response.data.id} with response status ${response.status}`);
+          await createComment(octokit, markupData);
         }
       } catch (error) {
         core2.setFailed(`An error occurred trying to create the PR comment: ${error}`);
@@ -16205,6 +16242,7 @@ var baseDir = core.getInput('base-directory') || '.';
 var ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 var shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 var shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
+var updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
@@ -16225,7 +16263,7 @@ async function run() {
       }
     }
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join('\n'));
+      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists);
     }
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     core.setOutput('trx-files', trxFiles);

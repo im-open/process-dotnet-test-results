@@ -42,15 +42,15 @@ For failed test runs you can expand each failed test and view more details about
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
-| Parameter              | Is Required | Default                          | Description                                                                                                             |
-| ---------------------- | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `github-token`         | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                              |
-| `base-directory`       | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                    |
-| `create-status-check`  | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                  |
-| `create-pr-comment`    | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated.                                    |
-| `ignore-test-failures` | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests. |
-| `timezone`             | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                          |
-
+| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                |
+|--------------------------------|-------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                                                                                 |
+| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                       |
+| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                     |
+| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated. When `true` the default behavior is to always create a new comment.                   |
+| `update-comment-if-one-exists` | false       | false                            | When `update-comment-if-one-exists` is true, this flag determines whether a new comment is created (default) or if the action updates an existing comment if one is found. |
+| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                    |
+| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                             |
 
 ## Outputs
 | Output         | Description                                                                                                                                                           |
@@ -98,6 +98,7 @@ jobs:
           base-directory: './test-results'              # Default: .
           create-status-check: true                     # Default: true
           create-pr-comment: true                       # Default: true
+          update-comment-if-one-exists: true             # Default: false
           ignore-test-failures: true                    # Default: false
           timezone: 'america/denver'                    # Default: UTC
       
