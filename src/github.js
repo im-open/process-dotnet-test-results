@@ -64,7 +64,7 @@ async function createOrUpdateComment(octokit, markupData) {
     return;
   }
 
-  const prefixedMarkupData = '<!-- im-open/process-dotnet-test-results -->' + markupData;
+  const prefixedMarkupData = '<!-- im-open/process-dotnet-test-results -->\n' + markupData;
 
   const existingComment = commentsResponse.data.find(comment => comment.body.startsWith(prefixedMarkupData));
 
@@ -87,7 +87,7 @@ async function createOrUpdateComment(octokit, markupData) {
   }
 }
 
-async function createPrComment(repoToken, markupData, shouldUpdateCommentOnChange) {
+async function createPrComment(repoToken, markupData, updateCommentIfOneExists) {
   try {
     if (github.context.eventName != 'pull_request') {
       core.info('This event was not triggered by a pull_request.  No comment will be created.');
@@ -95,7 +95,7 @@ async function createPrComment(repoToken, markupData, shouldUpdateCommentOnChang
     }
 
     const octokit = github.getOctokit(repoToken);
-    if (shouldUpdateCommentOnChange) {
+    if (updateCommentIfOneExists) {
       await createOrUpdateComment(octokit, markupData);
     } else {
       await createComment(octokit, markupData);

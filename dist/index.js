@@ -13121,7 +13121,7 @@ var require_github2 = __commonJS({
         core2.setFailed(`Failed to list PR comments. Error code: ${commentsResponse.status}`);
         return;
       }
-      const prefixedMarkupData = '<!-- im-open/process-dotnet-test-results -->' + markupData;
+      const prefixedMarkupData = '<!-- im-open/process-dotnet-test-results -->\n' + markupData;
       const existingComment = commentsResponse.data.find(comment => comment.body.startsWith(prefixedMarkupData));
       if (existingComment === void 0) {
         await createComment(octokit, prefixedMarkupData);
@@ -13140,14 +13140,14 @@ var require_github2 = __commonJS({
         }
       }
     }
-    async function createPrComment2(repoToken, markupData, shouldUpdateCommentOnChange2) {
+    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2) {
       try {
         if (github.context.eventName != 'pull_request') {
           core2.info('This event was not triggered by a pull_request.  No comment will be created.');
           return;
         }
         const octokit = github.getOctokit(repoToken);
-        if (shouldUpdateCommentOnChange2) {
+        if (updateCommentIfOneExists2) {
           await createOrUpdateComment(octokit, markupData);
         } else {
           await createComment(octokit, markupData);
@@ -16242,7 +16242,7 @@ var baseDir = core.getInput('base-directory') || '.';
 var ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 var shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 var shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
-var shouldUpdateCommentOnChange = core.getInput('update-pr-comment-on-change') == 'true';
+var updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
@@ -16263,7 +16263,7 @@ async function run() {
       }
     }
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join('\n'), shouldUpdateCommentOnChange);
+      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists);
     }
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     core.setOutput('trx-files', trxFiles);
