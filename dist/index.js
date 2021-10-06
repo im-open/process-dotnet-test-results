@@ -13126,7 +13126,6 @@ var require_github2 = __commonJS({
           core2.info('Checking for existing comment on PR....');
           existingCommentId = await lookForExistingComment(octokit);
         }
-        ``;
         let response;
         let success;
         if (existingCommentId) {
@@ -13150,7 +13149,7 @@ ${markupData}`,
           });
           success = response.status === 201;
         }
-        let action = existingCommentId ? 'create' : 'update';
+        const action = existingCommentId ? 'create' : 'update';
         if (success) {
           core2.info(`PR comment was ${action}d.  ID: ${response.data.id}.`);
         } else {
