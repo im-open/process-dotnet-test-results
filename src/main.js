@@ -3,7 +3,12 @@ const { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests } = require
 const { createStatusCheck, createPrComment } = require('./github');
 const { getMarkupForTrx } = require('./markup');
 
-const token = core.getInput('github-token');
+const requiredArgOptions = {
+  required: true,
+  trimWhitespace: true
+};
+
+const token = core.getInput('github-token', requiredArgOptions);
 const baseDir = core.getInput('base-directory') || '.';
 const ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 const shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';

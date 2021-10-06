@@ -42,15 +42,15 @@ For failed test runs you can expand each failed test and view more details about
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
-| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                |
-|--------------------------------|-------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                                                                                 |
-| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                       |
-| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                     |
-| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with code coverage results should be generated. When `true` the default behavior is to always create a new comment.                   |
-| `update-comment-if-one-exists` | false       | false                            | When `update-comment-if-one-exists` is true, this flag determines whether a new comment is created (default) or if the action updates an existing comment if one is found. |
-| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                    |
-| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                             |
+| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                         |
+| ------------------------------ | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                                                                                          |
+| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                |
+| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                              |
+| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated.  When `true` the default behavior is to update an existing comment if one exists.                |
+| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
+| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
+| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
 
 ## Outputs
 | Output         | Description                                                                                                                                                           |
@@ -73,7 +73,7 @@ jobs:
 
       - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dotnet-test-results@v1.0.3
+        uses: im-open/process-dotnet-test-results@v2.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -98,7 +98,7 @@ jobs:
           base-directory: './test-results'              # Default: .
           create-status-check: true                     # Default: true
           create-pr-comment: true                       # Default: true
-          update-comment-if-one-exists: true             # Default: false
+          update-comment-if-one-exists: true            # Default: true
           ignore-test-failures: true                    # Default: false
           timezone: 'america/denver'                    # Default: UTC
       
@@ -126,6 +126,17 @@ npm run bundle
 These commands utilize [esbuild](https://esbuild.github.io/getting-started/#bundling-for-node) to bundle the action and
 its dependencies into a single file located in the `dist` folder.
 
+## Incrementing the Version
+This action uses [git-version-lite] to examine commit messages to determine whether to perform a major, minor or patch increment on merge.  The following table provides the fragment that should be included in a commit message to active different increment strategies.
+| Increment Type | Commit Message Fragment                     |
+| -------------- | ------------------------------------------- |
+| major          | +semver:breaking                            |
+| major          | +semver:major                               |
+| minor          | +semver:feature                             |
+| minor          | +semver:minor                               |
+| patch          | *default increment type, no comment needed* |
+
+
 ## Code of Conduct
 
 This project has adopted the [im-open's Code of Conduct](https://github.com/im-open/.github/blob/master/CODE_OF_CONDUCT.md).
@@ -136,3 +147,4 @@ Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license]
 
 [NasAmin/trx-parser]: https://github.com/NasAmin/trx-parser#%EF%B8%8F-github-actions-limitations-%EF%B8%8F
 [limit]: https://github.com/github/docs/issues/3765
+[git-version-lite]: https://github.com/im-open/git-version-lite
