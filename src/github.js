@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const markupPrefix = '<!-- im-open/process-dotnet-test-results -->';
+const markupPrefix = 'im-open/process-dotnet-test-results';
 
 async function createStatusCheck(repoToken, reportData, markupData, conclusion) {
   try {
@@ -58,8 +58,8 @@ async function lookForExistingComment(octokit, commentIdentifier) {
         } else {
           page += 1;
         }
-
-        const existingComment = commentsResponse.data.find(c => c.body.startsWith(markupPrefix + commentIdentifier));
+        
+        const existingComment = commentsResponse.data.find(c => c.body.startsWith(`<!-- ${markupPrefix}${commentIdentifier} -->`));
         if (existingComment) {
           core.info(`An existing dotnet test results comment (${existingComment.id}) was found and will be udpated.`);
           return existingComment.id;
