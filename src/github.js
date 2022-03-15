@@ -37,7 +37,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
   }
 }
 
-async function lookForExistingComment(octokit) {
+async function lookForExistingComment(octokit, commentIdentifier) {
   let hasMoreComments = true;
   let page = 1;
   const maxResultsPerPage = 30;
@@ -59,7 +59,7 @@ async function lookForExistingComment(octokit) {
           page += 1;
         }
 
-        const existingComment = commentsResponse.data.find(c => c.body.startsWith(markupPrefix));
+        const existingComment = commentsResponse.data.find(c => c.body.startsWith(markupPrefix + commentIdentifier));
         if (existingComment) {
           core.info(`An existing dotnet test results comment (${existingComment.id}) was found and will be udpated.`);
           return existingComment.id;
@@ -77,7 +77,7 @@ async function lookForExistingComment(octokit) {
   return null;
 }
 
-async function createPrComment(repoToken, markupData, updateCommentIfOneExists) {
+async function createPrComment(repoToken, markupData, updateCommentIfOneExists, commentIdentifier) {
   try {
     if (github.context.eventName != 'pull_request') {
       core.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
@@ -89,7 +89,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists) 
     let existingCommentId = null;
     if (updateCommentIfOneExists) {
       core.info('Checking for existing comment on PR....');
-      existingCommentId = await lookForExistingComment(octokit);
+      existingCommentId = await lookForExistingComment(octokit, commentIdentifier);
     }
 
     let response;

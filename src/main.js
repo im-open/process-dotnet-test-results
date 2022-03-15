@@ -14,6 +14,7 @@ const ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 const shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 const shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
 const updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
+const commentIdentifier = core.getInput('comment-identifier') == '';
 
 async function run() {
   try {
@@ -37,7 +38,7 @@ async function run() {
     }
 
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists);
+      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists, commentIdentifier);
     }
 
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
