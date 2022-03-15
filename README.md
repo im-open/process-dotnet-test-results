@@ -61,7 +61,7 @@ For failed test runs you can expand each failed test and view more details about
 | `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
-| `comment-identifier`           | false       | ``                               | Used when there is multiple test run results per run and update each comment separately
+| `comment-identifier`           | false       | ``                               | Used when there is multiple test projects that run separtely but part of the same CI run.
 
 ## Outputs
 | Output         | Description                                                                                                                                                           |
@@ -112,6 +112,7 @@ jobs:
           update-comment-if-one-exists: true            # Default: true
           ignore-test-failures: true                    # Default: false
           timezone: 'america/denver'                    # Default: UTC
+          comment-identifier: 'bff-tests'               # Default: empty string
       
       - run: ./do-other-advanced-things-in-the-build.sh
 

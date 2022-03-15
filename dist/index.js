@@ -13066,7 +13066,6 @@ var require_github2 = __commonJS({
   'src/github.js'(exports2, module2) {
     var core2 = require_core();
     var github = require_github();
-    var markupPrefix = '<!-- im-open/process-dotnet-test-results -->';
     async function createStatusCheck2(repoToken, reportData, markupData, conclusion) {
       try {
         core2.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
@@ -13098,7 +13097,7 @@ var require_github2 = __commonJS({
         core2.setFailed(error.message);
       }
     }
-    async function lookForExistingComment(octokit) {
+    async function lookForExistingComment(octokit, markupPrefix) {
       let hasMoreComments = true;
       let page = 1;
       const maxResultsPerPage = 30;
@@ -13134,17 +13133,18 @@ var require_github2 = __commonJS({
       core2.info('An existing dotnet test results comment was not found, will create a new one instead.');
       return null;
     }
-    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2) {
+    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2, commentIdentifier2) {
       try {
         if (github.context.eventName != 'pull_request') {
           core2.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
           return;
         }
+        const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier2} -->`;
         const octokit = github.getOctokit(repoToken);
         let existingCommentId = null;
         if (updateCommentIfOneExists2) {
           core2.info('Checking for existing comment on PR....');
-          existingCommentId = await lookForExistingComment(octokit);
+          existingCommentId = await lookForExistingComment(octokit, markupPrefix);
         }
         let response;
         let success;
@@ -16270,6 +16270,7 @@ var ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 var shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 var shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
 var updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
+var commentIdentifier = core.getInput('comment-identifier') || '';
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
@@ -16290,7 +16291,7 @@ async function run() {
       }
     }
     if (markupForComment.length > 0) {
-      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists);
+      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists, commentIdentifier);
     }
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     core.setOutput('trx-files', trxFiles);

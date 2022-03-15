@@ -14,7 +14,7 @@ const ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
 const shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
 const shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
 const updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
-const commentIdentifier = core.getInput('comment-identifier') == '';
+const commentIdentifier = core.getInput('comment-identifier') || '';
 
 async function run() {
   try {
