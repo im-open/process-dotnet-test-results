@@ -61,7 +61,7 @@ For failed test runs you can expand each failed test and view more details about
 | `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
-| `comment-identifier`           | false       | ``                               | Used when there is multiple test projects that run separtely but part of the same CI run.
+| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.
 
 ## Outputs
 | Output         | Description                                                                                                                                                           |
@@ -103,7 +103,7 @@ jobs:
       
       - name: Process trx reports
         id: process-trx
-        uses: im-open/process-dotnet-test-results@v2.1.2
+        uses: im-open/process-dotnet-test-results@v2.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
