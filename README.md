@@ -84,7 +84,7 @@ jobs:
 
       - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dotnet-test-results@v2.0.2
+        uses: im-open/process-dotnet-test-results@v2.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
