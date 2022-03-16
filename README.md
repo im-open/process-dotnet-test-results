@@ -103,7 +103,7 @@ jobs:
       
       - name: Process trx reports
         id: process-trx
-        uses: im-open/process-dotnet-test-results@v2.0.2
+        uses: im-open/process-dotnet-test-results@v2.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
