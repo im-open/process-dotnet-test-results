@@ -1,6 +1,5 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const markupPrefix = '<!-- im-open/process-dotnet-test-results -->';
 
 async function createStatusCheck(repoToken, reportData, markupData, conclusion) {
   try {
@@ -37,7 +36,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
   }
 }
 
-async function lookForExistingComment(octokit) {
+async function lookForExistingComment(octokit, markupPrefix) {
   let hasMoreComments = true;
   let page = 1;
   const maxResultsPerPage = 30;
@@ -77,19 +76,19 @@ async function lookForExistingComment(octokit) {
   return null;
 }
 
-async function createPrComment(repoToken, markupData, updateCommentIfOneExists) {
+async function createPrComment(repoToken, markupData, updateCommentIfOneExists, commentIdentifier) {
   try {
     if (github.context.eventName != 'pull_request') {
       core.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
       return;
     }
-
+    const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier} -->`;
     const octokit = github.getOctokit(repoToken);
 
     let existingCommentId = null;
     if (updateCommentIfOneExists) {
       core.info('Checking for existing comment on PR....');
-      existingCommentId = await lookForExistingComment(octokit);
+      existingCommentId = await lookForExistingComment(octokit, markupPrefix);
     }
 
     let response;

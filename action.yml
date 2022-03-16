@@ -31,6 +31,9 @@ inputs:
   timezone:
     description: 'IANA time zone name (e.g. America/Denver) to display dates in.  If timezone is not provided, dates will be shown in UTC.'
     required: false
+  comment-identifier:
+    description: 'Used when there are multiple test projects that run separately but are part of the same CI run.'
+    required: false
 
 outputs:
   test-outcome:
