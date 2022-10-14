@@ -77,7 +77,7 @@ jobs:
   ci:
     runs-on: [ubuntu-20.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
@@ -95,7 +95,7 @@ jobs:
   advanced-ci:
     runs-on: [ubuntu-20.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Test My Solution
         continue-on-error: true
