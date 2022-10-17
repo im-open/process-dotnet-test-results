@@ -42,5 +42,5 @@ outputs:
     description: 'List of trx files that were processed'
 
 runs:
-  using: 'node16
+  using: 'node16'
   main: 'dist/index.js'
