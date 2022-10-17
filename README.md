@@ -77,14 +77,14 @@ jobs:
   ci:
     runs-on: [ubuntu-20.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
 
       - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dotnet-test-results@v2.2.0
+        uses: im-open/process-dotnet-test-results@v2.2.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -95,7 +95,7 @@ jobs:
   advanced-ci:
     runs-on: [ubuntu-20.04]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Test My Solution
         continue-on-error: true
@@ -103,7 +103,7 @@ jobs:
       
       - name: Process trx reports
         id: process-trx
-        uses: im-open/process-dotnet-test-results@v2.2.0
+        uses: im-open/process-dotnet-test-results@v2.2.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
