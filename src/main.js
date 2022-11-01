@@ -10,10 +10,10 @@ const requiredArgOptions = {
 
 const token = core.getInput('github-token', requiredArgOptions);
 const baseDir = core.getInput('base-directory') || '.';
-const ignoreTestFailures = core.getInput('ignore-test-failures') == 'true';
-const shouldCreateStatusCheck = core.getInput('create-status-check') == 'true';
-const shouldCreatePRComment = core.getInput('create-pr-comment') == 'true';
-const updateCommentIfOneExists = core.getInput('update-comment-if-one-exists') == 'true';
+const ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
+const shouldCreateStatusCheck = core.getBooleanInput('create-status-check');
+const shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
+const updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 const commentIdentifier = core.getInput('comment-identifier') || '';
 
 async function run() {
