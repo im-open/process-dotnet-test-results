@@ -103,6 +103,7 @@ jobs:
       
       - name: Process trx reports
         id: process-trx
+        # You may also reference just the major or major.minor version
         uses: im-open/process-dotnet-test-results@v2.2.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
