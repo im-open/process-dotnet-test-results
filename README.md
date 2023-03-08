@@ -84,7 +84,7 @@ jobs:
 
       - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dotnet-test-results@v2.2.5
+        uses: im-open/process-dotnet-test-results@v2.2.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -104,7 +104,7 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.2.5
+        uses: im-open/process-dotnet-test-results@v2.2.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
