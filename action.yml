@@ -1,4 +1,4 @@
-name: 'process-dotnet-test-results'
+name: process-dotnet-test-results
 
 description: |
   Action that parses .trx reports and creates a status check or PR comment with the results.
