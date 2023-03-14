@@ -63,7 +63,7 @@ For failed test runs you can expand each failed test and view more details about
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
 | `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                              |
-| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field.                               |
+| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`                               |
 
 ## Outputs
 | Output                   | Description                                                                                                                                                           |
@@ -151,7 +151,9 @@ jobs:
           create-status-check: false        
           create-pr-comment: false
           create-results-file: true
-          report-title-filter: "TestCases"
+          report-title-filter: "Tests" 
+          # Run dotnet test --list-tests to identify which name to put in.  
+          # For Example: If the test name is MyProject.Automation.Tests.MyTestGroup.CheckforButton. Use "Tests" for the input and the report will show "MyTestGroup".
 
       - name: Annotate Test Results
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
