@@ -24,6 +24,10 @@ inputs:
     description: 'Flag indicating whether a PR comment with test results should be generated.   When `true` the default behavior is to update an existing comment if one exists.'
     required: true
     default: 'true'
+  create-results-file:
+    description: 'Flag indicating whether a results file in markdown should be generated.'
+    required: false
+    default: 'false'
   update-comment-if-one-exists:
     description: 'When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.'
     required: true
@@ -34,13 +38,19 @@ inputs:
   comment-identifier:
     description: 'Used when there are multiple test projects that run separately but are part of the same CI run.'
     required: false
+  report-title-filter:
+    description: 'Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that was inputed in this field.'
+    required: false
 
 outputs:
   test-outcome:
     description: 'Test outcome based on presence of failing tests: Failed|Passed.  If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.'
   trx-files:
     description: 'List of trx files that were processed'
+  test-results-file-path:
+    description: 'File path of the test outcome in markdown format.  This is the same output that is posted in the PR comment'
 
 runs:
   using: 'node16'
   main: 'dist/index.js'
+  post: 'dist/cleanup.js'

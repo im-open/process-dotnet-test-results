@@ -3,6 +3,7 @@ const fs = require('fs');
 const glob = require('glob');
 const xmlParser = require('fast-xml-parser');
 const he = require('he');
+const path = require('path');
 
 function findTrxFiles(baseDir) {
   core.info(`Looking for trx files in '${baseDir}'...`);
@@ -118,15 +119,24 @@ function populateAndFormatObjects(parsedTrx) {
 
 function getReportTitle(data, isEmpty) {
   let reportTitle = '';
+  const reportTitleFilter = core.getInput('report-title-filter') || '';
 
   if (isEmpty) {
     reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
   } else {
     const unitTests = data.TestRun.TestDefinitions.UnitTest;
-    const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
-    const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
-    if (dllName) {
-      reportTitle = dllName;
+
+    if (reportTitleFilter != '') {
+      const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+      reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+    }
+
+    if (!reportTitle) {
+      const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
+      const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
+      if (dllName) {
+        reportTitle = dllName;
+      }
     }
   }
 
@@ -145,8 +155,40 @@ function areThereAnyFailingTests(trxJsonReports) {
   return false;
 }
 
+function createResultsFile(resultsFileName, results) {
+  core.info(`Writing results to ${resultsFileName}`);
+  let resultsFilePath = null;
+
+  fs.writeFile(resultsFileName, results, err => {
+    if (err) {
+      core.info(`Error writing results to file. Error: ${err}`);
+    } else {
+      core.info('Successfully created results file.');
+      core.info(`File: ${resultsFileName}`);
+    }
+  });
+  resultsFilePath = path.resolve(resultsFileName);
+  core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
+
+  return resultsFilePath;
+}
+
+function deleteResultsFile(resultsFilePath) {
+  core.info(`Removing markdown file: ${resultsFilePath}`);
+  if (fs.existsSync(resultsFilePath)) {
+    fs.unlink(resultsFilePath, err => {
+      if (err) {
+        core.error(`Error in deleting file ${resultsFilePath}.  Error: ${err}`);
+      }
+      core.info(`Successfully deleted results file: ${resultsFilePath}`);
+    });
+  }
+}
+
 module.exports = {
   findTrxFiles,
   transformAllTrxToJson,
-  areThereAnyFailingTests
+  areThereAnyFailingTests,
+  createResultsFile,
+  deleteResultsFile
 };
