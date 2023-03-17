@@ -63,9 +63,10 @@ For failed test runs you can expand each failed test and view more details about
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
 | `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                              |
-| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`                               |
+| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details.                              |
 
 ## Outputs
+
 | Output                   | Description                                                                                                                                                           |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `test-outcome`           | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
@@ -75,6 +76,7 @@ For failed test runs you can expand each failed test and view more details about
 ## Usage Examples
 
 ### Using the defaults
+
 ```yml
 jobs:
   ci:
@@ -151,13 +153,13 @@ jobs:
           create-status-check: false        
           create-pr-comment: false
           create-results-file: true
-          report-title-filter: "Tests" 
-          # Run dotnet test --list-tests to identify which name to put in.  
-          # For Example: If the test name is MyProject.Automation.Tests.MyTestGroup.CheckforButton. Use "Tests" for the input and the report will show "MyTestGroup".
+          report-title-filter: "Tests" # See Notes below on title output
 
       - name: Annotate Test Results
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
 ```
+
+The value for `report-title-filter` input in the example above will output a report title of `AuthenticatedTests` from unit test name of `Shopping.Automation.Test.AuthenticatedTests.PrescriptionPlanQuoteTests.VerifyUserCanQuoteForPDPPlan`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
 
 ## Contributing
 
