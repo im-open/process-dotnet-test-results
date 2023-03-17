@@ -159,7 +159,7 @@ jobs:
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
 ```
 
-The value for `report-title-filter` input in the example above will output a report title of `AuthenticatedTests` from unit test name of `Shopping.Automation.Test.AuthenticatedTests.PrescriptionPlanQuoteTests.VerifyUserCanQuoteForPDPPlan`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
+The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
 
 ## Contributing
 
