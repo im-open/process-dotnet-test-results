@@ -160,6 +160,7 @@ jobs:
 ```
 
 The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
+To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
 
 ## Contributing
 
