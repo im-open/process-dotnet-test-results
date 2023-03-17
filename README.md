@@ -58,20 +58,25 @@ For failed test runs you can expand each failed test and view more details about
 | `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                |
 | `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                              |
 | `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated.  When `true` the default behavior is to update an existing comment if one exists.                |
+| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                |
 | `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
-| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                     |
+| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                              |
+| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details.                              |
 
 ## Outputs
-| Output         | Description                                                                                                                                                           |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test-outcome` | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
-| `trx-files`    | List of `trx` files that were processed                                                                                                                               |
+
+| Output                   | Description                                                                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test-outcome`           | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
+| `trx-files`              | List of `trx` files that were processed                                                                                                                               |
+| `test-results-file-path` | File path for test results file.  This will be `null` when the input `create-results-file` is set to `false`.                                            |
 
 ## Usage Examples
 
 ### Using the defaults
+
 ```yml
 jobs:
   ci:
@@ -84,12 +89,14 @@ jobs:
 
       - name: Process trx reports with default
         if: always()
-        uses: im-open/process-dotnet-test-results@v2.2.6
+        # You may also reference just the major or major.minor version
+        uses: im-open/process-dotnet-test-results@v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ### Specifying additional behavior
+
 ```yml
 jobs:
   advanced-ci:
@@ -104,7 +111,7 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.2.6
+        uses: im-open/process-dotnet-test-results@v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'              # Default: .
@@ -123,6 +130,37 @@ jobs:
           echo "There were test failures."
           exit 1
 ```
+
+### Using create-results-file
+
+```yml
+jobs:
+  ci:
+    runs-on: [ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: dotnet test with coverage
+        run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
+
+      - name: Process trx reports with default
+        if: always()
+        id: process-test
+        # You may also reference just the major or major.minor version
+        uses: im-open/process-dotnet-test-results@v2.3.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          create-status-check: false        
+          create-pr-comment: false
+          create-results-file: true
+          report-title-filter: "Tests" # See Notes below on title output
+
+      - name: Annotate Test Results
+        run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
+```
+
+The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
+To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
 
 ## Contributing
 

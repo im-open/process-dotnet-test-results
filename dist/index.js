@@ -9850,6 +9850,7 @@ var require_utils2 = __commonJS({
     var glob = require_glob();
     var xmlParser = require_parser();
     var he = require_he();
+    var path = require('path');
     function findTrxFiles2(baseDir2) {
       core2.info(`Looking for trx files in '${baseDir2}'...`);
       const files = glob.sync(baseDir2 + '/**/*.trx', {});
@@ -9949,14 +9950,21 @@ var require_utils2 = __commonJS({
     }
     function getReportTitle(data, isEmpty) {
       let reportTitle = '';
+      const reportTitleFilter = core2.getInput('report-title-filter') || '';
       if (isEmpty) {
         reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
       } else {
         const unitTests = data.TestRun.TestDefinitions.UnitTest;
-        const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
-        const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
-        if (dllName) {
-          reportTitle = dllName;
+        if (reportTitleFilter != '') {
+          const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+          reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+        }
+        if (!reportTitle) {
+          const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
+          const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
+          if (dllName) {
+            reportTitle = dllName;
+          }
         }
       }
       return reportTitle;
@@ -9972,10 +9980,38 @@ var require_utils2 = __commonJS({
       core2.info(`There are no failing tests.`);
       return false;
     }
+    function createResultsFile2(resultsFileName, results) {
+      core2.info(`Writing results to ${resultsFileName}`);
+      let resultsFilePath = null;
+      fs.writeFile(resultsFileName, results, err => {
+        if (err) {
+          core2.info(`Error writing results to file. Error: ${err}`);
+        } else {
+          core2.info('Successfully created results file.');
+          core2.info(`File: ${resultsFileName}`);
+        }
+      });
+      resultsFilePath = path.resolve(resultsFileName);
+      core2.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
+      return resultsFilePath;
+    }
+    function deleteResultsFile(resultsFilePath) {
+      core2.info(`Removing markdown file: ${resultsFilePath}`);
+      if (fs.existsSync(resultsFilePath)) {
+        fs.unlink(resultsFilePath, err => {
+          if (err) {
+            core2.error(`Error in deleting file ${resultsFilePath}.  Error: ${err}`);
+          }
+          core2.info(`Successfully deleted results file: ${resultsFilePath}`);
+        });
+      }
+    }
     module2.exports = {
       findTrxFiles: findTrxFiles2,
       transformAllTrxToJson: transformAllTrxToJson2,
-      areThereAnyFailingTests: areThereAnyFailingTests2
+      areThereAnyFailingTests: areThereAnyFailingTests2,
+      createResultsFile: createResultsFile2,
+      deleteResultsFile
     };
   }
 });
@@ -27316,7 +27352,7 @@ var require_markup = __commonJS({
 
 // src/main.js
 var core = require_core();
-var { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests } = require_utils2();
+var { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests, createResultsFile } = require_utils2();
 var { createStatusCheck, createPrComment } = require_github2();
 var { getMarkupForTrx } = require_markup();
 var requiredArgOptions = {
@@ -27328,6 +27364,7 @@ var baseDir = core.getInput('base-directory') || '.';
 var ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
 var shouldCreateStatusCheck = core.getBooleanInput('create-status-check');
 var shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
+var shouldCreateResultsFile = core.getBooleanInput('create-results-file');
 var updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 var commentIdentifier = core.getInput('comment-identifier') || '';
 async function run() {
@@ -27345,23 +27382,29 @@ async function run() {
       if (shouldCreateStatusCheck) {
         await createStatusCheck(token, data, markupData, conclusion);
       }
-      if (shouldCreatePRComment) {
-        markupForComment.push(markupData);
-      }
+      markupForComment.push(markupData);
     }
-    if (markupForComment.length > 0) {
+    if (markupForComment.length > 0 && shouldCreatePRComment) {
       await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists, commentIdentifier);
+    }
+    const resultsFile = './test-results.md';
+    let resultsFilePath = null;
+    if (shouldCreateResultsFile) {
+      resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
     }
     core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     core.setOutput('trx-files', trxFiles);
+    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     if (error instanceof RangeError) {
       core.info(error.message);
       core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
       return;
     } else {
       core.setFailed(`An error occurred processing the trx files: ${error.message}`);
       core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
     }
   }
 }
