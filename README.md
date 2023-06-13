@@ -131,6 +131,21 @@ jobs:
           timezone: 'america/denver' # Default: UTC
           comment-identifier: 'bff-tests' # Default: empty string
 
+      # Optional
+      - name: Annotate Test Outcome
+        if: steps.process-trx.outputs.test-results-truncated == 'true'
+        run: cat ${{ steps.process-trx.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
+
+      # Optional
+      - name: Upload Outcome as artifact if character limit reached
+        if: steps.process-trx.outputs.test-results-truncated == 'true'
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: Cypress-Results
+          path: |
+            ${{ steps.process-trx.outputs.test-results-file-path }}
+          retention-days: 7
+
       - run: ./do-other-advanced-things-in-the-build.sh
 
       - name: Fail if there were test problems
