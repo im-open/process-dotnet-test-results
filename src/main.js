@@ -23,6 +23,8 @@ async function run() {
     const trxToJson = await transformAllTrxToJson(trxFiles);
     const failingTestsFound = areThereAnyFailingTests(trxToJson);
     let markupForComment = [];
+
+    let fullMarkupComment;
     for (const data of trxToJson) {
       const markupData = getMarkupForTrx(data);
 
@@ -38,7 +40,19 @@ async function run() {
     }
 
     if (markupForComment.length > 0 && shouldCreatePRComment) {
-      await createPrComment(token, markupForComment.join('\n'), updateCommentIfOneExists, commentIdentifier);
+      const commentCharacterLimit = 65535;
+      let markupComment = markupForComment.join('\n');
+      if (markupComment.length > characterLimit) {
+        core.info(
+          `Truncating markup data due to character limit exceeded for github api.  Markup data length: ${markupComment.length}/${characterLimit}`
+        );
+        markupComment = markupComment.substring(0, characterLimit - 100);
+        markupComment = 'Test outcome truncated due to character limit. See full report in output. \n' + markupComment;
+        core.setOutput('test-outcome-truncated', 'true');
+      } else {
+        core.setOutput('test-outcome-truncated', 'false');
+      }
+      await createPrComment(token, markupComment, updateCommentIfOneExists, commentIdentifier);
     }
 
     const resultsFile = './test-results.md';

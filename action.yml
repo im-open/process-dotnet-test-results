@@ -47,6 +47,8 @@ outputs:
     description: 'Test outcome based on presence of failing tests: Failed|Passed.  If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.'
   trx-files:
     description: 'List of trx files that were processed'
+  test-results-truncated:
+    description: 'Boolean if test results was truncated due to markdown exceeding character limit of 65535.'
   test-results-file-path:
     description: 'File path of the test outcome in markdown format.  This is the same output that is posted in the PR comment'
 

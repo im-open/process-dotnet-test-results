@@ -2,9 +2,9 @@
 
 This repository is based on [NasAmin/trx-parser]
 
-This action works in conjunction with another step that runs `dotnet test` and it parses test results from `trx` files.  This action will take the parsed results and create a Status Check or PR Comment depending on the flags set. This action does not run the tests itself.
+This action works in conjunction with another step that runs `dotnet test` and it parses test results from `trx` files. This action will take the parsed results and create a Status Check or PR Comment depending on the flags set. This action does not run the tests itself.
 
-There should be one status check created per `trx` file.  For comments, one will be created for all `trx` files.  The check and comment headings are named after the test project the `trx` was generated for.
+There should be one status check created per `trx` file. For comments, one will be created for all `trx` files. The check and comment headings are named after the test project the `trx` was generated for.
 
 ## Index
 
@@ -25,53 +25,62 @@ There should be one status check created per `trx` file.  For comments, one will
   - [Incrementing the Version](#incrementing-the-version)
 - [Code of Conduct](#code-of-conduct)
 - [License](#license)
-  
+
 ## Failures
-The status check can be seen as a new item on the workflow run, a PR comment or on the PR Status Check section.  If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a failure though.
+
+The status check can be seen as a new item on the workflow run, a PR comment or on the PR Status Check section. If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a failure though.
 
 ## Limitations
-GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment.  This action will fail if the test results exceed the GitHub [limit].  To mitigate this size issue only failed tests are included in the output.
 
-If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit.  The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
+GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action will fail if the test results exceed the GitHub [limit]. To mitigate this size issue only failed tests are included in the output.
+
+If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
 
 ## Action Outputs
+
 ### Pull Request Comment
+
 This is shown on the pull request when the `create-pr-comment` is set to `true` and there is a PR associated with the commit.
 <kbd><img src="./docs/pr_comment.png"></img></kbd>
 
 ### Pull Request Status Check
+
 This is shown on the pull request when the `create-status-check` is set to `true` and there is a PR associated with the commit.
 <kbd><img src="./docs/pr_status_check.png"></img></kbd>
 
 ### Workflow Run
+
 This is shown on the workflow run when the `create-status-check` is set to `true`.
 <kbd><img src="./docs/workflow_status_check.png"></img></kbd>
 
 ### Failed Test Details
+
 For failed test runs you can expand each failed test and view more details about the failure
 <kbd><img src="./docs/failed_tests.png"></img></kbd>
 
 ## Inputs
-| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                         |
-| ------------------------------ | ----------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API.  Value is generally: secrets.GITHUB_TOKEN.                                                                                                          |
-| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                |
-| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                              |
-| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated.  When `true` the default behavior is to update an existing comment if one exists.                |
-| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                |
-| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
-| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
-| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
-| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                              |
-| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details.                              |
+
+| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                                                                                                   |
+| ------------------------------ | ----------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                                                                                                     |
+| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                                                                                          |
+| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                                                                                                        |
+| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                                                                                           |
+| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                                                                                                |
+| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.                                                                           |
+| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                                                                                                       |
+| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                                                                                                |
+| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                                                                                               |
+| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details. |
 
 ## Outputs
 
 | Output                   | Description                                                                                                                                                           |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test-outcome`           | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
+| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
 | `trx-files`              | List of `trx` files that were processed                                                                                                                               |
-| `test-results-file-path` | File path for test results file.  This will be `null` when the input `create-results-file` is set to `false`.                                            |
+| `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                          |
+| `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                             |
 
 ## Usage Examples
 
@@ -107,21 +116,21 @@ jobs:
       - name: Test My Solution
         continue-on-error: true
         run: dotnet test ./src/my-solution.sln --logger "trx" --configuration Release --results-directory ../../test-results
-      
+
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
         uses: im-open/process-dotnet-test-results@v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-directory: './test-results'              # Default: .
-          create-status-check: true                     # Default: true
-          create-pr-comment: true                       # Default: true
-          update-comment-if-one-exists: true            # Default: true
-          ignore-test-failures: true                    # Default: false
-          timezone: 'america/denver'                    # Default: UTC
-          comment-identifier: 'bff-tests'               # Default: empty string
-      
+          base-directory: './test-results' # Default: .
+          create-status-check: true # Default: true
+          create-pr-comment: true # Default: true
+          update-comment-if-one-exists: true # Default: true
+          ignore-test-failures: true # Default: false
+          timezone: 'america/denver' # Default: UTC
+          comment-identifier: 'bff-tests' # Default: empty string
+
       - run: ./do-other-advanced-things-in-the-build.sh
 
       - name: Fail if there were test problems
@@ -150,16 +159,16 @@ jobs:
         uses: im-open/process-dotnet-test-results@v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          create-status-check: false        
+          create-status-check: false
           create-pr-comment: false
           create-results-file: true
-          report-title-filter: "Tests" # See Notes below on title output
+          report-title-filter: 'Tests' # See Notes below on title output
 
       - name: Annotate Test Results
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
 ```
 
-The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`.  This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
+The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`. This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
 To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
 
 ## Contributing
@@ -196,16 +205,16 @@ its dependencies into a single file located in the `dist` folder.
 
 ### Incrementing the Version
 
-Both the build and PR merge workflows will use the strategies below to determine what the next version will be.  If the build workflow was not able to automatically update the README.md action examples with the next version, the README.md should be updated manually as part of the PR using that calculated version.
+Both the build and PR merge workflows will use the strategies below to determine what the next version will be. If the build workflow was not able to automatically update the README.md action examples with the next version, the README.md should be updated manually as part of the PR using that calculated version.
 
-This action uses [git-version-lite] to examine commit messages to determine whether to perform a major, minor or patch increment on merge.  The following table provides the fragment that should be included in a commit message to active different increment strategies.
-| Increment Type | Commit Message Fragment                     |
+This action uses [git-version-lite] to examine commit messages to determine whether to perform a major, minor or patch increment on merge. The following table provides the fragment that should be included in a commit message to active different increment strategies.
+| Increment Type | Commit Message Fragment |
 | -------------- | ------------------------------------------- |
-| major          | +semver:breaking                            |
-| major          | +semver:major                               |
-| minor          | +semver:feature                             |
-| minor          | +semver:minor                               |
-| patch          | *default increment type, no comment needed* |
+| major | +semver:breaking |
+| major | +semver:major |
+| minor | +semver:feature |
+| minor | +semver:minor |
+| patch | _default increment type, no comment needed_ |
 
 ## Code of Conduct
 
@@ -215,6 +224,6 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 
 Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
 
-[NasAmin/trx-parser]: https://github.com/NasAmin/trx-parser#%EF%B8%8F-github-actions-limitations-%EF%B8%8F
+[nasamin/trx-parser]: https://github.com/NasAmin/trx-parser#%EF%B8%8F-github-actions-limitations-%EF%B8%8F
 [limit]: https://github.com/github/docs/issues/3765
 [git-version-lite]: https://github.com/im-open/git-version-lite
