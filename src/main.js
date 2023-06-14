@@ -42,11 +42,11 @@ async function run() {
     if (markupForComment.length > 0 && shouldCreatePRComment) {
       const commentCharacterLimit = 65535;
       let markupComment = markupForComment.join('\n');
-      if (markupComment.length > characterLimit) {
+      if (markupComment.length > commentCharacterLimit) {
         core.info(
-          `Truncating markup data due to character limit exceeded for github api.  Markup data length: ${markupComment.length}/${characterLimit}`
+          `Truncating markup data due to character limit exceeded for github api.  Markup data length: ${markupComment.length}/${commentCharacterLimit}`
         );
-        markupComment = markupComment.substring(0, characterLimit - 100);
+        markupComment = markupComment.substring(0, commentCharacterLimit - 100);
         markupComment = 'Test outcome truncated due to character limit. See full report in output. \n' + markupComment;
         core.setOutput('test-outcome-truncated', 'true');
       } else {
