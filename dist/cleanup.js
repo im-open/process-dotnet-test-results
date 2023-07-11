@@ -4576,6 +4576,7 @@ var require_util = __commonJS({
       let match = regex.exec(string);
       while (match) {
         const allmatches = [];
+        allmatches.startIndex = regex.lastIndex - match[0].length;
         const len = match.length;
         for (let index = 0; index < len; index++) {
           allmatches.push(match[index]);
@@ -4616,7 +4617,7 @@ var require_util = __commonJS({
       }
     };
     exports2.buildOptions = function (options, defaultOptions, props) {
-      var newOptions = {};
+      let newOptions = {};
       if (!options) {
         return defaultOptions;
       }
@@ -4652,7 +4653,11 @@ var require_node2json = __commonJS({
     var util = require_util();
     var convertToJson = function (node, options, parentTagName) {
       const jObj = {};
-      if ((!node.child || util.isEmptyObject(node.child)) && (!node.attrsMap || util.isEmptyObject(node.attrsMap))) {
+      if (
+        !options.alwaysCreateTextNode &&
+        (!node.child || util.isEmptyObject(node.child)) &&
+        (!node.attrsMap || util.isEmptyObject(node.attrsMap))
+      ) {
         return util.isExist(node.val) ? node.val : '';
       }
       if (
@@ -4708,6 +4713,82 @@ var require_xmlNode = __commonJS({
   }
 });
 
+// node_modules/strnum/strnum.js
+var require_strnum = __commonJS({
+  'node_modules/strnum/strnum.js'(exports2, module2) {
+    var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
+    var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
+    if (!Number.parseInt && window.parseInt) {
+      Number.parseInt = window.parseInt;
+    }
+    if (!Number.parseFloat && window.parseFloat) {
+      Number.parseFloat = window.parseFloat;
+    }
+    var consider = {
+      hex: true,
+      leadingZeros: true,
+      decimalPoint: '.',
+      eNotation: true
+    };
+    function toNumber(str, options = {}) {
+      options = Object.assign({}, consider, options);
+      if (!str || typeof str !== 'string') return str;
+      let trimmedStr = str.trim();
+      if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr)) return str;
+      else if (options.hex && hexRegex.test(trimmedStr)) {
+        return Number.parseInt(trimmedStr, 16);
+      } else {
+        const match = numRegex.exec(trimmedStr);
+        if (match) {
+          const sign = match[1];
+          const leadingZeros = match[2];
+          let numTrimmedByZeros = trimZeros(match[3]);
+          const eNotation = match[4] || match[6];
+          if (!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== '.') return str;
+          else if (!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== '.') return str;
+          else {
+            const num = Number(trimmedStr);
+            const numStr = '' + num;
+            if (numStr.search(/[eE]/) !== -1) {
+              if (options.eNotation) return num;
+              else return str;
+            } else if (eNotation) {
+              if (options.eNotation) return num;
+              else return str;
+            } else if (trimmedStr.indexOf('.') !== -1) {
+              if (numStr === '0' && numTrimmedByZeros === '') return num;
+              else if (numStr === numTrimmedByZeros) return num;
+              else if (sign && numStr === '-' + numTrimmedByZeros) return num;
+              else return str;
+            }
+            if (leadingZeros) {
+              if (numTrimmedByZeros === numStr) return num;
+              else if (sign + numTrimmedByZeros === numStr) return num;
+              else return str;
+            }
+            if (trimmedStr === numStr) return num;
+            else if (trimmedStr === sign + numStr) return num;
+            return str;
+          }
+        } else {
+          return str;
+        }
+      }
+    }
+    function trimZeros(numStr) {
+      if (numStr && numStr.indexOf('.') !== -1) {
+        numStr = numStr.replace(/0+$/, '');
+        if (numStr === '.') numStr = '0';
+        else if (numStr[0] === '.') numStr = '0' + numStr;
+        else if (numStr[numStr.length - 1] === '.') numStr = numStr.substr(0, numStr.length - 1);
+        return numStr;
+      }
+      return numStr;
+    }
+    module2.exports = toNumber;
+  }
+});
+
 // node_modules/fast-xml-parser/src/xmlstr2xmlnode.js
 var require_xmlstr2xmlnode = __commonJS({
   'node_modules/fast-xml-parser/src/xmlstr2xmlnode.js'(exports2) {
@@ -4715,6 +4796,7 @@ var require_xmlstr2xmlnode = __commonJS({
     var util = require_util();
     var buildOptions = require_util().buildOptions;
     var xmlNode = require_xmlNode();
+    var toNumber = require_strnum();
     var regx = '<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)'.replace(
       /NAME/g,
       util.nameRegexp
@@ -4738,13 +4820,18 @@ var require_xmlstr2xmlnode = __commonJS({
       trimValues: true,
       cdataTagName: false,
       cdataPositionChar: '\\c',
+      numParseOptions: {
+        hex: true,
+        leadingZeros: true
+      },
       tagValueProcessor: function (a, tagName) {
         return a;
       },
       attrValueProcessor: function (a, attrName) {
         return a;
       },
-      stopNodes: []
+      stopNodes: [],
+      alwaysCreateTextNode: false
     };
     exports2.defaultOptions = defaultOptions;
     var props = [
@@ -4763,7 +4850,9 @@ var require_xmlstr2xmlnode = __commonJS({
       'tagValueProcessor',
       'attrValueProcessor',
       'parseTrueNumberOnly',
-      'stopNodes'
+      'numParseOptions',
+      'stopNodes',
+      'alwaysCreateTextNode'
     ];
     exports2.props = props;
     function processTagValue(tagName, val, options) {
@@ -4772,7 +4861,7 @@ var require_xmlstr2xmlnode = __commonJS({
           val = val.trim();
         }
         val = options.tagValueProcessor(val, tagName);
-        val = parseValue(val, options.parseNodeValue, options.parseTrueNumberOnly);
+        val = parseValue(val, options.parseNodeValue, options.numParseOptions);
       }
       return val;
     }
@@ -4789,25 +4878,12 @@ var require_xmlstr2xmlnode = __commonJS({
       }
       return tagname;
     }
-    function parseValue(val, shouldParse, parseTrueNumberOnly) {
+    function parseValue(val, shouldParse, options) {
       if (shouldParse && typeof val === 'string') {
-        let parsed;
-        if (val.trim() === '' || isNaN(val)) {
-          parsed = val === 'true' ? true : val === 'false' ? false : val;
-        } else {
-          if (val.indexOf('0x') !== -1) {
-            parsed = Number.parseInt(val, 16);
-          } else if (val.indexOf('.') !== -1) {
-            parsed = Number.parseFloat(val);
-            val = val.replace(/\.?0+$/, '');
-          } else {
-            parsed = Number.parseInt(val, 10);
-          }
-          if (parseTrueNumberOnly) {
-            parsed = String(parsed) === val ? parsed : val;
-          }
-        }
-        return parsed;
+        const newval = val.trim();
+        if (newval === 'true') return true;
+        else if (newval === 'false') return false;
+        else return toNumber(val, options);
       } else {
         if (util.isExist(val)) {
           return val;
@@ -4834,7 +4910,7 @@ var require_xmlstr2xmlnode = __commonJS({
               attrs[options.attributeNamePrefix + attrName] = parseValue(
                 matches[i][4],
                 options.parseAttributeValue,
-                options.parseTrueNumberOnly
+                options.numParseOptions
               );
             } else if (options.allowBooleanAttributes) {
               attrs[options.attributeNamePrefix + attrName] = true;
@@ -5029,6 +5105,7 @@ var require_validator = __commonJS({
           i = readPI(xmlData, i);
           if (i.err) return i;
         } else if (xmlData[i] === '<') {
+          let tagStartPos = i;
           i++;
           if (xmlData[i] === '!') {
             i = readCommentAndCDATA(xmlData, i);
@@ -5060,7 +5137,7 @@ var require_validator = __commonJS({
             if (!validateTagName(tagName)) {
               let msg;
               if (tagName.trim().length === 0) {
-                msg = "There is an unnecessary space between tag name and backward slash '</ ..'.";
+                msg = "Invalid space after '<'.";
               } else {
                 msg = "Tag '" + tagName + "' is an invalid name.";
               }
@@ -5077,6 +5154,7 @@ var require_validator = __commonJS({
             let attrStr = result.value;
             i = result.index;
             if (attrStr[attrStr.length - 1] === '/') {
+              const attrStrStart = i - attrStr.length;
               attrStr = attrStr.substring(0, attrStr.length - 1);
               const isValid = validateAttributeString(attrStr, options);
               if (isValid === true) {
@@ -5085,7 +5163,7 @@ var require_validator = __commonJS({
                 return getErrorObject(
                   isValid.err.code,
                   isValid.err.msg,
-                  getLineNumberForPosition(xmlData, i - attrStr.length + isValid.err.line)
+                  getLineNumberForPosition(xmlData, attrStrStart + isValid.err.line)
                 );
               }
             } else if (closingTag) {
@@ -5099,15 +5177,24 @@ var require_validator = __commonJS({
                 return getErrorObject(
                   'InvalidTag',
                   "Closing tag '" + tagName + "' can't have attributes or invalid starting.",
-                  getLineNumberForPosition(xmlData, i)
+                  getLineNumberForPosition(xmlData, tagStartPos)
                 );
               } else {
                 const otg = tags.pop();
-                if (tagName !== otg) {
+                if (tagName !== otg.tagName) {
+                  let openPos = getLineNumberForPosition(xmlData, otg.tagStartPos);
                   return getErrorObject(
                     'InvalidTag',
-                    "Closing tag '" + otg + "' is expected inplace of '" + tagName + "'.",
-                    getLineNumberForPosition(xmlData, i)
+                    "Expected closing tag '" +
+                      otg.tagName +
+                      "' (opened in line " +
+                      openPos.line +
+                      ', col ' +
+                      openPos.col +
+                      ") instead of closing tag '" +
+                      tagName +
+                      "'.",
+                    getLineNumberForPosition(xmlData, tagStartPos)
                   );
                 }
                 if (tags.length == 0) {
@@ -5130,7 +5217,7 @@ var require_validator = __commonJS({
                   getLineNumberForPosition(xmlData, i)
                 );
               } else {
-                tags.push(tagName);
+                tags.push({ tagName, tagStartPos });
               }
               tagFound = true;
             }
@@ -5170,20 +5257,32 @@ var require_validator = __commonJS({
       }
       if (!tagFound) {
         return getErrorObject('InvalidXml', 'Start tag expected.', 1);
+      } else if (tags.length == 1) {
+        return getErrorObject(
+          'InvalidTag',
+          "Unclosed tag '" + tags[0].tagName + "'.",
+          getLineNumberForPosition(xmlData, tags[0].tagStartPos)
+        );
       } else if (tags.length > 0) {
         return getErrorObject(
           'InvalidXml',
-          "Invalid '" + JSON.stringify(tags, null, 4).replace(/\r?\n/g, '') + "' found.",
-          1
+          "Invalid '" +
+            JSON.stringify(
+              tags.map(t => t.tagName),
+              null,
+              4
+            ).replace(/\r?\n/g, '') +
+            "' found.",
+          { line: 1, col: 1 }
         );
       }
       return true;
     };
     function readPI(xmlData, i) {
-      var start = i;
+      const start = i;
       for (; i < xmlData.length; i++) {
         if (xmlData[i] == '?' || xmlData[i] == ' ') {
-          var tagname = xmlData.substr(start, i - start);
+          const tagname = xmlData.substr(start, i - start);
           if (i > 5 && tagname === 'xml') {
             return getErrorObject(
               'InvalidXml',
@@ -5259,7 +5358,6 @@ var require_validator = __commonJS({
           if (startChar === '') {
             startChar = xmlData[i];
           } else if (startChar !== xmlData[i]) {
-            continue;
           } else {
             startChar = '';
           }
@@ -5289,13 +5387,13 @@ var require_validator = __commonJS({
           return getErrorObject(
             'InvalidAttr',
             "Attribute '" + matches[i][2] + "' has no space in starting.",
-            getPositionFromMatch(attrStr, matches[i][0])
+            getPositionFromMatch(matches[i])
           );
         } else if (matches[i][3] === void 0 && !options.allowBooleanAttributes) {
           return getErrorObject(
             'InvalidAttr',
             "boolean attribute '" + matches[i][2] + "' is not allowed.",
-            getPositionFromMatch(attrStr, matches[i][0])
+            getPositionFromMatch(matches[i])
           );
         }
         const attrName = matches[i][2];
@@ -5303,7 +5401,7 @@ var require_validator = __commonJS({
           return getErrorObject(
             'InvalidAttr',
             "Attribute '" + attrName + "' is an invalid name.",
-            getPositionFromMatch(attrStr, matches[i][0])
+            getPositionFromMatch(matches[i])
           );
         }
         if (!attrNames.hasOwnProperty(attrName)) {
@@ -5312,7 +5410,7 @@ var require_validator = __commonJS({
           return getErrorObject(
             'InvalidAttr',
             "Attribute '" + attrName + "' is repeated.",
-            getPositionFromMatch(attrStr, matches[i][0])
+            getPositionFromMatch(matches[i])
           );
         }
       }
@@ -5350,7 +5448,8 @@ var require_validator = __commonJS({
         err: {
           code,
           msg: message,
-          line: lineNumber
+          line: lineNumber.line || lineNumber,
+          col: lineNumber.col
         }
       };
     }
@@ -5361,11 +5460,14 @@ var require_validator = __commonJS({
       return util.isName(tagname);
     }
     function getLineNumberForPosition(xmlData, index) {
-      var lines = xmlData.substring(0, index).split(/\r?\n/);
-      return lines.length;
+      const lines = xmlData.substring(0, index).split(/\r?\n/);
+      return {
+        line: lines.length,
+        col: lines[lines.length - 1].length + 1
+      };
     }
-    function getPositionFromMatch(attrStr, match) {
-      return attrStr.indexOf(match) + match.length;
+    function getPositionFromMatch(match) {
+      return match.startIndex + match[1].length;
     }
   }
 });
@@ -5515,10 +5617,10 @@ var require_node2json_str = __commonJS({
       let jObj = '{';
       const keys = Object.keys(node.child);
       for (let index = 0; index < keys.length; index++) {
-        var tagname = keys[index];
+        const tagname = keys[index];
         if (node.child[tagname] && node.child[tagname].length > 1) {
           jObj += '"' + tagname + '" : [ ';
-          for (var tag in node.child[tagname]) {
+          for (let tag in node.child[tagname]) {
             jObj += _cToJsonStr(node.child[tagname][tag], options) + ' , ';
           }
           jObj = jObj.substr(0, jObj.length - 1) + ' ] ';
@@ -5585,7 +5687,8 @@ var require_json2xml = __commonJS({
       'indentBy',
       'supressEmptyNode',
       'tagValueProcessor',
-      'attrValueProcessor'
+      'attrValueProcessor',
+      'rootNodeName'
     ];
     function Parser(options) {
       this.options = buildOptions(options, defaultOptions, props);
@@ -5606,6 +5709,7 @@ var require_json2xml = __commonJS({
       }
       this.replaceCDATAstr = replaceCDATAstr;
       this.replaceCDATAarr = replaceCDATAarr;
+      this.processTextOrObjNode = processTextOrObjNode;
       if (this.options.format) {
         this.indentate = indentate;
         this.tagEndChar = '>\n';
@@ -5628,15 +5732,17 @@ var require_json2xml = __commonJS({
       this.buildObjectNode = buildObjectNode;
     }
     Parser.prototype.parse = function (jObj) {
+      if (Array.isArray(jObj) && this.options.rootNodeName && this.options.rootNodeName.length > 1) {
+        jObj = {
+          [this.options.rootNodeName]: jObj
+        };
+      }
       return this.j2x(jObj, 0).val;
     };
     Parser.prototype.j2x = function (jObj, level) {
       let attrStr = '';
       let val = '';
-      const keys = Object.keys(jObj);
-      const len = keys.length;
-      for (let i = 0; i < len; i++) {
-        const key = keys[i];
+      for (let key in jObj) {
         if (typeof jObj[key] === 'undefined') {
         } else if (jObj[key] === null) {
           val += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
@@ -5678,8 +5784,7 @@ var require_json2xml = __commonJS({
               } else if (item === null) {
                 val += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
               } else if (typeof item === 'object') {
-                const result = this.j2x(item, level + 1);
-                val += this.buildObjNode(result.val, key, result.attrStr, level);
+                val += this.processTextOrObjNode(item, key, level);
               } else {
                 val += this.buildTextNode(item, key, '', level);
               }
@@ -5693,13 +5798,20 @@ var require_json2xml = __commonJS({
               attrStr += ' ' + Ks[j] + '="' + this.options.attrValueProcessor('' + jObj[key][Ks[j]]) + '"';
             }
           } else {
-            const result = this.j2x(jObj[key], level + 1);
-            val += this.buildObjNode(result.val, key, result.attrStr, level);
+            val += this.processTextOrObjNode(jObj[key], key, level);
           }
         }
       }
       return { attrStr, val };
     };
+    function processTextOrObjNode(object, key, level) {
+      const result = this.j2x(object, level + 1);
+      if (object[this.options.textNodeName] !== void 0 && Object.keys(object).length === 1) {
+        return this.buildTextNode(result.val, key, result.attrStr, level);
+      } else {
+        return this.buildObjNode(result.val, key, result.attrStr, level);
+      }
+    }
     function replaceCDATAstr(str, cdata) {
       str = this.options.tagValueProcessor('' + str);
       if (this.options.cdataPositionChar === '' || str === '') {
@@ -5720,7 +5832,7 @@ var require_json2xml = __commonJS({
       }
     }
     function buildObjectNode(val, key, attrStr, level) {
-      if (attrStr && !val.includes('<')) {
+      if (attrStr && val.indexOf('<') === -1) {
         return this.indentate(level) + '<' + key + attrStr + '>' + val + '</' + key + this.tagEndChar;
       } else {
         return (
@@ -5790,7 +5902,7 @@ var require_parser = __commonJS({
     var x2xmlnode = require_xmlstr2xmlnode();
     var buildOptions = require_util().buildOptions;
     var validator = require_validator();
-    exports2.parse = function (xmlData, options, validationOption) {
+    exports2.parse = function (xmlData, givenOptions = {}, validationOption) {
       if (validationOption) {
         if (validationOption === true) validationOption = {};
         const result = validator.validate(xmlData, validationOption);
@@ -5798,7 +5910,12 @@ var require_parser = __commonJS({
           throw Error(result.err.msg);
         }
       }
-      options = buildOptions(options, x2xmlnode.defaultOptions, x2xmlnode.props);
+      if (givenOptions.parseTrueNumberOnly && givenOptions.parseNodeValue !== false && !givenOptions.numParseOptions) {
+        givenOptions.numParseOptions = {
+          leadingZeros: false
+        };
+      }
+      let options = buildOptions(givenOptions, x2xmlnode.defaultOptions, x2xmlnode.props);
       const traversableObj = xmlToNodeobj.getTraversalObj(xmlData, options);
       return nodeToJson.convertToJson(traversableObj, options);
     };
