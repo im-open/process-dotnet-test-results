@@ -99,7 +99,7 @@ jobs:
       - name: Process trx reports with default
         if: always()
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.3
+        uses: im-open/process-dotnet-test-results@v2.3.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -120,7 +120,7 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.3
+        uses: im-open/process-dotnet-test-results@v2.3.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results' # Default: .
@@ -171,7 +171,7 @@ jobs:
         if: always()
         id: process-test
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.3
+        uses: im-open/process-dotnet-test-results@v2.3.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           create-status-check: false
