@@ -105,14 +105,14 @@ var require_command = __commonJS({
           let first = true;
           for (const key in this.properties) {
             if (this.properties.hasOwnProperty(key)) {
-              const val = this.properties[key];
-              if (val) {
+              const val2 = this.properties[key];
+              if (val2) {
                 if (first) {
                   first = false;
                 } else {
                   cmdStr += ',';
                 }
-                cmdStr += `${key}=${escapeProperty(val)}`;
+                cmdStr += `${key}=${escapeProperty(val2)}`;
               }
             }
           }
@@ -2180,12 +2180,12 @@ var require_core = __commonJS({
       ExitCode2[(ExitCode2['Success'] = 0)] = 'Success';
       ExitCode2[(ExitCode2['Failure'] = 1)] = 'Failure';
     })((ExitCode = exports2.ExitCode || (exports2.ExitCode = {})));
-    function exportVariable(name, val) {
-      const convertedVal = utils_1.toCommandValue(val);
+    function exportVariable(name, val2) {
+      const convertedVal = utils_1.toCommandValue(val2);
       process.env[name] = convertedVal;
       const filePath = process.env['GITHUB_ENV'] || '';
       if (filePath) {
-        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val2));
       }
       command_1.issueCommand('set-env', { name }, convertedVal);
     }
@@ -2205,14 +2205,14 @@ var require_core = __commonJS({
     }
     exports2.addPath = addPath;
     function getInput(name, options) {
-      const val = process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] || '';
-      if (options && options.required && !val) {
+      const val2 = process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] || '';
+      if (options && options.required && !val2) {
         throw new Error(`Input required and not supplied: ${name}`);
       }
       if (options && options.trimWhitespace === false) {
-        return val;
+        return val2;
       }
-      return val.trim();
+      return val2.trim();
     }
     exports2.getInput = getInput;
     function getMultilineInput(name, options) {
@@ -2228,9 +2228,9 @@ var require_core = __commonJS({
     function getBooleanInput(name, options) {
       const trueValue = ['true', 'True', 'TRUE'];
       const falseValue = ['false', 'False', 'FALSE'];
-      const val = getInput(name, options);
-      if (trueValue.includes(val)) return true;
-      if (falseValue.includes(val)) return false;
+      const val2 = getInput(name, options);
+      if (trueValue.includes(val2)) return true;
+      if (falseValue.includes(val2)) return false;
       throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
@@ -4616,469 +4616,9 @@ var require_util = __commonJS({
         return '';
       }
     };
-    exports2.buildOptions = function (options, defaultOptions, props) {
-      let newOptions = {};
-      if (!options) {
-        return defaultOptions;
-      }
-      for (let i = 0; i < props.length; i++) {
-        if (options[props[i]] !== void 0) {
-          newOptions[props[i]] = options[props[i]];
-        } else {
-          newOptions[props[i]] = defaultOptions[props[i]];
-        }
-      }
-      return newOptions;
-    };
-    exports2.isTagNameInArrayMode = function (tagName, arrayMode, parentTagName) {
-      if (arrayMode === false) {
-        return false;
-      } else if (arrayMode instanceof RegExp) {
-        return arrayMode.test(tagName);
-      } else if (typeof arrayMode === 'function') {
-        return !!arrayMode(tagName, parentTagName);
-      }
-      return arrayMode === 'strict';
-    };
     exports2.isName = isName;
     exports2.getAllMatches = getAllMatches;
     exports2.nameRegexp = nameRegexp;
-  }
-});
-
-// node_modules/fast-xml-parser/src/node2json.js
-var require_node2json = __commonJS({
-  'node_modules/fast-xml-parser/src/node2json.js'(exports2) {
-    'use strict';
-    var util = require_util();
-    var convertToJson = function (node, options, parentTagName) {
-      const jObj = {};
-      if (
-        !options.alwaysCreateTextNode &&
-        (!node.child || util.isEmptyObject(node.child)) &&
-        (!node.attrsMap || util.isEmptyObject(node.attrsMap))
-      ) {
-        return util.isExist(node.val) ? node.val : '';
-      }
-      if (
-        util.isExist(node.val) &&
-        !(typeof node.val === 'string' && (node.val === '' || node.val === options.cdataPositionChar))
-      ) {
-        const asArray = util.isTagNameInArrayMode(node.tagname, options.arrayMode, parentTagName);
-        jObj[options.textNodeName] = asArray ? [node.val] : node.val;
-      }
-      util.merge(jObj, node.attrsMap, options.arrayMode);
-      const keys = Object.keys(node.child);
-      for (let index = 0; index < keys.length; index++) {
-        const tagName = keys[index];
-        if (node.child[tagName] && node.child[tagName].length > 1) {
-          jObj[tagName] = [];
-          for (let tag in node.child[tagName]) {
-            if (node.child[tagName].hasOwnProperty(tag)) {
-              jObj[tagName].push(convertToJson(node.child[tagName][tag], options, tagName));
-            }
-          }
-        } else {
-          const result = convertToJson(node.child[tagName][0], options, tagName);
-          const asArray =
-            (options.arrayMode === true && typeof result === 'object') ||
-            util.isTagNameInArrayMode(tagName, options.arrayMode, parentTagName);
-          jObj[tagName] = asArray ? [result] : result;
-        }
-      }
-      return jObj;
-    };
-    exports2.convertToJson = convertToJson;
-  }
-});
-
-// node_modules/fast-xml-parser/src/xmlNode.js
-var require_xmlNode = __commonJS({
-  'node_modules/fast-xml-parser/src/xmlNode.js'(exports2, module2) {
-    'use strict';
-    module2.exports = function (tagname, parent, val) {
-      this.tagname = tagname;
-      this.parent = parent;
-      this.child = {};
-      this.attrsMap = {};
-      this.val = val;
-      this.addChild = function (child) {
-        if (Array.isArray(this.child[child.tagname])) {
-          this.child[child.tagname].push(child);
-        } else {
-          this.child[child.tagname] = [child];
-        }
-      };
-    };
-  }
-});
-
-// node_modules/strnum/strnum.js
-var require_strnum = __commonJS({
-  'node_modules/strnum/strnum.js'(exports2, module2) {
-    var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
-    var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
-    if (!Number.parseInt && window.parseInt) {
-      Number.parseInt = window.parseInt;
-    }
-    if (!Number.parseFloat && window.parseFloat) {
-      Number.parseFloat = window.parseFloat;
-    }
-    var consider = {
-      hex: true,
-      leadingZeros: true,
-      decimalPoint: '.',
-      eNotation: true
-    };
-    function toNumber(str, options = {}) {
-      options = Object.assign({}, consider, options);
-      if (!str || typeof str !== 'string') return str;
-      let trimmedStr = str.trim();
-      if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr)) return str;
-      else if (options.hex && hexRegex.test(trimmedStr)) {
-        return Number.parseInt(trimmedStr, 16);
-      } else {
-        const match = numRegex.exec(trimmedStr);
-        if (match) {
-          const sign = match[1];
-          const leadingZeros = match[2];
-          let numTrimmedByZeros = trimZeros(match[3]);
-          const eNotation = match[4] || match[6];
-          if (!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== '.') return str;
-          else if (!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== '.') return str;
-          else {
-            const num = Number(trimmedStr);
-            const numStr = '' + num;
-            if (numStr.search(/[eE]/) !== -1) {
-              if (options.eNotation) return num;
-              else return str;
-            } else if (eNotation) {
-              if (options.eNotation) return num;
-              else return str;
-            } else if (trimmedStr.indexOf('.') !== -1) {
-              if (numStr === '0' && numTrimmedByZeros === '') return num;
-              else if (numStr === numTrimmedByZeros) return num;
-              else if (sign && numStr === '-' + numTrimmedByZeros) return num;
-              else return str;
-            }
-            if (leadingZeros) {
-              if (numTrimmedByZeros === numStr) return num;
-              else if (sign + numTrimmedByZeros === numStr) return num;
-              else return str;
-            }
-            if (trimmedStr === numStr) return num;
-            else if (trimmedStr === sign + numStr) return num;
-            return str;
-          }
-        } else {
-          return str;
-        }
-      }
-    }
-    function trimZeros(numStr) {
-      if (numStr && numStr.indexOf('.') !== -1) {
-        numStr = numStr.replace(/0+$/, '');
-        if (numStr === '.') numStr = '0';
-        else if (numStr[0] === '.') numStr = '0' + numStr;
-        else if (numStr[numStr.length - 1] === '.') numStr = numStr.substr(0, numStr.length - 1);
-        return numStr;
-      }
-      return numStr;
-    }
-    module2.exports = toNumber;
-  }
-});
-
-// node_modules/fast-xml-parser/src/xmlstr2xmlnode.js
-var require_xmlstr2xmlnode = __commonJS({
-  'node_modules/fast-xml-parser/src/xmlstr2xmlnode.js'(exports2) {
-    'use strict';
-    var util = require_util();
-    var buildOptions = require_util().buildOptions;
-    var xmlNode = require_xmlNode();
-    var toNumber = require_strnum();
-    var regx = '<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)'.replace(
-      /NAME/g,
-      util.nameRegexp
-    );
-    if (!Number.parseInt && window.parseInt) {
-      Number.parseInt = window.parseInt;
-    }
-    if (!Number.parseFloat && window.parseFloat) {
-      Number.parseFloat = window.parseFloat;
-    }
-    var defaultOptions = {
-      attributeNamePrefix: '@_',
-      attrNodeName: false,
-      textNodeName: '#text',
-      ignoreAttributes: true,
-      ignoreNameSpace: false,
-      allowBooleanAttributes: false,
-      parseNodeValue: true,
-      parseAttributeValue: false,
-      arrayMode: false,
-      trimValues: true,
-      cdataTagName: false,
-      cdataPositionChar: '\\c',
-      numParseOptions: {
-        hex: true,
-        leadingZeros: true
-      },
-      tagValueProcessor: function (a, tagName) {
-        return a;
-      },
-      attrValueProcessor: function (a, attrName) {
-        return a;
-      },
-      stopNodes: [],
-      alwaysCreateTextNode: false
-    };
-    exports2.defaultOptions = defaultOptions;
-    var props = [
-      'attributeNamePrefix',
-      'attrNodeName',
-      'textNodeName',
-      'ignoreAttributes',
-      'ignoreNameSpace',
-      'allowBooleanAttributes',
-      'parseNodeValue',
-      'parseAttributeValue',
-      'arrayMode',
-      'trimValues',
-      'cdataTagName',
-      'cdataPositionChar',
-      'tagValueProcessor',
-      'attrValueProcessor',
-      'parseTrueNumberOnly',
-      'numParseOptions',
-      'stopNodes',
-      'alwaysCreateTextNode'
-    ];
-    exports2.props = props;
-    function processTagValue(tagName, val, options) {
-      if (val) {
-        if (options.trimValues) {
-          val = val.trim();
-        }
-        val = options.tagValueProcessor(val, tagName);
-        val = parseValue(val, options.parseNodeValue, options.numParseOptions);
-      }
-      return val;
-    }
-    function resolveNameSpace(tagname, options) {
-      if (options.ignoreNameSpace) {
-        const tags = tagname.split(':');
-        const prefix = tagname.charAt(0) === '/' ? '/' : '';
-        if (tags[0] === 'xmlns') {
-          return '';
-        }
-        if (tags.length === 2) {
-          tagname = prefix + tags[1];
-        }
-      }
-      return tagname;
-    }
-    function parseValue(val, shouldParse, options) {
-      if (shouldParse && typeof val === 'string') {
-        const newval = val.trim();
-        if (newval === 'true') return true;
-        else if (newval === 'false') return false;
-        else return toNumber(val, options);
-      } else {
-        if (util.isExist(val)) {
-          return val;
-        } else {
-          return '';
-        }
-      }
-    }
-    var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])(.*?)\\3)?`, 'g');
-    function buildAttributesMap(attrStr, options) {
-      if (!options.ignoreAttributes && typeof attrStr === 'string') {
-        attrStr = attrStr.replace(/\r?\n/g, ' ');
-        const matches = util.getAllMatches(attrStr, attrsRegx);
-        const len = matches.length;
-        const attrs = {};
-        for (let i = 0; i < len; i++) {
-          const attrName = resolveNameSpace(matches[i][1], options);
-          if (attrName.length) {
-            if (matches[i][4] !== void 0) {
-              if (options.trimValues) {
-                matches[i][4] = matches[i][4].trim();
-              }
-              matches[i][4] = options.attrValueProcessor(matches[i][4], attrName);
-              attrs[options.attributeNamePrefix + attrName] = parseValue(
-                matches[i][4],
-                options.parseAttributeValue,
-                options.numParseOptions
-              );
-            } else if (options.allowBooleanAttributes) {
-              attrs[options.attributeNamePrefix + attrName] = true;
-            }
-          }
-        }
-        if (!Object.keys(attrs).length) {
-          return;
-        }
-        if (options.attrNodeName) {
-          const attrCollection = {};
-          attrCollection[options.attrNodeName] = attrs;
-          return attrCollection;
-        }
-        return attrs;
-      }
-    }
-    var getTraversalObj = function (xmlData, options) {
-      xmlData = xmlData.replace(/\r\n?/g, '\n');
-      options = buildOptions(options, defaultOptions, props);
-      const xmlObj = new xmlNode('!xml');
-      let currentNode = xmlObj;
-      let textData = '';
-      for (let i = 0; i < xmlData.length; i++) {
-        const ch = xmlData[i];
-        if (ch === '<') {
-          if (xmlData[i + 1] === '/') {
-            const closeIndex = findClosingIndex(xmlData, '>', i, 'Closing Tag is not closed.');
-            let tagName = xmlData.substring(i + 2, closeIndex).trim();
-            if (options.ignoreNameSpace) {
-              const colonIndex = tagName.indexOf(':');
-              if (colonIndex !== -1) {
-                tagName = tagName.substr(colonIndex + 1);
-              }
-            }
-            if (currentNode) {
-              if (currentNode.val) {
-                currentNode.val = util.getValue(currentNode.val) + '' + processTagValue(tagName, textData, options);
-              } else {
-                currentNode.val = processTagValue(tagName, textData, options);
-              }
-            }
-            if (options.stopNodes.length && options.stopNodes.includes(currentNode.tagname)) {
-              currentNode.child = [];
-              if (currentNode.attrsMap == void 0) {
-                currentNode.attrsMap = {};
-              }
-              currentNode.val = xmlData.substr(currentNode.startIndex + 1, i - currentNode.startIndex - 1);
-            }
-            currentNode = currentNode.parent;
-            textData = '';
-            i = closeIndex;
-          } else if (xmlData[i + 1] === '?') {
-            i = findClosingIndex(xmlData, '?>', i, 'Pi Tag is not closed.');
-          } else if (xmlData.substr(i + 1, 3) === '!--') {
-            i = findClosingIndex(xmlData, '-->', i, 'Comment is not closed.');
-          } else if (xmlData.substr(i + 1, 2) === '!D') {
-            const closeIndex = findClosingIndex(xmlData, '>', i, 'DOCTYPE is not closed.');
-            const tagExp = xmlData.substring(i, closeIndex);
-            if (tagExp.indexOf('[') >= 0) {
-              i = xmlData.indexOf(']>', i) + 1;
-            } else {
-              i = closeIndex;
-            }
-          } else if (xmlData.substr(i + 1, 2) === '![') {
-            const closeIndex = findClosingIndex(xmlData, ']]>', i, 'CDATA is not closed.') - 2;
-            const tagExp = xmlData.substring(i + 9, closeIndex);
-            if (textData) {
-              currentNode.val =
-                util.getValue(currentNode.val) + '' + processTagValue(currentNode.tagname, textData, options);
-              textData = '';
-            }
-            if (options.cdataTagName) {
-              const childNode = new xmlNode(options.cdataTagName, currentNode, tagExp);
-              currentNode.addChild(childNode);
-              currentNode.val = util.getValue(currentNode.val) + options.cdataPositionChar;
-              if (tagExp) {
-                childNode.val = tagExp;
-              }
-            } else {
-              currentNode.val = (currentNode.val || '') + (tagExp || '');
-            }
-            i = closeIndex + 2;
-          } else {
-            const result = closingIndexForOpeningTag(xmlData, i + 1);
-            let tagExp = result.data;
-            const closeIndex = result.index;
-            const separatorIndex = tagExp.indexOf(' ');
-            let tagName = tagExp;
-            let shouldBuildAttributesMap = true;
-            if (separatorIndex !== -1) {
-              tagName = tagExp.substr(0, separatorIndex).replace(/\s\s*$/, '');
-              tagExp = tagExp.substr(separatorIndex + 1);
-            }
-            if (options.ignoreNameSpace) {
-              const colonIndex = tagName.indexOf(':');
-              if (colonIndex !== -1) {
-                tagName = tagName.substr(colonIndex + 1);
-                shouldBuildAttributesMap = tagName !== result.data.substr(colonIndex + 1);
-              }
-            }
-            if (currentNode && textData) {
-              if (currentNode.tagname !== '!xml') {
-                currentNode.val =
-                  util.getValue(currentNode.val) + '' + processTagValue(currentNode.tagname, textData, options);
-              }
-            }
-            if (tagExp.length > 0 && tagExp.lastIndexOf('/') === tagExp.length - 1) {
-              if (tagName[tagName.length - 1] === '/') {
-                tagName = tagName.substr(0, tagName.length - 1);
-                tagExp = tagName;
-              } else {
-                tagExp = tagExp.substr(0, tagExp.length - 1);
-              }
-              const childNode = new xmlNode(tagName, currentNode, '');
-              if (tagName !== tagExp) {
-                childNode.attrsMap = buildAttributesMap(tagExp, options);
-              }
-              currentNode.addChild(childNode);
-            } else {
-              const childNode = new xmlNode(tagName, currentNode);
-              if (options.stopNodes.length && options.stopNodes.includes(childNode.tagname)) {
-                childNode.startIndex = closeIndex;
-              }
-              if (tagName !== tagExp && shouldBuildAttributesMap) {
-                childNode.attrsMap = buildAttributesMap(tagExp, options);
-              }
-              currentNode.addChild(childNode);
-              currentNode = childNode;
-            }
-            textData = '';
-            i = closeIndex;
-          }
-        } else {
-          textData += xmlData[i];
-        }
-      }
-      return xmlObj;
-    };
-    function closingIndexForOpeningTag(data, i) {
-      let attrBoundary;
-      let tagExp = '';
-      for (let index = i; index < data.length; index++) {
-        let ch = data[index];
-        if (attrBoundary) {
-          if (ch === attrBoundary) attrBoundary = '';
-        } else if (ch === '"' || ch === "'") {
-          attrBoundary = ch;
-        } else if (ch === '>') {
-          return {
-            data: tagExp,
-            index
-          };
-        } else if (ch === '	') {
-          ch = ' ';
-        }
-        tagExp += ch;
-      }
-    }
-    function findClosingIndex(xmlData, str, i, errMsg) {
-      const closingIndex = xmlData.indexOf(str, i);
-      if (closingIndex === -1) {
-        throw new Error(errMsg);
-      } else {
-        return closingIndex + str.length - 1;
-      }
-    }
-    exports2.getTraversalObj = getTraversalObj;
   }
 });
 
@@ -5088,11 +4628,11 @@ var require_validator = __commonJS({
     'use strict';
     var util = require_util();
     var defaultOptions = {
-      allowBooleanAttributes: false
+      allowBooleanAttributes: false,
+      unpairedTags: []
     };
-    var props = ['allowBooleanAttributes'];
     exports2.validate = function (xmlData, options) {
-      options = util.buildOptions(options, defaultOptions, props);
+      options = Object.assign({}, defaultOptions, options);
       const tags = [];
       let tagFound = false;
       let reachedRoot = false;
@@ -5216,6 +4756,7 @@ var require_validator = __commonJS({
                   'Multiple possible root nodes found.',
                   getLineNumberForPosition(xmlData, i)
                 );
+              } else if (options.unpairedTags.indexOf(tagName) !== -1) {
               } else {
                 tags.push({ tagName, tagStartPos });
               }
@@ -5238,6 +4779,10 @@ var require_validator = __commonJS({
                 if (afterAmp == -1)
                   return getErrorObject('InvalidChar', "char '&' is not expected.", getLineNumberForPosition(xmlData, i));
                 i = afterAmp;
+              } else {
+                if (reachedRoot === true && !isWhiteSpace(xmlData[i])) {
+                  return getErrorObject('InvalidXml', 'Extra text at the end', getLineNumberForPosition(xmlData, i));
+                }
               }
             }
             if (xmlData[i] === '<') {
@@ -5245,7 +4790,7 @@ var require_validator = __commonJS({
             }
           }
         } else {
-          if (xmlData[i] === ' ' || xmlData[i] === '	' || xmlData[i] === '\n' || xmlData[i] === '\r') {
+          if (isWhiteSpace(xmlData[i])) {
             continue;
           }
           return getErrorObject(
@@ -5278,6 +4823,9 @@ var require_validator = __commonJS({
       }
       return true;
     };
+    function isWhiteSpace(char) {
+      return char === ' ' || char === '	' || char === '\n' || char === '\r';
+    }
     function readPI(xmlData, i) {
       const start = i;
       for (; i < xmlData.length; i++) {
@@ -5389,6 +4937,12 @@ var require_validator = __commonJS({
             "Attribute '" + matches[i][2] + "' has no space in starting.",
             getPositionFromMatch(matches[i])
           );
+        } else if (matches[i][3] !== void 0 && matches[i][4] === void 0) {
+          return getErrorObject(
+            'InvalidAttr',
+            "Attribute '" + matches[i][2] + "' is without value.",
+            getPositionFromMatch(matches[i])
+          );
         } else if (matches[i][3] === void 0 && !options.allowBooleanAttributes) {
           return getErrorObject(
             'InvalidAttr',
@@ -5472,227 +5026,1073 @@ var require_validator = __commonJS({
   }
 });
 
-// node_modules/fast-xml-parser/src/nimndata.js
-var require_nimndata = __commonJS({
-  'node_modules/fast-xml-parser/src/nimndata.js'(exports2) {
-    'use strict';
-    var char = function (a) {
-      return String.fromCharCode(a);
-    };
-    var chars = {
-      nilChar: char(176),
-      missingChar: char(201),
-      nilPremitive: char(175),
-      missingPremitive: char(200),
-      emptyChar: char(178),
-      emptyValue: char(177),
-      boundryChar: char(179),
-      objStart: char(198),
-      arrStart: char(204),
-      arrayEnd: char(185)
-    };
-    var charsArr = [
-      chars.nilChar,
-      chars.nilPremitive,
-      chars.missingChar,
-      chars.missingPremitive,
-      chars.boundryChar,
-      chars.emptyChar,
-      chars.emptyValue,
-      chars.arrayEnd,
-      chars.objStart,
-      chars.arrStart
-    ];
-    var _e = function (node, e_schema, options) {
-      if (typeof e_schema === 'string') {
-        if (node && node[0] && node[0].val !== void 0) {
-          return getValue(node[0].val, e_schema);
-        } else {
-          return getValue(node, e_schema);
-        }
-      } else {
-        const hasValidData = hasData(node);
-        if (hasValidData === true) {
-          let str = '';
-          if (Array.isArray(e_schema)) {
-            str += chars.arrStart;
-            const itemSchema = e_schema[0];
-            const arr_len = node.length;
-            if (typeof itemSchema === 'string') {
-              for (let arr_i = 0; arr_i < arr_len; arr_i++) {
-                const r = getValue(node[arr_i].val, itemSchema);
-                str = processValue(str, r);
-              }
-            } else {
-              for (let arr_i = 0; arr_i < arr_len; arr_i++) {
-                const r = _e(node[arr_i], itemSchema, options);
-                str = processValue(str, r);
-              }
-            }
-            str += chars.arrayEnd;
-          } else {
-            str += chars.objStart;
-            const keys = Object.keys(e_schema);
-            if (Array.isArray(node)) {
-              node = node[0];
-            }
-            for (let i in keys) {
-              const key = keys[i];
-              let r;
-              if (!options.ignoreAttributes && node.attrsMap && node.attrsMap[key]) {
-                r = _e(node.attrsMap[key], e_schema[key], options);
-              } else if (key === options.textNodeName) {
-                r = _e(node.val, e_schema[key], options);
-              } else {
-                r = _e(node.child[key], e_schema[key], options);
-              }
-              str = processValue(str, r);
-            }
-          }
-          return str;
-        } else {
-          return hasValidData;
-        }
-      }
-    };
-    var getValue = function (a) {
-      switch (a) {
-        case void 0:
-          return chars.missingPremitive;
-        case null:
-          return chars.nilPremitive;
-        case '':
-          return chars.emptyValue;
-        default:
-          return a;
-      }
-    };
-    var processValue = function (str, r) {
-      if (!isAppChar(r[0]) && !isAppChar(str[str.length - 1])) {
-        str += chars.boundryChar;
-      }
-      return str + r;
-    };
-    var isAppChar = function (ch) {
-      return charsArr.indexOf(ch) !== -1;
-    };
-    function hasData(jObj) {
-      if (jObj === void 0) {
-        return chars.missingChar;
-      } else if (jObj === null) {
-        return chars.nilChar;
-      } else if (
-        jObj.child &&
-        Object.keys(jObj.child).length === 0 &&
-        (!jObj.attrsMap || Object.keys(jObj.attrsMap).length === 0)
-      ) {
-        return chars.emptyChar;
-      } else {
-        return true;
-      }
-    }
-    var x2j = require_xmlstr2xmlnode();
-    var buildOptions = require_util().buildOptions;
-    var convert2nimn = function (node, e_schema, options) {
-      options = buildOptions(options, x2j.defaultOptions, x2j.props);
-      return _e(node, e_schema, options);
-    };
-    exports2.convert2nimn = convert2nimn;
-  }
-});
-
-// node_modules/fast-xml-parser/src/node2json_str.js
-var require_node2json_str = __commonJS({
-  'node_modules/fast-xml-parser/src/node2json_str.js'(exports2) {
-    'use strict';
-    var util = require_util();
-    var buildOptions = require_util().buildOptions;
-    var x2j = require_xmlstr2xmlnode();
-    var convertToJsonString = function (node, options) {
-      options = buildOptions(options, x2j.defaultOptions, x2j.props);
-      options.indentBy = options.indentBy || '';
-      return _cToJsonStr(node, options, 0);
-    };
-    var _cToJsonStr = function (node, options, level) {
-      let jObj = '{';
-      const keys = Object.keys(node.child);
-      for (let index = 0; index < keys.length; index++) {
-        const tagname = keys[index];
-        if (node.child[tagname] && node.child[tagname].length > 1) {
-          jObj += '"' + tagname + '" : [ ';
-          for (let tag in node.child[tagname]) {
-            jObj += _cToJsonStr(node.child[tagname][tag], options) + ' , ';
-          }
-          jObj = jObj.substr(0, jObj.length - 1) + ' ] ';
-        } else {
-          jObj += '"' + tagname + '" : ' + _cToJsonStr(node.child[tagname][0], options) + ' ,';
-        }
-      }
-      util.merge(jObj, node.attrsMap);
-      if (util.isEmptyObject(jObj)) {
-        return util.isExist(node.val) ? node.val : '';
-      } else {
-        if (util.isExist(node.val)) {
-          if (!(typeof node.val === 'string' && (node.val === '' || node.val === options.cdataPositionChar))) {
-            jObj += '"' + options.textNodeName + '" : ' + stringval(node.val);
-          }
-        }
-      }
-      if (jObj[jObj.length - 1] === ',') {
-        jObj = jObj.substr(0, jObj.length - 2);
-      }
-      return jObj + '}';
-    };
-    function stringval(v) {
-      if (v === true || v === false || !isNaN(v)) {
-        return v;
-      } else {
-        return '"' + v + '"';
-      }
-    }
-    exports2.convertToJsonString = convertToJsonString;
-  }
-});
-
-// node_modules/fast-xml-parser/src/json2xml.js
-var require_json2xml = __commonJS({
-  'node_modules/fast-xml-parser/src/json2xml.js'(exports2, module2) {
-    'use strict';
-    var buildOptions = require_util().buildOptions;
+// node_modules/fast-xml-parser/src/xmlparser/OptionsBuilder.js
+var require_OptionsBuilder = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/OptionsBuilder.js'(exports2) {
     var defaultOptions = {
+      preserveOrder: false,
       attributeNamePrefix: '@_',
-      attrNodeName: false,
+      attributesGroupName: false,
       textNodeName: '#text',
       ignoreAttributes: true,
-      cdataTagName: false,
-      cdataPositionChar: '\\c',
-      format: false,
-      indentBy: '  ',
-      supressEmptyNode: false,
-      tagValueProcessor: function (a) {
-        return a;
+      removeNSPrefix: false,
+      allowBooleanAttributes: false,
+      parseTagValue: true,
+      parseAttributeValue: false,
+      trimValues: true,
+      cdataPropName: false,
+      numberParseOptions: {
+        hex: true,
+        leadingZeros: true,
+        eNotation: true
       },
-      attrValueProcessor: function (a) {
-        return a;
+      tagValueProcessor: function (tagName, val2) {
+        return val2;
+      },
+      attributeValueProcessor: function (attrName, val2) {
+        return val2;
+      },
+      stopNodes: [],
+      alwaysCreateTextNode: false,
+      isArray: () => false,
+      commentPropName: false,
+      unpairedTags: [],
+      processEntities: true,
+      htmlEntities: false,
+      ignoreDeclaration: false,
+      ignorePiTags: false,
+      transformTagName: false,
+      transformAttributeName: false,
+      updateTag: function (tagName, jPath, attrs) {
+        return tagName;
       }
     };
-    var props = [
-      'attributeNamePrefix',
-      'attrNodeName',
-      'textNodeName',
-      'ignoreAttributes',
-      'cdataTagName',
-      'cdataPositionChar',
-      'format',
-      'indentBy',
-      'supressEmptyNode',
-      'tagValueProcessor',
-      'attrValueProcessor',
-      'rootNodeName'
-    ];
-    function Parser(options) {
-      this.options = buildOptions(options, defaultOptions, props);
-      if (this.options.ignoreAttributes || this.options.attrNodeName) {
+    var buildOptions = function (options) {
+      return Object.assign({}, defaultOptions, options);
+    };
+    exports2.buildOptions = buildOptions;
+    exports2.defaultOptions = defaultOptions;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlparser/xmlNode.js
+var require_xmlNode = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/xmlNode.js'(exports2, module2) {
+    'use strict';
+    var XmlNode = class {
+      constructor(tagname) {
+        this.tagname = tagname;
+        this.child = [];
+        this[':@'] = {};
+      }
+      add(key, val2) {
+        if (key === '__proto__') key = '#__proto__';
+        this.child.push({ [key]: val2 });
+      }
+      addChild(node) {
+        if (node.tagname === '__proto__') node.tagname = '#__proto__';
+        if (node[':@'] && Object.keys(node[':@']).length > 0) {
+          this.child.push({ [node.tagname]: node.child, [':@']: node[':@'] });
+        } else {
+          this.child.push({ [node.tagname]: node.child });
+        }
+      }
+    };
+    module2.exports = XmlNode;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
+var require_DocTypeReader = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js'(exports2, module2) {
+    var util = require_util();
+    function readDocType(xmlData, i) {
+      const entities = {};
+      if (
+        xmlData[i + 3] === 'O' &&
+        xmlData[i + 4] === 'C' &&
+        xmlData[i + 5] === 'T' &&
+        xmlData[i + 6] === 'Y' &&
+        xmlData[i + 7] === 'P' &&
+        xmlData[i + 8] === 'E'
+      ) {
+        i = i + 9;
+        let angleBracketsCount = 1;
+        let hasBody = false,
+          comment = false;
+        let exp = '';
+        for (; i < xmlData.length; i++) {
+          if (xmlData[i] === '<' && !comment) {
+            if (hasBody && isEntity(xmlData, i)) {
+              i += 7;
+              [entityName, val, i] = readEntityExp(xmlData, i + 1);
+              if (val.indexOf('&') === -1)
+                entities[validateEntityName(entityName)] = {
+                  regx: RegExp(`&${entityName};`, 'g'),
+                  val
+                };
+            } else if (hasBody && isElement(xmlData, i)) i += 8;
+            else if (hasBody && isAttlist(xmlData, i)) i += 8;
+            else if (hasBody && isNotation(xmlData, i)) i += 9;
+            else if (isComment) comment = true;
+            else throw new Error('Invalid DOCTYPE');
+            angleBracketsCount++;
+            exp = '';
+          } else if (xmlData[i] === '>') {
+            if (comment) {
+              if (xmlData[i - 1] === '-' && xmlData[i - 2] === '-') {
+                comment = false;
+                angleBracketsCount--;
+              }
+            } else {
+              angleBracketsCount--;
+            }
+            if (angleBracketsCount === 0) {
+              break;
+            }
+          } else if (xmlData[i] === '[') {
+            hasBody = true;
+          } else {
+            exp += xmlData[i];
+          }
+        }
+        if (angleBracketsCount !== 0) {
+          throw new Error(`Unclosed DOCTYPE`);
+        }
+      } else {
+        throw new Error(`Invalid Tag instead of DOCTYPE`);
+      }
+      return { entities, i };
+    }
+    function readEntityExp(xmlData, i) {
+      let entityName2 = '';
+      for (; i < xmlData.length && xmlData[i] !== "'" && xmlData[i] !== '"'; i++) {
+        entityName2 += xmlData[i];
+      }
+      entityName2 = entityName2.trim();
+      if (entityName2.indexOf(' ') !== -1) throw new Error('External entites are not supported');
+      const startChar = xmlData[i++];
+      let val2 = '';
+      for (; i < xmlData.length && xmlData[i] !== startChar; i++) {
+        val2 += xmlData[i];
+      }
+      return [entityName2, val2, i];
+    }
+    function isComment(xmlData, i) {
+      if (xmlData[i + 1] === '!' && xmlData[i + 2] === '-' && xmlData[i + 3] === '-') return true;
+      return false;
+    }
+    function isEntity(xmlData, i) {
+      if (
+        xmlData[i + 1] === '!' &&
+        xmlData[i + 2] === 'E' &&
+        xmlData[i + 3] === 'N' &&
+        xmlData[i + 4] === 'T' &&
+        xmlData[i + 5] === 'I' &&
+        xmlData[i + 6] === 'T' &&
+        xmlData[i + 7] === 'Y'
+      )
+        return true;
+      return false;
+    }
+    function isElement(xmlData, i) {
+      if (
+        xmlData[i + 1] === '!' &&
+        xmlData[i + 2] === 'E' &&
+        xmlData[i + 3] === 'L' &&
+        xmlData[i + 4] === 'E' &&
+        xmlData[i + 5] === 'M' &&
+        xmlData[i + 6] === 'E' &&
+        xmlData[i + 7] === 'N' &&
+        xmlData[i + 8] === 'T'
+      )
+        return true;
+      return false;
+    }
+    function isAttlist(xmlData, i) {
+      if (
+        xmlData[i + 1] === '!' &&
+        xmlData[i + 2] === 'A' &&
+        xmlData[i + 3] === 'T' &&
+        xmlData[i + 4] === 'T' &&
+        xmlData[i + 5] === 'L' &&
+        xmlData[i + 6] === 'I' &&
+        xmlData[i + 7] === 'S' &&
+        xmlData[i + 8] === 'T'
+      )
+        return true;
+      return false;
+    }
+    function isNotation(xmlData, i) {
+      if (
+        xmlData[i + 1] === '!' &&
+        xmlData[i + 2] === 'N' &&
+        xmlData[i + 3] === 'O' &&
+        xmlData[i + 4] === 'T' &&
+        xmlData[i + 5] === 'A' &&
+        xmlData[i + 6] === 'T' &&
+        xmlData[i + 7] === 'I' &&
+        xmlData[i + 8] === 'O' &&
+        xmlData[i + 9] === 'N'
+      )
+        return true;
+      return false;
+    }
+    function validateEntityName(name) {
+      if (util.isName(name)) return name;
+      else throw new Error(`Invalid entity name ${name}`);
+    }
+    module2.exports = readDocType;
+  }
+});
+
+// node_modules/strnum/strnum.js
+var require_strnum = __commonJS({
+  'node_modules/strnum/strnum.js'(exports2, module2) {
+    var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
+    var numRegex = /^([\-\+])?(0*)(\.[0-9]+([eE]\-?[0-9]+)?|[0-9]+(\.[0-9]+([eE]\-?[0-9]+)?)?)$/;
+    if (!Number.parseInt && window.parseInt) {
+      Number.parseInt = window.parseInt;
+    }
+    if (!Number.parseFloat && window.parseFloat) {
+      Number.parseFloat = window.parseFloat;
+    }
+    var consider = {
+      hex: true,
+      leadingZeros: true,
+      decimalPoint: '.',
+      eNotation: true
+    };
+    function toNumber(str, options = {}) {
+      options = Object.assign({}, consider, options);
+      if (!str || typeof str !== 'string') return str;
+      let trimmedStr = str.trim();
+      if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr)) return str;
+      else if (options.hex && hexRegex.test(trimmedStr)) {
+        return Number.parseInt(trimmedStr, 16);
+      } else {
+        const match = numRegex.exec(trimmedStr);
+        if (match) {
+          const sign = match[1];
+          const leadingZeros = match[2];
+          let numTrimmedByZeros = trimZeros(match[3]);
+          const eNotation = match[4] || match[6];
+          if (!options.leadingZeros && leadingZeros.length > 0 && sign && trimmedStr[2] !== '.') return str;
+          else if (!options.leadingZeros && leadingZeros.length > 0 && !sign && trimmedStr[1] !== '.') return str;
+          else {
+            const num = Number(trimmedStr);
+            const numStr = '' + num;
+            if (numStr.search(/[eE]/) !== -1) {
+              if (options.eNotation) return num;
+              else return str;
+            } else if (eNotation) {
+              if (options.eNotation) return num;
+              else return str;
+            } else if (trimmedStr.indexOf('.') !== -1) {
+              if (numStr === '0' && numTrimmedByZeros === '') return num;
+              else if (numStr === numTrimmedByZeros) return num;
+              else if (sign && numStr === '-' + numTrimmedByZeros) return num;
+              else return str;
+            }
+            if (leadingZeros) {
+              if (numTrimmedByZeros === numStr) return num;
+              else if (sign + numTrimmedByZeros === numStr) return num;
+              else return str;
+            }
+            if (trimmedStr === numStr) return num;
+            else if (trimmedStr === sign + numStr) return num;
+            return str;
+          }
+        } else {
+          return str;
+        }
+      }
+    }
+    function trimZeros(numStr) {
+      if (numStr && numStr.indexOf('.') !== -1) {
+        numStr = numStr.replace(/0+$/, '');
+        if (numStr === '.') numStr = '0';
+        else if (numStr[0] === '.') numStr = '0' + numStr;
+        else if (numStr[numStr.length - 1] === '.') numStr = numStr.substr(0, numStr.length - 1);
+        return numStr;
+      }
+      return numStr;
+    }
+    module2.exports = toNumber;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlparser/OrderedObjParser.js
+var require_OrderedObjParser = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/OrderedObjParser.js'(exports2, module2) {
+    'use strict';
+    var util = require_util();
+    var xmlNode = require_xmlNode();
+    var readDocType = require_DocTypeReader();
+    var toNumber = require_strnum();
+    var regx = '<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)'.replace(
+      /NAME/g,
+      util.nameRegexp
+    );
+    var OrderedObjParser = class {
+      constructor(options) {
+        this.options = options;
+        this.currentNode = null;
+        this.tagsNodeStack = [];
+        this.docTypeEntities = {};
+        this.lastEntities = {
+          apos: { regex: /&(apos|#39|#x27);/g, val: "'" },
+          gt: { regex: /&(gt|#62|#x3E);/g, val: '>' },
+          lt: { regex: /&(lt|#60|#x3C);/g, val: '<' },
+          quot: { regex: /&(quot|#34|#x22);/g, val: '"' }
+        };
+        this.ampEntity = { regex: /&(amp|#38|#x26);/g, val: '&' };
+        this.htmlEntities = {
+          space: { regex: /&(nbsp|#160);/g, val: ' ' },
+          cent: { regex: /&(cent|#162);/g, val: '\xA2' },
+          pound: { regex: /&(pound|#163);/g, val: '\xA3' },
+          yen: { regex: /&(yen|#165);/g, val: '\xA5' },
+          euro: { regex: /&(euro|#8364);/g, val: '\u20AC' },
+          copyright: { regex: /&(copy|#169);/g, val: '\xA9' },
+          reg: { regex: /&(reg|#174);/g, val: '\xAE' },
+          inr: { regex: /&(inr|#8377);/g, val: '\u20B9' }
+        };
+        this.addExternalEntities = addExternalEntities;
+        this.parseXml = parseXml;
+        this.parseTextData = parseTextData;
+        this.resolveNameSpace = resolveNameSpace;
+        this.buildAttributesMap = buildAttributesMap;
+        this.isItStopNode = isItStopNode;
+        this.replaceEntitiesValue = replaceEntitiesValue;
+        this.readStopNodeData = readStopNodeData;
+        this.saveTextToParentTag = saveTextToParentTag;
+        this.addChild = addChild;
+      }
+    };
+    function addExternalEntities(externalEntities) {
+      const entKeys = Object.keys(externalEntities);
+      for (let i = 0; i < entKeys.length; i++) {
+        const ent = entKeys[i];
+        this.lastEntities[ent] = {
+          regex: new RegExp('&' + ent + ';', 'g'),
+          val: externalEntities[ent]
+        };
+      }
+    }
+    function parseTextData(val2, tagName, jPath, dontTrim, hasAttributes, isLeafNode, escapeEntities) {
+      if (val2 !== void 0) {
+        if (this.options.trimValues && !dontTrim) {
+          val2 = val2.trim();
+        }
+        if (val2.length > 0) {
+          if (!escapeEntities) val2 = this.replaceEntitiesValue(val2);
+          const newval = this.options.tagValueProcessor(tagName, val2, jPath, hasAttributes, isLeafNode);
+          if (newval === null || newval === void 0) {
+            return val2;
+          } else if (typeof newval !== typeof val2 || newval !== val2) {
+            return newval;
+          } else if (this.options.trimValues) {
+            return parseValue(val2, this.options.parseTagValue, this.options.numberParseOptions);
+          } else {
+            const trimmedVal = val2.trim();
+            if (trimmedVal === val2) {
+              return parseValue(val2, this.options.parseTagValue, this.options.numberParseOptions);
+            } else {
+              return val2;
+            }
+          }
+        }
+      }
+    }
+    function resolveNameSpace(tagname) {
+      if (this.options.removeNSPrefix) {
+        const tags = tagname.split(':');
+        const prefix = tagname.charAt(0) === '/' ? '/' : '';
+        if (tags[0] === 'xmlns') {
+          return '';
+        }
+        if (tags.length === 2) {
+          tagname = prefix + tags[1];
+        }
+      }
+      return tagname;
+    }
+    var attrsRegx = new RegExp(`([^\\s=]+)\\s*(=\\s*(['"])([\\s\\S]*?)\\3)?`, 'gm');
+    function buildAttributesMap(attrStr, jPath, tagName) {
+      if (!this.options.ignoreAttributes && typeof attrStr === 'string') {
+        const matches = util.getAllMatches(attrStr, attrsRegx);
+        const len = matches.length;
+        const attrs = {};
+        for (let i = 0; i < len; i++) {
+          const attrName = this.resolveNameSpace(matches[i][1]);
+          let oldVal = matches[i][4];
+          let aName = this.options.attributeNamePrefix + attrName;
+          if (attrName.length) {
+            if (this.options.transformAttributeName) {
+              aName = this.options.transformAttributeName(aName);
+            }
+            if (aName === '__proto__') aName = '#__proto__';
+            if (oldVal !== void 0) {
+              if (this.options.trimValues) {
+                oldVal = oldVal.trim();
+              }
+              oldVal = this.replaceEntitiesValue(oldVal);
+              const newVal = this.options.attributeValueProcessor(attrName, oldVal, jPath);
+              if (newVal === null || newVal === void 0) {
+                attrs[aName] = oldVal;
+              } else if (typeof newVal !== typeof oldVal || newVal !== oldVal) {
+                attrs[aName] = newVal;
+              } else {
+                attrs[aName] = parseValue(oldVal, this.options.parseAttributeValue, this.options.numberParseOptions);
+              }
+            } else if (this.options.allowBooleanAttributes) {
+              attrs[aName] = true;
+            }
+          }
+        }
+        if (!Object.keys(attrs).length) {
+          return;
+        }
+        if (this.options.attributesGroupName) {
+          const attrCollection = {};
+          attrCollection[this.options.attributesGroupName] = attrs;
+          return attrCollection;
+        }
+        return attrs;
+      }
+    }
+    var parseXml = function (xmlData) {
+      xmlData = xmlData.replace(/\r\n?/g, '\n');
+      const xmlObj = new xmlNode('!xml');
+      let currentNode = xmlObj;
+      let textData = '';
+      let jPath = '';
+      for (let i = 0; i < xmlData.length; i++) {
+        const ch = xmlData[i];
+        if (ch === '<') {
+          if (xmlData[i + 1] === '/') {
+            const closeIndex = findClosingIndex(xmlData, '>', i, 'Closing Tag is not closed.');
+            let tagName = xmlData.substring(i + 2, closeIndex).trim();
+            if (this.options.removeNSPrefix) {
+              const colonIndex = tagName.indexOf(':');
+              if (colonIndex !== -1) {
+                tagName = tagName.substr(colonIndex + 1);
+              }
+            }
+            if (this.options.transformTagName) {
+              tagName = this.options.transformTagName(tagName);
+            }
+            if (currentNode) {
+              textData = this.saveTextToParentTag(textData, currentNode, jPath);
+            }
+            const lastTagName = jPath.substring(jPath.lastIndexOf('.') + 1);
+            if (tagName && this.options.unpairedTags.indexOf(tagName) !== -1) {
+              throw new Error(`Unpaired tag can not be used as closing tag: </${tagName}>`);
+            }
+            let propIndex = 0;
+            if (lastTagName && this.options.unpairedTags.indexOf(lastTagName) !== -1) {
+              propIndex = jPath.lastIndexOf('.', jPath.lastIndexOf('.') - 1);
+              this.tagsNodeStack.pop();
+            } else {
+              propIndex = jPath.lastIndexOf('.');
+            }
+            jPath = jPath.substring(0, propIndex);
+            currentNode = this.tagsNodeStack.pop();
+            textData = '';
+            i = closeIndex;
+          } else if (xmlData[i + 1] === '?') {
+            let tagData = readTagExp(xmlData, i, false, '?>');
+            if (!tagData) throw new Error('Pi Tag is not closed.');
+            textData = this.saveTextToParentTag(textData, currentNode, jPath);
+            if ((this.options.ignoreDeclaration && tagData.tagName === '?xml') || this.options.ignorePiTags) {
+            } else {
+              const childNode = new xmlNode(tagData.tagName);
+              childNode.add(this.options.textNodeName, '');
+              if (tagData.tagName !== tagData.tagExp && tagData.attrExpPresent) {
+                childNode[':@'] = this.buildAttributesMap(tagData.tagExp, jPath, tagData.tagName);
+              }
+              this.addChild(currentNode, childNode, jPath);
+            }
+            i = tagData.closeIndex + 1;
+          } else if (xmlData.substr(i + 1, 3) === '!--') {
+            const endIndex = findClosingIndex(xmlData, '-->', i + 4, 'Comment is not closed.');
+            if (this.options.commentPropName) {
+              const comment = xmlData.substring(i + 4, endIndex - 2);
+              textData = this.saveTextToParentTag(textData, currentNode, jPath);
+              currentNode.add(this.options.commentPropName, [{ [this.options.textNodeName]: comment }]);
+            }
+            i = endIndex;
+          } else if (xmlData.substr(i + 1, 2) === '!D') {
+            const result = readDocType(xmlData, i);
+            this.docTypeEntities = result.entities;
+            i = result.i;
+          } else if (xmlData.substr(i + 1, 2) === '![') {
+            const closeIndex = findClosingIndex(xmlData, ']]>', i, 'CDATA is not closed.') - 2;
+            const tagExp = xmlData.substring(i + 9, closeIndex);
+            textData = this.saveTextToParentTag(textData, currentNode, jPath);
+            if (this.options.cdataPropName) {
+              currentNode.add(this.options.cdataPropName, [{ [this.options.textNodeName]: tagExp }]);
+            } else {
+              let val2 = this.parseTextData(tagExp, currentNode.tagname, jPath, true, false, true);
+              if (val2 == void 0) val2 = '';
+              currentNode.add(this.options.textNodeName, val2);
+            }
+            i = closeIndex + 2;
+          } else {
+            let result = readTagExp(xmlData, i, this.options.removeNSPrefix);
+            let tagName = result.tagName;
+            let tagExp = result.tagExp;
+            let attrExpPresent = result.attrExpPresent;
+            let closeIndex = result.closeIndex;
+            if (this.options.transformTagName) {
+              tagName = this.options.transformTagName(tagName);
+            }
+            if (currentNode && textData) {
+              if (currentNode.tagname !== '!xml') {
+                textData = this.saveTextToParentTag(textData, currentNode, jPath, false);
+              }
+            }
+            const lastTag = currentNode;
+            if (lastTag && this.options.unpairedTags.indexOf(lastTag.tagname) !== -1) {
+              currentNode = this.tagsNodeStack.pop();
+              jPath = jPath.substring(0, jPath.lastIndexOf('.'));
+            }
+            if (tagName !== xmlObj.tagname) {
+              jPath += jPath ? '.' + tagName : tagName;
+            }
+            if (this.isItStopNode(this.options.stopNodes, jPath, tagName)) {
+              let tagContent = '';
+              if (tagExp.length > 0 && tagExp.lastIndexOf('/') === tagExp.length - 1) {
+                i = result.closeIndex;
+              } else if (this.options.unpairedTags.indexOf(tagName) !== -1) {
+                i = result.closeIndex;
+              } else {
+                const result2 = this.readStopNodeData(xmlData, tagName, closeIndex + 1);
+                if (!result2) throw new Error(`Unexpected end of ${tagName}`);
+                i = result2.i;
+                tagContent = result2.tagContent;
+              }
+              const childNode = new xmlNode(tagName);
+              if (tagName !== tagExp && attrExpPresent) {
+                childNode[':@'] = this.buildAttributesMap(tagExp, jPath, tagName);
+              }
+              if (tagContent) {
+                tagContent = this.parseTextData(tagContent, tagName, jPath, true, attrExpPresent, true, true);
+              }
+              jPath = jPath.substr(0, jPath.lastIndexOf('.'));
+              childNode.add(this.options.textNodeName, tagContent);
+              this.addChild(currentNode, childNode, jPath);
+            } else {
+              if (tagExp.length > 0 && tagExp.lastIndexOf('/') === tagExp.length - 1) {
+                if (tagName[tagName.length - 1] === '/') {
+                  tagName = tagName.substr(0, tagName.length - 1);
+                  tagExp = tagName;
+                } else {
+                  tagExp = tagExp.substr(0, tagExp.length - 1);
+                }
+                if (this.options.transformTagName) {
+                  tagName = this.options.transformTagName(tagName);
+                }
+                const childNode = new xmlNode(tagName);
+                if (tagName !== tagExp && attrExpPresent) {
+                  childNode[':@'] = this.buildAttributesMap(tagExp, jPath, tagName);
+                }
+                this.addChild(currentNode, childNode, jPath);
+                jPath = jPath.substr(0, jPath.lastIndexOf('.'));
+              } else {
+                const childNode = new xmlNode(tagName);
+                this.tagsNodeStack.push(currentNode);
+                if (tagName !== tagExp && attrExpPresent) {
+                  childNode[':@'] = this.buildAttributesMap(tagExp, jPath, tagName);
+                }
+                this.addChild(currentNode, childNode, jPath);
+                currentNode = childNode;
+              }
+              textData = '';
+              i = closeIndex;
+            }
+          }
+        } else {
+          textData += xmlData[i];
+        }
+      }
+      return xmlObj.child;
+    };
+    function addChild(currentNode, childNode, jPath) {
+      const result = this.options.updateTag(childNode.tagname, jPath, childNode[':@']);
+      if (result === false) {
+      } else if (typeof result === 'string') {
+        childNode.tagname = result;
+        currentNode.addChild(childNode);
+      } else {
+        currentNode.addChild(childNode);
+      }
+    }
+    var replaceEntitiesValue = function (val2) {
+      if (this.options.processEntities) {
+        for (let entityName2 in this.docTypeEntities) {
+          const entity = this.docTypeEntities[entityName2];
+          val2 = val2.replace(entity.regx, entity.val);
+        }
+        for (let entityName2 in this.lastEntities) {
+          const entity = this.lastEntities[entityName2];
+          val2 = val2.replace(entity.regex, entity.val);
+        }
+        if (this.options.htmlEntities) {
+          for (let entityName2 in this.htmlEntities) {
+            const entity = this.htmlEntities[entityName2];
+            val2 = val2.replace(entity.regex, entity.val);
+          }
+        }
+        val2 = val2.replace(this.ampEntity.regex, this.ampEntity.val);
+      }
+      return val2;
+    };
+    function saveTextToParentTag(textData, currentNode, jPath, isLeafNode) {
+      if (textData) {
+        if (isLeafNode === void 0) isLeafNode = Object.keys(currentNode.child).length === 0;
+        textData = this.parseTextData(
+          textData,
+          currentNode.tagname,
+          jPath,
+          false,
+          currentNode[':@'] ? Object.keys(currentNode[':@']).length !== 0 : false,
+          isLeafNode
+        );
+        if (textData !== void 0 && textData !== '') currentNode.add(this.options.textNodeName, textData);
+        textData = '';
+      }
+      return textData;
+    }
+    function isItStopNode(stopNodes, jPath, currentTagName) {
+      const allNodesExp = '*.' + currentTagName;
+      for (const stopNodePath in stopNodes) {
+        const stopNodeExp = stopNodes[stopNodePath];
+        if (allNodesExp === stopNodeExp || jPath === stopNodeExp) return true;
+      }
+      return false;
+    }
+    function tagExpWithClosingIndex(xmlData, i, closingChar = '>') {
+      let attrBoundary;
+      let tagExp = '';
+      for (let index = i; index < xmlData.length; index++) {
+        let ch = xmlData[index];
+        if (attrBoundary) {
+          if (ch === attrBoundary) attrBoundary = '';
+        } else if (ch === '"' || ch === "'") {
+          attrBoundary = ch;
+        } else if (ch === closingChar[0]) {
+          if (closingChar[1]) {
+            if (xmlData[index + 1] === closingChar[1]) {
+              return {
+                data: tagExp,
+                index
+              };
+            }
+          } else {
+            return {
+              data: tagExp,
+              index
+            };
+          }
+        } else if (ch === '	') {
+          ch = ' ';
+        }
+        tagExp += ch;
+      }
+    }
+    function findClosingIndex(xmlData, str, i, errMsg) {
+      const closingIndex = xmlData.indexOf(str, i);
+      if (closingIndex === -1) {
+        throw new Error(errMsg);
+      } else {
+        return closingIndex + str.length - 1;
+      }
+    }
+    function readTagExp(xmlData, i, removeNSPrefix, closingChar = '>') {
+      const result = tagExpWithClosingIndex(xmlData, i + 1, closingChar);
+      if (!result) return;
+      let tagExp = result.data;
+      const closeIndex = result.index;
+      const separatorIndex = tagExp.search(/\s/);
+      let tagName = tagExp;
+      let attrExpPresent = true;
+      if (separatorIndex !== -1) {
+        tagName = tagExp.substr(0, separatorIndex).replace(/\s\s*$/, '');
+        tagExp = tagExp.substr(separatorIndex + 1);
+      }
+      if (removeNSPrefix) {
+        const colonIndex = tagName.indexOf(':');
+        if (colonIndex !== -1) {
+          tagName = tagName.substr(colonIndex + 1);
+          attrExpPresent = tagName !== result.data.substr(colonIndex + 1);
+        }
+      }
+      return {
+        tagName,
+        tagExp,
+        closeIndex,
+        attrExpPresent
+      };
+    }
+    function readStopNodeData(xmlData, tagName, i) {
+      const startIndex = i;
+      let openTagCount = 1;
+      for (; i < xmlData.length; i++) {
+        if (xmlData[i] === '<') {
+          if (xmlData[i + 1] === '/') {
+            const closeIndex = findClosingIndex(xmlData, '>', i, `${tagName} is not closed`);
+            let closeTagName = xmlData.substring(i + 2, closeIndex).trim();
+            if (closeTagName === tagName) {
+              openTagCount--;
+              if (openTagCount === 0) {
+                return {
+                  tagContent: xmlData.substring(startIndex, i),
+                  i: closeIndex
+                };
+              }
+            }
+            i = closeIndex;
+          } else if (xmlData[i + 1] === '?') {
+            const closeIndex = findClosingIndex(xmlData, '?>', i + 1, 'StopNode is not closed.');
+            i = closeIndex;
+          } else if (xmlData.substr(i + 1, 3) === '!--') {
+            const closeIndex = findClosingIndex(xmlData, '-->', i + 3, 'StopNode is not closed.');
+            i = closeIndex;
+          } else if (xmlData.substr(i + 1, 2) === '![') {
+            const closeIndex = findClosingIndex(xmlData, ']]>', i, 'StopNode is not closed.') - 2;
+            i = closeIndex;
+          } else {
+            const tagData = readTagExp(xmlData, i, '>');
+            if (tagData) {
+              const openTagName = tagData && tagData.tagName;
+              if (openTagName === tagName && tagData.tagExp[tagData.tagExp.length - 1] !== '/') {
+                openTagCount++;
+              }
+              i = tagData.closeIndex;
+            }
+          }
+        }
+      }
+    }
+    function parseValue(val2, shouldParse, options) {
+      if (shouldParse && typeof val2 === 'string') {
+        const newval = val2.trim();
+        if (newval === 'true') return true;
+        else if (newval === 'false') return false;
+        else return toNumber(val2, options);
+      } else {
+        if (util.isExist(val2)) {
+          return val2;
+        } else {
+          return '';
+        }
+      }
+    }
+    module2.exports = OrderedObjParser;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlparser/node2json.js
+var require_node2json = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/node2json.js'(exports2) {
+    'use strict';
+    function prettify(node, options) {
+      return compress(node, options);
+    }
+    function compress(arr, options, jPath) {
+      let text;
+      const compressedObj = {};
+      for (let i = 0; i < arr.length; i++) {
+        const tagObj = arr[i];
+        const property = propName(tagObj);
+        let newJpath = '';
+        if (jPath === void 0) newJpath = property;
+        else newJpath = jPath + '.' + property;
+        if (property === options.textNodeName) {
+          if (text === void 0) text = tagObj[property];
+          else text += '' + tagObj[property];
+        } else if (property === void 0) {
+          continue;
+        } else if (tagObj[property]) {
+          let val2 = compress(tagObj[property], options, newJpath);
+          const isLeaf = isLeafTag(val2, options);
+          if (tagObj[':@']) {
+            assignAttributes(val2, tagObj[':@'], newJpath, options);
+          } else if (
+            Object.keys(val2).length === 1 &&
+            val2[options.textNodeName] !== void 0 &&
+            !options.alwaysCreateTextNode
+          ) {
+            val2 = val2[options.textNodeName];
+          } else if (Object.keys(val2).length === 0) {
+            if (options.alwaysCreateTextNode) val2[options.textNodeName] = '';
+            else val2 = '';
+          }
+          if (compressedObj[property] !== void 0 && compressedObj.hasOwnProperty(property)) {
+            if (!Array.isArray(compressedObj[property])) {
+              compressedObj[property] = [compressedObj[property]];
+            }
+            compressedObj[property].push(val2);
+          } else {
+            if (options.isArray(property, newJpath, isLeaf)) {
+              compressedObj[property] = [val2];
+            } else {
+              compressedObj[property] = val2;
+            }
+          }
+        }
+      }
+      if (typeof text === 'string') {
+        if (text.length > 0) compressedObj[options.textNodeName] = text;
+      } else if (text !== void 0) compressedObj[options.textNodeName] = text;
+      return compressedObj;
+    }
+    function propName(obj) {
+      const keys = Object.keys(obj);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (key !== ':@') return key;
+      }
+    }
+    function assignAttributes(obj, attrMap, jpath, options) {
+      if (attrMap) {
+        const keys = Object.keys(attrMap);
+        const len = keys.length;
+        for (let i = 0; i < len; i++) {
+          const atrrName = keys[i];
+          if (options.isArray(atrrName, jpath + '.' + atrrName, true, true)) {
+            obj[atrrName] = [attrMap[atrrName]];
+          } else {
+            obj[atrrName] = attrMap[atrrName];
+          }
+        }
+      }
+    }
+    function isLeafTag(obj, options) {
+      const { textNodeName } = options;
+      const propCount = Object.keys(obj).length;
+      if (propCount === 0) {
+        return true;
+      }
+      if (propCount === 1 && (obj[textNodeName] || typeof obj[textNodeName] === 'boolean' || obj[textNodeName] === 0)) {
+        return true;
+      }
+      return false;
+    }
+    exports2.prettify = prettify;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlparser/XMLParser.js
+var require_XMLParser = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlparser/XMLParser.js'(exports2, module2) {
+    var { buildOptions } = require_OptionsBuilder();
+    var OrderedObjParser = require_OrderedObjParser();
+    var { prettify } = require_node2json();
+    var validator = require_validator();
+    var XMLParser = class {
+      constructor(options) {
+        this.externalEntities = {};
+        this.options = buildOptions(options);
+      }
+      parse(xmlData, validationOption) {
+        if (typeof xmlData === 'string') {
+        } else if (xmlData.toString) {
+          xmlData = xmlData.toString();
+        } else {
+          throw new Error('XML data is accepted in String or Bytes[] form.');
+        }
+        if (validationOption) {
+          if (validationOption === true) validationOption = {};
+          const result = validator.validate(xmlData, validationOption);
+          if (result !== true) {
+            throw Error(`${result.err.msg}:${result.err.line}:${result.err.col}`);
+          }
+        }
+        const orderedObjParser = new OrderedObjParser(this.options);
+        orderedObjParser.addExternalEntities(this.externalEntities);
+        const orderedResult = orderedObjParser.parseXml(xmlData);
+        if (this.options.preserveOrder || orderedResult === void 0) return orderedResult;
+        else return prettify(orderedResult, this.options);
+      }
+      addEntity(key, value) {
+        if (value.indexOf('&') !== -1) {
+          throw new Error("Entity value can't have '&'");
+        } else if (key.indexOf('&') !== -1 || key.indexOf(';') !== -1) {
+          throw new Error("An entity must be set without '&' and ';'. Eg. use '#xD' for '&#xD;'");
+        } else if (value === '&') {
+          throw new Error("An entity with value '&' is not permitted");
+        } else {
+          this.externalEntities[key] = value;
+        }
+      }
+    };
+    module2.exports = XMLParser;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlbuilder/orderedJs2Xml.js
+var require_orderedJs2Xml = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlbuilder/orderedJs2Xml.js'(exports2, module2) {
+    var EOL = '\n';
+    function toXml(jArray, options) {
+      let indentation = '';
+      if (options.format && options.indentBy.length > 0) {
+        indentation = EOL;
+      }
+      return arrToStr(jArray, options, '', indentation);
+    }
+    function arrToStr(arr, options, jPath, indentation) {
+      let xmlStr = '';
+      let isPreviousElementTag = false;
+      for (let i = 0; i < arr.length; i++) {
+        const tagObj = arr[i];
+        const tagName = propName(tagObj);
+        let newJPath = '';
+        if (jPath.length === 0) newJPath = tagName;
+        else newJPath = `${jPath}.${tagName}`;
+        if (tagName === options.textNodeName) {
+          let tagText = tagObj[tagName];
+          if (!isStopNode(newJPath, options)) {
+            tagText = options.tagValueProcessor(tagName, tagText);
+            tagText = replaceEntitiesValue(tagText, options);
+          }
+          if (isPreviousElementTag) {
+            xmlStr += indentation;
+          }
+          xmlStr += tagText;
+          isPreviousElementTag = false;
+          continue;
+        } else if (tagName === options.cdataPropName) {
+          if (isPreviousElementTag) {
+            xmlStr += indentation;
+          }
+          xmlStr += `<![CDATA[${tagObj[tagName][0][options.textNodeName]}]]>`;
+          isPreviousElementTag = false;
+          continue;
+        } else if (tagName === options.commentPropName) {
+          xmlStr += indentation + `<!--${tagObj[tagName][0][options.textNodeName]}-->`;
+          isPreviousElementTag = true;
+          continue;
+        } else if (tagName[0] === '?') {
+          const attStr2 = attr_to_str(tagObj[':@'], options);
+          const tempInd = tagName === '?xml' ? '' : indentation;
+          let piTextNodeName = tagObj[tagName][0][options.textNodeName];
+          piTextNodeName = piTextNodeName.length !== 0 ? ' ' + piTextNodeName : '';
+          xmlStr += tempInd + `<${tagName}${piTextNodeName}${attStr2}?>`;
+          isPreviousElementTag = true;
+          continue;
+        }
+        let newIdentation = indentation;
+        if (newIdentation !== '') {
+          newIdentation += options.indentBy;
+        }
+        const attStr = attr_to_str(tagObj[':@'], options);
+        const tagStart = indentation + `<${tagName}${attStr}`;
+        const tagValue = arrToStr(tagObj[tagName], options, newJPath, newIdentation);
+        if (options.unpairedTags.indexOf(tagName) !== -1) {
+          if (options.suppressUnpairedNode) xmlStr += tagStart + '>';
+          else xmlStr += tagStart + '/>';
+        } else if ((!tagValue || tagValue.length === 0) && options.suppressEmptyNode) {
+          xmlStr += tagStart + '/>';
+        } else if (tagValue && tagValue.endsWith('>')) {
+          xmlStr += tagStart + `>${tagValue}${indentation}</${tagName}>`;
+        } else {
+          xmlStr += tagStart + '>';
+          if (tagValue && indentation !== '' && (tagValue.includes('/>') || tagValue.includes('</'))) {
+            xmlStr += indentation + options.indentBy + tagValue + indentation;
+          } else {
+            xmlStr += tagValue;
+          }
+          xmlStr += `</${tagName}>`;
+        }
+        isPreviousElementTag = true;
+      }
+      return xmlStr;
+    }
+    function propName(obj) {
+      const keys = Object.keys(obj);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (key !== ':@') return key;
+      }
+    }
+    function attr_to_str(attrMap, options) {
+      let attrStr = '';
+      if (attrMap && !options.ignoreAttributes) {
+        for (let attr in attrMap) {
+          let attrVal = options.attributeValueProcessor(attr, attrMap[attr]);
+          attrVal = replaceEntitiesValue(attrVal, options);
+          if (attrVal === true && options.suppressBooleanAttributes) {
+            attrStr += ` ${attr.substr(options.attributeNamePrefix.length)}`;
+          } else {
+            attrStr += ` ${attr.substr(options.attributeNamePrefix.length)}="${attrVal}"`;
+          }
+        }
+      }
+      return attrStr;
+    }
+    function isStopNode(jPath, options) {
+      jPath = jPath.substr(0, jPath.length - options.textNodeName.length - 1);
+      let tagName = jPath.substr(jPath.lastIndexOf('.') + 1);
+      for (let index in options.stopNodes) {
+        if (options.stopNodes[index] === jPath || options.stopNodes[index] === '*.' + tagName) return true;
+      }
+      return false;
+    }
+    function replaceEntitiesValue(textValue, options) {
+      if (textValue && textValue.length > 0 && options.processEntities) {
+        for (let i = 0; i < options.entities.length; i++) {
+          const entity = options.entities[i];
+          textValue = textValue.replace(entity.regex, entity.val);
+        }
+      }
+      return textValue;
+    }
+    module2.exports = toXml;
+  }
+});
+
+// node_modules/fast-xml-parser/src/xmlbuilder/json2xml.js
+var require_json2xml = __commonJS({
+  'node_modules/fast-xml-parser/src/xmlbuilder/json2xml.js'(exports2, module2) {
+    'use strict';
+    var buildFromOrderedJs = require_orderedJs2Xml();
+    var defaultOptions = {
+      attributeNamePrefix: '@_',
+      attributesGroupName: false,
+      textNodeName: '#text',
+      ignoreAttributes: true,
+      cdataPropName: false,
+      format: false,
+      indentBy: '  ',
+      suppressEmptyNode: false,
+      suppressUnpairedNode: true,
+      suppressBooleanAttributes: true,
+      tagValueProcessor: function (key, a) {
+        return a;
+      },
+      attributeValueProcessor: function (attrName, a) {
+        return a;
+      },
+      preserveOrder: false,
+      commentPropName: false,
+      unpairedTags: [],
+      entities: [
+        { regex: new RegExp('&', 'g'), val: '&amp;' },
+        { regex: new RegExp('>', 'g'), val: '&gt;' },
+        { regex: new RegExp('<', 'g'), val: '&lt;' },
+        { regex: new RegExp("'", 'g'), val: '&apos;' },
+        { regex: new RegExp('"', 'g'), val: '&quot;' }
+      ],
+      processEntities: true,
+      stopNodes: [],
+      oneListGroup: false
+    };
+    function Builder(options) {
+      this.options = Object.assign({}, defaultOptions, options);
+      if (this.options.ignoreAttributes || this.options.attributesGroupName) {
         this.isAttribute = function () {
           return false;
         };
@@ -5700,15 +6100,6 @@ var require_json2xml = __commonJS({
         this.attrPrefixLen = this.options.attributeNamePrefix.length;
         this.isAttribute = isAttribute;
       }
-      if (this.options.cdataTagName) {
-        this.isCDATA = isCDATA;
-      } else {
-        this.isCDATA = function () {
-          return false;
-        };
-      }
-      this.replaceCDATAstr = replaceCDATAstr;
-      this.replaceCDATAarr = replaceCDATAarr;
       this.processTextOrObjNode = processTextOrObjNode;
       if (this.options.format) {
         this.indentate = indentate;
@@ -5721,161 +6112,166 @@ var require_json2xml = __commonJS({
         this.tagEndChar = '>';
         this.newLine = '';
       }
-      if (this.options.supressEmptyNode) {
-        this.buildTextNode = buildEmptyTextNode;
-        this.buildObjNode = buildEmptyObjNode;
-      } else {
-        this.buildTextNode = buildTextValNode;
-        this.buildObjNode = buildObjectNode;
-      }
-      this.buildTextValNode = buildTextValNode;
-      this.buildObjectNode = buildObjectNode;
     }
-    Parser.prototype.parse = function (jObj) {
-      if (Array.isArray(jObj) && this.options.rootNodeName && this.options.rootNodeName.length > 1) {
-        jObj = {
-          [this.options.rootNodeName]: jObj
-        };
+    Builder.prototype.build = function (jObj) {
+      if (this.options.preserveOrder) {
+        return buildFromOrderedJs(jObj, this.options);
+      } else {
+        if (Array.isArray(jObj) && this.options.arrayNodeName && this.options.arrayNodeName.length > 1) {
+          jObj = {
+            [this.options.arrayNodeName]: jObj
+          };
+        }
+        return this.j2x(jObj, 0).val;
       }
-      return this.j2x(jObj, 0).val;
     };
-    Parser.prototype.j2x = function (jObj, level) {
+    Builder.prototype.j2x = function (jObj, level) {
       let attrStr = '';
-      let val = '';
+      let val2 = '';
       for (let key in jObj) {
         if (typeof jObj[key] === 'undefined') {
         } else if (jObj[key] === null) {
-          val += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
+          if (key[0] === '?') val2 += this.indentate(level) + '<' + key + '?' + this.tagEndChar;
+          else val2 += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
         } else if (jObj[key] instanceof Date) {
-          val += this.buildTextNode(jObj[key], key, '', level);
+          val2 += this.buildTextValNode(jObj[key], key, '', level);
         } else if (typeof jObj[key] !== 'object') {
           const attr = this.isAttribute(key);
           if (attr) {
-            attrStr += ' ' + attr + '="' + this.options.attrValueProcessor('' + jObj[key]) + '"';
-          } else if (this.isCDATA(key)) {
-            if (jObj[this.options.textNodeName]) {
-              val += this.replaceCDATAstr(jObj[this.options.textNodeName], jObj[key]);
-            } else {
-              val += this.replaceCDATAstr('', jObj[key]);
-            }
+            attrStr += this.buildAttrPairStr(attr, '' + jObj[key]);
           } else {
             if (key === this.options.textNodeName) {
-              if (jObj[this.options.cdataTagName]) {
-              } else {
-                val += this.options.tagValueProcessor('' + jObj[key]);
-              }
+              let newval = this.options.tagValueProcessor(key, '' + jObj[key]);
+              val2 += this.replaceEntitiesValue(newval);
             } else {
-              val += this.buildTextNode(jObj[key], key, '', level);
+              val2 += this.buildTextValNode(jObj[key], key, '', level);
             }
           }
         } else if (Array.isArray(jObj[key])) {
-          if (this.isCDATA(key)) {
-            val += this.indentate(level);
-            if (jObj[this.options.textNodeName]) {
-              val += this.replaceCDATAarr(jObj[this.options.textNodeName], jObj[key]);
-            } else {
-              val += this.replaceCDATAarr('', jObj[key]);
-            }
-          } else {
-            const arrLen = jObj[key].length;
-            for (let j = 0; j < arrLen; j++) {
-              const item = jObj[key][j];
-              if (typeof item === 'undefined') {
-              } else if (item === null) {
-                val += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
-              } else if (typeof item === 'object') {
-                val += this.processTextOrObjNode(item, key, level);
+          const arrLen = jObj[key].length;
+          let listTagVal = '';
+          for (let j = 0; j < arrLen; j++) {
+            const item = jObj[key][j];
+            if (typeof item === 'undefined') {
+            } else if (item === null) {
+              if (key[0] === '?') val2 += this.indentate(level) + '<' + key + '?' + this.tagEndChar;
+              else val2 += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
+            } else if (typeof item === 'object') {
+              if (this.options.oneListGroup) {
+                listTagVal += this.j2x(item, level + 1).val;
               } else {
-                val += this.buildTextNode(item, key, '', level);
+                listTagVal += this.processTextOrObjNode(item, key, level);
               }
+            } else {
+              listTagVal += this.buildTextValNode(item, key, '', level);
             }
           }
+          if (this.options.oneListGroup) {
+            listTagVal = this.buildObjectNode(listTagVal, key, '', level);
+          }
+          val2 += listTagVal;
         } else {
-          if (this.options.attrNodeName && key === this.options.attrNodeName) {
+          if (this.options.attributesGroupName && key === this.options.attributesGroupName) {
             const Ks = Object.keys(jObj[key]);
             const L = Ks.length;
             for (let j = 0; j < L; j++) {
-              attrStr += ' ' + Ks[j] + '="' + this.options.attrValueProcessor('' + jObj[key][Ks[j]]) + '"';
+              attrStr += this.buildAttrPairStr(Ks[j], '' + jObj[key][Ks[j]]);
             }
           } else {
-            val += this.processTextOrObjNode(jObj[key], key, level);
+            val2 += this.processTextOrObjNode(jObj[key], key, level);
           }
         }
       }
-      return { attrStr, val };
+      return { attrStr, val: val2 };
+    };
+    Builder.prototype.buildAttrPairStr = function (attrName, val2) {
+      val2 = this.options.attributeValueProcessor(attrName, '' + val2);
+      val2 = this.replaceEntitiesValue(val2);
+      if (this.options.suppressBooleanAttributes && val2 === 'true') {
+        return ' ' + attrName;
+      } else return ' ' + attrName + '="' + val2 + '"';
     };
     function processTextOrObjNode(object, key, level) {
       const result = this.j2x(object, level + 1);
       if (object[this.options.textNodeName] !== void 0 && Object.keys(object).length === 1) {
-        return this.buildTextNode(result.val, key, result.attrStr, level);
+        return this.buildTextValNode(object[this.options.textNodeName], key, result.attrStr, level);
       } else {
-        return this.buildObjNode(result.val, key, result.attrStr, level);
+        return this.buildObjectNode(result.val, key, result.attrStr, level);
       }
     }
-    function replaceCDATAstr(str, cdata) {
-      str = this.options.tagValueProcessor('' + str);
-      if (this.options.cdataPositionChar === '' || str === '') {
-        return str + '<![CDATA[' + cdata + ']]' + this.tagEndChar;
-      } else {
-        return str.replace(this.options.cdataPositionChar, '<![CDATA[' + cdata + ']]' + this.tagEndChar);
-      }
-    }
-    function replaceCDATAarr(str, cdata) {
-      str = this.options.tagValueProcessor('' + str);
-      if (this.options.cdataPositionChar === '' || str === '') {
-        return str + '<![CDATA[' + cdata.join(']]><![CDATA[') + ']]' + this.tagEndChar;
-      } else {
-        for (let v in cdata) {
-          str = str.replace(this.options.cdataPositionChar, '<![CDATA[' + cdata[v] + ']]>');
+    Builder.prototype.buildObjectNode = function (val2, key, attrStr, level) {
+      if (val2 === '') {
+        if (key[0] === '?') return this.indentate(level) + '<' + key + attrStr + '?' + this.tagEndChar;
+        else {
+          return this.indentate(level) + '<' + key + attrStr + this.closeTag(key) + this.tagEndChar;
         }
-        return str + this.newLine;
-      }
-    }
-    function buildObjectNode(val, key, attrStr, level) {
-      if (attrStr && val.indexOf('<') === -1) {
-        return this.indentate(level) + '<' + key + attrStr + '>' + val + '</' + key + this.tagEndChar;
       } else {
-        return (
-          this.indentate(level) +
-          '<' +
-          key +
-          attrStr +
-          this.tagEndChar +
-          val +
-          this.indentate(level) +
-          '</' +
-          key +
-          this.tagEndChar
-        );
+        let tagEndExp = '</' + key + this.tagEndChar;
+        let piClosingChar = '';
+        if (key[0] === '?') {
+          piClosingChar = '?';
+          tagEndExp = '';
+        }
+        if (attrStr && val2.indexOf('<') === -1) {
+          return this.indentate(level) + '<' + key + attrStr + piClosingChar + '>' + val2 + tagEndExp;
+        } else if (
+          this.options.commentPropName !== false &&
+          key === this.options.commentPropName &&
+          piClosingChar.length === 0
+        ) {
+          return this.indentate(level) + `<!--${val2}-->` + this.newLine;
+        } else {
+          return (
+            this.indentate(level) +
+            '<' +
+            key +
+            attrStr +
+            piClosingChar +
+            this.tagEndChar +
+            val2 +
+            this.indentate(level) +
+            tagEndExp
+          );
+        }
       }
-    }
-    function buildEmptyObjNode(val, key, attrStr, level) {
-      if (val !== '') {
-        return this.buildObjectNode(val, key, attrStr, level);
+    };
+    Builder.prototype.closeTag = function (key) {
+      let closeTag = '';
+      if (this.options.unpairedTags.indexOf(key) !== -1) {
+        if (!this.options.suppressUnpairedNode) closeTag = '/';
+      } else if (this.options.suppressEmptyNode) {
+        closeTag = '/';
       } else {
-        return this.indentate(level) + '<' + key + attrStr + '/' + this.tagEndChar;
+        closeTag = `></${key}`;
       }
-    }
-    function buildTextValNode(val, key, attrStr, level) {
-      return (
-        this.indentate(level) +
-        '<' +
-        key +
-        attrStr +
-        '>' +
-        this.options.tagValueProcessor(val) +
-        '</' +
-        key +
-        this.tagEndChar
-      );
-    }
-    function buildEmptyTextNode(val, key, attrStr, level) {
-      if (val !== '') {
-        return this.buildTextValNode(val, key, attrStr, level);
+      return closeTag;
+    };
+    Builder.prototype.buildTextValNode = function (val2, key, attrStr, level) {
+      if (this.options.cdataPropName !== false && key === this.options.cdataPropName) {
+        return this.indentate(level) + `<![CDATA[${val2}]]>` + this.newLine;
+      } else if (this.options.commentPropName !== false && key === this.options.commentPropName) {
+        return this.indentate(level) + `<!--${val2}-->` + this.newLine;
+      } else if (key[0] === '?') {
+        return this.indentate(level) + '<' + key + attrStr + '?' + this.tagEndChar;
       } else {
-        return this.indentate(level) + '<' + key + attrStr + '/' + this.tagEndChar;
+        let textValue = this.options.tagValueProcessor(key, val2);
+        textValue = this.replaceEntitiesValue(textValue);
+        if (textValue === '') {
+          return this.indentate(level) + '<' + key + attrStr + this.closeTag(key) + this.tagEndChar;
+        } else {
+          return this.indentate(level) + '<' + key + attrStr + '>' + textValue + '</' + key + this.tagEndChar;
+        }
       }
-    }
+    };
+    Builder.prototype.replaceEntitiesValue = function (textValue) {
+      if (textValue && textValue.length > 0 && this.options.processEntities) {
+        for (let i = 0; i < this.options.entities.length; i++) {
+          const entity = this.options.entities[i];
+          textValue = textValue.replace(entity.regex, entity.val);
+        }
+      }
+      return textValue;
+    };
     function indentate(level) {
       return this.options.indentBy.repeat(level);
     }
@@ -5886,47 +6282,21 @@ var require_json2xml = __commonJS({
         return false;
       }
     }
-    function isCDATA(name) {
-      return name === this.options.cdataTagName;
-    }
-    module2.exports = Parser;
+    module2.exports = Builder;
   }
 });
 
-// node_modules/fast-xml-parser/src/parser.js
-var require_parser = __commonJS({
-  'node_modules/fast-xml-parser/src/parser.js'(exports2) {
+// node_modules/fast-xml-parser/src/fxp.js
+var require_fxp = __commonJS({
+  'node_modules/fast-xml-parser/src/fxp.js'(exports2, module2) {
     'use strict';
-    var nodeToJson = require_node2json();
-    var xmlToNodeobj = require_xmlstr2xmlnode();
-    var x2xmlnode = require_xmlstr2xmlnode();
-    var buildOptions = require_util().buildOptions;
     var validator = require_validator();
-    exports2.parse = function (xmlData, givenOptions = {}, validationOption) {
-      if (validationOption) {
-        if (validationOption === true) validationOption = {};
-        const result = validator.validate(xmlData, validationOption);
-        if (result !== true) {
-          throw Error(result.err.msg);
-        }
-      }
-      if (givenOptions.parseTrueNumberOnly && givenOptions.parseNodeValue !== false && !givenOptions.numParseOptions) {
-        givenOptions.numParseOptions = {
-          leadingZeros: false
-        };
-      }
-      let options = buildOptions(givenOptions, x2xmlnode.defaultOptions, x2xmlnode.props);
-      const traversableObj = xmlToNodeobj.getTraversalObj(xmlData, options);
-      return nodeToJson.convertToJson(traversableObj, options);
-    };
-    exports2.convertTonimn = require_nimndata().convert2nimn;
-    exports2.getTraversalObj = xmlToNodeobj.getTraversalObj;
-    exports2.convertToJson = nodeToJson.convertToJson;
-    exports2.convertToJsonString = require_node2json_str().convertToJsonString;
-    exports2.validate = validator.validate;
-    exports2.j2xParser = require_json2xml();
-    exports2.parseToNimn = function (xmlData, schema, options) {
-      return exports2.convertTonimn(exports2.getTraversalObj(xmlData, options), schema, options);
+    var XMLParser = require_XMLParser();
+    var XMLBuilder = require_json2xml();
+    module2.exports = {
+      XMLParser,
+      XMLValidator: validator,
+      XMLBuilder
     };
   }
 });
@@ -9965,7 +10335,7 @@ var require_utils2 = __commonJS({
     var core2 = require_core();
     var fs = require('fs');
     var glob = require_glob();
-    var xmlParser = require_parser();
+    var { XMLParser, XMLValidator } = require_fxp();
     var he = require_he();
     var path = require('path');
     function findTrxFiles(baseDir) {
@@ -9989,7 +10359,7 @@ var require_utils2 = __commonJS({
       let trxDataWrapper;
       core2.info(`Transforming file ${filePath}`);
       const xmlData = fs.readFileSync(filePath, 'utf-8');
-      const options = {
+      const xmlParser = new XMLParser({
         attributeNamePrefix: '_',
         textNodeName: '#text',
         ignoreAttributes: false,
@@ -10002,15 +10372,15 @@ var require_utils2 = __commonJS({
         cdataPositionChar: '\\c',
         parseTrueNumberOnly: false,
         arrayMode: false,
-        attrValueProcessor: (val, _attrName) =>
-          he.decode(val, {
+        attrValueProcessor: (val2, _attrName) =>
+          he.decode(val2, {
             isAttributeValue: true
           }),
-        tagValueProcessor: (val, _tagName) => he.decode(val),
+        tagValueProcessor: (val2, _tagName) => he.decode(val2),
         stopNodes: ['parse-me-as-string']
-      };
-      if (xmlParser.validate(xmlData.toString()) === true) {
-        const parsedTrx = xmlParser.parse(xmlData, options, true);
+      });
+      if (XMLValidator.validate(xmlData.toString()) === true) {
+        const parsedTrx = xmlParser.parse(xmlData);
         const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
         if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
           core2.warning('There is trouble');
@@ -10077,7 +10447,7 @@ var require_utils2 = __commonJS({
           reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
         }
         if (!reportTitle) {
-          const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
+          const storage = unitTests.length > 0 && unitTests[0]._storage ? unitTests[0]._storage : 'NOT FOUND';
           const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
           if (dllName) {
             reportTitle = dllName;
