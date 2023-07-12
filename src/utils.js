@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const fs = require('fs');
 const glob = require('glob');
-const xmlParser = require('fast-xml-parser');
+const { XMLParser, XMLValidator } = require('fast-xml-parser');
 const he = require('he');
 const path = require('path');
 
@@ -34,7 +34,7 @@ async function transformTrxToJson(filePath) {
   core.info(`Transforming file ${filePath}`);
 
   const xmlData = fs.readFileSync(filePath, 'utf-8');
-  const options = {
+  const xmlParser = new XMLParser({
     attributeNamePrefix: '_',
     textNodeName: '#text',
     ignoreAttributes: false,
@@ -53,10 +53,10 @@ async function transformTrxToJson(filePath) {
       }),
     tagValueProcessor: (val, _tagName) => he.decode(val),
     stopNodes: ['parse-me-as-string']
-  };
+  });
 
-  if (xmlParser.validate(xmlData.toString()) === true) {
-    const parsedTrx = xmlParser.parse(xmlData, options, true);
+  if (XMLValidator.validate(xmlData.toString()) === true) {
+    const parsedTrx = xmlParser.parse(xmlData);
     const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
     if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
       core.warning('There is trouble');
@@ -132,7 +132,7 @@ function getReportTitle(data, isEmpty) {
     }
 
     if (!reportTitle) {
-      const storage = unitTests.length > 0 ? unitTests[0]._storage : 'NOT FOUND';
+      const storage = unitTests.length > 0 && unitTests[0]._storage ? unitTests[0]._storage : 'NOT FOUND';
       const dllName = storage.replace(/\\/g, '/').replace('.dll', '').toUpperCase().split('/').pop();
       if (dllName) {
         reportTitle = dllName;
