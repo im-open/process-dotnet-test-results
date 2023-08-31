@@ -27,7 +27,7 @@ inputs:
   create-summary:
     description: 'Flag indicating whether a Job Summary with test results should be generated.'
     required: true
-    default: 'true'
+    default: 'false'
   create-results-file:
     description: 'Flag indicating whether a results file in markdown should be generated.'
     required: false
