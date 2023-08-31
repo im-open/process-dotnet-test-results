@@ -24,6 +24,10 @@ inputs:
     description: 'Flag indicating whether a PR comment with test results should be generated.   When `true` the default behavior is to update an existing comment if one exists.'
     required: true
     default: 'true'
+  create-summary:
+    description: 'Flag indicating whether a Job Summary with test results should be generated.'
+    required: true
+    default: 'true'
   create-results-file:
     description: 'Flag indicating whether a results file in markdown should be generated.'
     required: false
