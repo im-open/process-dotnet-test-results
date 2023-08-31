@@ -111,6 +111,12 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
   }
 }
 
+async function createJobSummary(markupData) {
+  await core.summary
+    .addRaw(markupData)
+    .write();
+}
+
 module.exports = {
   createStatusCheck,
   createPrComment
