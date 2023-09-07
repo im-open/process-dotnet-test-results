@@ -6,25 +6,29 @@ This action works in conjunction with another step that runs `dotnet test` and i
 
 There should be one status check created per `trx` file. For comments, one will be created for all `trx` files. The check and comment headings are named after the test project the `trx` was generated for.
 
-## Index
+## Index <!-- omit in toc -->
 
-- [Failures](#failures)
-- [Limitations](#limitations)
-- [Action Outputs](#action-outputs)
-  - [Pull Request Comment](#pull-request-comment)
-  - [Pull Request Status Check](#pull-request-status-check)
-  - [Workflow Run](#workflow-run)
-  - [Failed Test Details](#failed-test-details)
-- [Inputs](#inputs)
-- [Outputs](#outputs)
-- [Usage Examples](#usage-examples)
-  - [Using the defaults](#using-the-defaults)
-  - [Specifying additional behavior](#specifying-additional-behavior)
-- [Contributing](#contributing)
-  - [Recompiling](#recompiling)
-  - [Incrementing the Version](#incrementing-the-version)
-- [Code of Conduct](#code-of-conduct)
-- [License](#license)
+- [process-dotnet-test-results](#process-dotnet-test-results)
+  - [Failures](#failures)
+  - [Limitations](#limitations)
+  - [Action Outputs](#action-outputs)
+    - [Pull Request Comment](#pull-request-comment)
+    - [Pull Request Status Check](#pull-request-status-check)
+    - [Workflow Run](#workflow-run)
+    - [Failed Test Details](#failed-test-details)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+  - [Usage Examples](#usage-examples)
+    - [Using the defaults](#using-the-defaults)
+    - [Specifying additional behavior](#specifying-additional-behavior)
+    - [Using create-results-file](#using-create-results-file)
+  - [Contributing](#contributing)
+    - [Incrementing the Version](#incrementing-the-version)
+    - [Source Code Changes](#source-code-changes)
+    - [Recompiling Manually](#recompiling-manually)
+    - [Updating the README.md](#updating-the-readmemd)
+  - [Code of Conduct](#code-of-conduct)
+  - [License](#license)
 
 ## Failures
 
@@ -60,23 +64,23 @@ For failed test runs you can expand each failed test and view more details about
 
 ## Inputs
 
-| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                                                                                                   |
-| ------------------------------ | ----------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                                                                                                     |
-| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                                                                                          |
-| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                                                                                                        |
-| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                                                                                           |
-| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                                                                                                |
-| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.                                                                           |
-| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                                                                                                       |
-| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                                                                                                |
-| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                                                                                               |
-| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputed in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details. |
+| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                                                                                                    |
+|--------------------------------|-------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                                                                                                      |
+| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                                                                                           |
+| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                                                                                                         |
+| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                                                                                            |
+| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                                                                                                 |
+| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.                                                                            |
+| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                                                                                                        |
+| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                                                                                                 |
+| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                                                                                                |
+| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputted in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details. |
 
 ## Outputs
 
 | Output                   | Description                                                                                                                                                           |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
 | `trx-files`              | List of `trx` files that were processed                                                                                                                               |
 | `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                          |
@@ -188,57 +192,63 @@ To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
 
 ## Contributing
 
-When creating new PRs please ensure:
+When creating PRs, please review the following guidelines:
 
-1. For major or minor changes, at least one of the commit messages contains the appropriate `+semver:` keywords listed under [Incrementing the Version](#incrementing-the-version).
-1. The action code does not contain sensitive information.
+- [ ] The action code does not contain sensitive information.
+- [ ] At least one of the commit messages contains the appropriate `+semver:` keywords listed under [Incrementing the Version] for major and minor increments.
+- [ ] The action has been recompiled.  See [Recompiling Manually] for details.
+- [ ] The README.md has been updated with the latest version of the action.  See [Updating the README.md] for details.
 
-When a pull request is created and there are changes to code-specific files and folders, the build workflow will run and it will recompile the action and push a commit to the branch if the PR author has not done so. The usage examples in the README.md will also be updated with the next version if they have not been updated manually. The following files and folders contain action code and will trigger the automatic updates:
+### Incrementing the Version
 
-- action.yml
-- package.json
-- package-lock.json
-- src/\*\*
-- dist/\*\*
+This repo uses [git-version-lite] in its workflows to examine commit messages to determine whether to perform a major, minor or patch increment on merge if [source code] changes have been made.  The following table provides the fragment that should be included in a commit message to active different increment strategies.
 
-There may be some instances where the bot does not have permission to push changes back to the branch though so these steps should be done manually for those branches. See [Recompiling Manually](#recompiling-manually) and [Incrementing the Version](#incrementing-the-version) for more details.
+| Increment Type | Commit Message Fragment                     |
+|----------------|---------------------------------------------|
+| major          | +semver:breaking                            |
+| major          | +semver:major                               |
+| minor          | +semver:feature                             |
+| minor          | +semver:minor                               |
+| patch          | _default increment type, no comment needed_ |
+
+### Source Code Changes
+
+The files and directories that are considered source code are listed in the `files-with-code` and `dirs-with-code` arguments in both the [build-and-review-pr] and [increment-version-on-merge] workflows.  
+
+If a PR contains source code changes, the README.md should be updated with the latest action version and the action should be recompiled.  The [build-and-review-pr] workflow will ensure these steps are performed when they are required.  The workflow will provide instructions for completing these steps if the PR Author does not initially complete them.
+
+If a PR consists solely of non-source code changes like changes to the `README.md` or workflows under `./.github/workflows`, version updates and recompiles do not need to be performed.
 
 ### Recompiling Manually
 
-If changes are made to the action's code in this repository, or its dependencies, the action can be re-compiled by running the following command:
+This command utilizes [esbuild] to bundle the action and its dependencies into a single file located in the `dist` folder.  If changes are made to the action's [source code], the action must be recompiled by running the following command:
 
 ```sh
 # Installs dependencies and bundles the code
 npm run build
-
-# Bundle the code (if dependencies are already installed)
-npm run bundle
 ```
 
-These commands utilize [esbuild](https://esbuild.github.io/getting-started/#bundling-for-node) to bundle the action and
-its dependencies into a single file located in the `dist` folder.
+### Updating the README.md
 
-### Incrementing the Version
-
-Both the build and PR merge workflows will use the strategies below to determine what the next version will be. If the build workflow was not able to automatically update the README.md action examples with the next version, the README.md should be updated manually as part of the PR using that calculated version.
-
-This action uses [git-version-lite] to examine commit messages to determine whether to perform a major, minor or patch increment on merge. The following table provides the fragment that should be included in a commit message to active different increment strategies.
-| Increment Type | Commit Message Fragment |
-| -------------- | ------------------------------------------- |
-| major | +semver:breaking |
-| major | +semver:major |
-| minor | +semver:feature |
-| minor | +semver:minor |
-| patch | _default increment type, no comment needed_ |
+If changes are made to the action's [source code], the [usage examples] section of this file should be updated with the next version of the action.  Each instance of this action should be updated.  This helps users know what the latest tag is without having to navigate to the Tags page of the repository.  See [Incrementing the Version] for details on how to determine what the next version will be or consult the first workflow run for the PR which will also calculate the next version.
 
 ## Code of Conduct
 
-This project has adopted the [im-open's Code of Conduct](https://github.com/im-open/.github/blob/master/CODE_OF_CONDUCT.md).
+This project has adopted the [im-open's Code of Conduct](https://github.com/im-open/.github/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
-Copyright &copy; 2021, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+Copyright &copy; 2023, Extend Health, LLC. Code released under the [MIT license](LICENSE).
 
+<!-- Links -->
+[Incrementing the Version]: #incrementing-the-version
+[Recompiling Manually]: #recompiling-manually
+[Updating the README.md]: #updating-the-readmemd
+[source code]: #source-code-changes
+[usage examples]: #usage-examples
+[build-and-review-pr]: ./.github/workflows/build-and-review-pr.yml
+[increment-version-on-merge]: ./.github/workflows/increment-version-on-merge.yml
+[esbuild]: https://esbuild.github.io/getting-started/#bundling-for-node
+[git-version-lite]: https://github.com/im-open/git-version-lite
 [nasamin/trx-parser]: https://github.com/NasAmin/trx-parser#%EF%B8%8F-github-actions-limitations-%EF%B8%8F
 [limit]: https://github.com/github/docs/issues/3765
-[git-version-lite]: https://github.com/im-open/git-version-lite
