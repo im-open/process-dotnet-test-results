@@ -1,3 +1,7 @@
+# Deprecated :warning:
+
+This action is superseded by https://github.com/im-open/publish-unit-test-result-action.
+
 # process-dotnet-test-results
 
 This repository is based on [NasAmin/trx-parser]
