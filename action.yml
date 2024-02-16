@@ -53,6 +53,6 @@ outputs:
     description: 'File path of the test outcome in markdown format.  This is the same output that is posted in the PR comment'
 
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
   post: 'dist/cleanup.js'
