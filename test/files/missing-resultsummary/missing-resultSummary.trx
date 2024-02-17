@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="abe4ff2e-96c4-40af-8931-213d2a54d718" name="myuser@ABC-FFFFFFF 2024-02-16 12:26:11" runUser="MYDOMAIN\myuser" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2024-02-16T12:26:11.1096727-07:00" queuing="2024-02-16T12:26:11.1096729-07:00" start="2024-02-16T12:26:10.3181654-07:00" finish="2024-02-16T12:26:11.1156289-07:00" />
+  <TestSettings name="default" id="58f471b8-d2db-4025-bbb6-f32c4161ea2c">
+    <Deployment runDeploymentRoot="myuser_ABC-FFFFFFF_2024-02-16_12_26_11" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="388e7b8e-4381-4c12-8efa-7c24fe2f82c9" testId="a491cb31-e8f0-e335-2569-c2510e5b8cf7" testName="Widget.Tests.MathTests.ZeroTimesAnythingShouldBe0" computerName="ABC-FFFFFFF" duration="00:00:00.0010000" startTime="2024-02-16T12:26:11.0340675-07:00" endTime="2024-02-16T12:26:11.0340676-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="388e7b8e-4381-4c12-8efa-7c24fe2f82c9">
+      <Output>
+        <ErrorInfo>
+          <Message>We do not need to test all these iterations</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="ec96e09c-17d2-4036-a100-3a78e0fe7b77" testId="be281ffb-a4d6-67ab-d9af-941232c31283" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" computerName="ABC-FFFFFFF" duration="00:00:00.0000020" startTime="2024-02-16T12:26:11.0332965-07:00" endTime="2024-02-16T12:26:11.0332966-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ec96e09c-17d2-4036-a100-3a78e0fe7b77" />
+    <UnitTestResult executionId="a220bffc-cc5c-4f37-9f30-67b06f3827ef" testId="9631a370-9720-44c9-70b2-11e51e32ba9f" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" computerName="ABC-FFFFFFF" duration="00:00:00.0056870" startTime="2024-02-16T12:26:11.0294968-07:00" endTime="2024-02-16T12:26:11.0295240-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a220bffc-cc5c-4f37-9f30-67b06f3827ef" />
+    <UnitTestResult executionId="bc6b954c-3061-468e-ac14-681111183118" testId="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" computerName="ABC-FFFFFFF" duration="00:00:00.0000172" startTime="2024-02-16T12:26:11.0332508-07:00" endTime="2024-02-16T12:26:11.0332509-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc6b954c-3061-468e-ac14-681111183118" />
+    <UnitTestResult executionId="938b5dca-f457-4f7e-b6f8-dfe4de3e7fce" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" computerName="ABC-FFFFFFF" duration="00:00:00.0008567" startTime="2024-02-16T12:26:11.0333380-07:00" endTime="2024-02-16T12:26:11.0333381-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="938b5dca-f457-4f7e-b6f8-dfe4de3e7fce" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="be281ffb-a4d6-67ab-d9af-941232c31283">
+      <Execution id="ec96e09c-17d2-4036-a100-3a78e0fe7b77" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+    </UnitTest>
+    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6">
+      <Execution id="bc6b954c-3061-468e-ac14-681111183118" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+    </UnitTest>
+    <UnitTest name="Widget.Tests.MathTests.ZeroTimesAnythingShouldBe0" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="a491cb31-e8f0-e335-2569-c2510e5b8cf7">
+      <Execution id="388e7b8e-4381-4c12-8efa-7c24fe2f82c9" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="ZeroTimesAnythingShouldBe0" />
+    </UnitTest>
+    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="9631a370-9720-44c9-70b2-11e51e32ba9f">
+      <Execution id="a220bffc-cc5c-4f37-9f30-67b06f3827ef" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+    </UnitTest>
+    <UnitTest name="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
+      <Execution id="938b5dca-f457-4f7e-b6f8-dfe4de3e7fce" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="OnePlusOneShouldNotEqualFive" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a491cb31-e8f0-e335-2569-c2510e5b8cf7" executionId="388e7b8e-4381-4c12-8efa-7c24fe2f82c9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="be281ffb-a4d6-67ab-d9af-941232c31283" executionId="ec96e09c-17d2-4036-a100-3a78e0fe7b77" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9631a370-9720-44c9-70b2-11e51e32ba9f" executionId="a220bffc-cc5c-4f37-9f30-67b06f3827ef" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6" executionId="bc6b954c-3061-468e-ac14-681111183118" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" executionId="938b5dca-f457-4f7e-b6f8-dfe4de3e7fce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+</TestRun>

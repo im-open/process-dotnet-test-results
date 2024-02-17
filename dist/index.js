@@ -10357,7 +10357,8 @@ var require_utils2 = __commonJS({
     }
     async function transformTrxToJson(filePath) {
       let trxDataWrapper;
-      core2.info(`Transforming file ${filePath}`);
+      core2.info(`
+Transforming file ${filePath}`);
       const xmlData = fs.readFileSync(filePath, 'utf-8');
       const xmlParser = new XMLParser({
         attributeNamePrefix: '_',
@@ -10381,11 +10382,14 @@ var require_utils2 = __commonJS({
       });
       if (XMLValidator.validate(xmlData.toString()) === true) {
         const parsedTrx = xmlParser.parse(xmlData);
+        if (!isParsedTrxValid(parsedTrx, filePath)) {
+          return;
+        }
         const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
         if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
           core2.warning('There is trouble');
         }
-        const testDefinitionsAreEmpty = parsedTrx && parsedTrx.TestRun && parsedTrx.TestRun.TestDefinitions ? false : true;
+        const testDefinitionsAreEmpty = !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
         populateAndFormatObjects(parsedTrx);
         const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
         trxDataWrapper = {
@@ -10399,49 +10403,60 @@ var require_utils2 = __commonJS({
             TrxXmlString: xmlData
           }
         };
+      } else {
+        core2.setFailed(`The file '${filePath}' is not valid XML and cannot be parsed.`);
+        return;
       }
       return trxDataWrapper;
     }
-    function populateAndFormatObjects(parsedTrx) {
+    function isParsedTrxValid(parsedTrx, filePath) {
+      let missingElement;
       if (!parsedTrx.TestRun) {
-        parsedTrx.TestRun = {
-          Results: {
-            UnitTestResult: []
-          },
-          TestDefinitions: {
-            UnitTest: []
-          }
+        missingElement = 'TestRun';
+      } else if (!parsedTrx.TestRun.ResultSummary) {
+        missingElement = 'TestRun.ResultSummary';
+      } else if (!parsedTrx.TestRun.ResultSummary.Counters) {
+        missingElement = 'TestRun.ResultSummary.Counters';
+      } else if (!parsedTrx.TestRun.ResultSummary.RunInfos) {
+        missingElement = 'TestRun.ResultSummary.RunInfos';
+      } else if (!parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
+        missingElement = 'TestRun.ResultSummary.RunInfos.RunInfo';
+      }
+      if (missingElement) {
+        core2.setFailed(`The file '${filePath}' does not contain the ${missingElement} element.`);
+        return false;
+      }
+      return true;
+    }
+    function populateAndFormatObjects(parsedTrx) {
+      if (!parsedTrx.TestRun.Results) {
+        parsedTrx.TestRun.Results = {
+          UnitTestResult: []
         };
-      } else {
-        if (!parsedTrx.TestRun.Results) {
-          parsedTrx.TestRun.Results = {
-            UnitTestResult: []
-          };
-        } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
-          parsedTrx.TestRun.Results.UnitTestResult = [];
-        }
-        if (!parsedTrx.TestRun.TestDefinitions) {
-          parsedTrx.TestRun.TestDefinitions = {
-            UnitTest: []
-          };
-        } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
-          parsedTrx.TestRun.TestDefinitions.UnitTest = [];
-        }
+      } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
+        parsedTrx.TestRun.Results.UnitTestResult = [];
       }
       if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
         parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
+      }
+      if (!parsedTrx.TestRun.TestDefinitions) {
+        parsedTrx.TestRun.TestDefinitions = {
+          UnitTest: []
+        };
+      } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
+        parsedTrx.TestRun.TestDefinitions.UnitTest = [];
       }
       if (!Array.isArray(parsedTrx.TestRun.TestDefinitions.UnitTest)) {
         parsedTrx.TestRun.TestDefinitions.UnitTest = [parsedTrx.TestRun.TestDefinitions.UnitTest];
       }
     }
-    function getReportTitle(data, isEmpty) {
+    function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
       let reportTitle = '';
-      const reportTitleFilter = core2.getInput('report-title-filter') || '';
-      if (isEmpty) {
-        reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
+      if (testDefinitionsAreEmpty) {
+        reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
       } else {
-        const unitTests = data.TestRun.TestDefinitions.UnitTest;
+        const reportTitleFilter = core2.getInput('report-title-filter') || '';
+        const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
         if (reportTitleFilter != '') {
           const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
           reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
@@ -27858,16 +27873,23 @@ async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
     const trxToJson = await transformAllTrxToJson(trxFiles);
+    if (trxToJson.some(trx => !trx)) {
+      core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
+      core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
+      return;
+    }
+    core.setOutput('trx-files', trxFiles);
     const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
     let markupForComment = [];
-    let fullMarkupComment;
     for (const data of trxToJson) {
       const markupData = getMarkupForTrx(data);
-      let conclusion = 'success';
-      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-      }
       if (shouldCreateStatusCheck) {
+        let conclusion = 'success';
+        if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+        }
         await createStatusCheck(token, data, markupData, conclusion);
       }
       markupForComment.push(markupData);
@@ -27887,14 +27909,11 @@ async function run() {
       }
       await createPrComment(token, markupComment, updateCommentIfOneExists, commentIdentifier);
     }
-    const resultsFile = './test-results.md';
-    let resultsFilePath = null;
     if (shouldCreateResultsFile) {
-      resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
+      const resultsFile = './test-results.md';
+      const resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
+      core.setOutput('test-results-file-path', resultsFilePath);
     }
-    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
-    core.setOutput('trx-files', trxFiles);
-    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     if (error instanceof RangeError) {
       core.info(error.message);

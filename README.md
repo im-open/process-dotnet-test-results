@@ -2,9 +2,9 @@
 
 This repository is based on [NasAmin/trx-parser]
 
-This action works in conjunction with another step that runs `dotnet test` and it parses test results from `trx` files. This action will take the parsed results and create a Status Check or PR Comment depending on the flags set. This action does not run the tests itself.
+This action works in conjunction with a previous step that runs `dotnet test --logger trx` and has created `trx` files for this action to process. This action will examine the parsed results and create a Status Check or PR Comment depending on the flags set. This action does not run the tests itself.
 
-There should be one status check created per `trx` file. For comments, one will be created for all `trx` files. The check and comment headings are named after the test project the `trx` was generated for.
+If creating status checks is enabled, one status check will be created for each `trx` file found.  If creating pr comments is enabled, one comment will be created for all `trx` files.  The status check title and each comment heading are named after the test project the `trx` was generated for.
 
 ## Index <!-- omit in toc -->
 
@@ -32,13 +32,20 @@ There should be one status check created per `trx` file. For comments, one will 
 
 ## Failures
 
-The status check can be seen as a new item on the workflow run, a PR comment or on the PR Status Check section. If the test results contain failures, the status check will be marked as failed. Having the status check marked as failed will prevent PRs from being merged. If this status check behavior is not desired, the `ignore-test-failures` input can be set and the outcome will be marked as neutral if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a failure though.
+The test status & action's conclusion can be viewed in multiple places:
+
+- In the body of a PR comment this action generates
+- Next to the name of one of the status checks under the `Checks` section of a PR
+- Next to the name of one of the status checks under the `Jobs` section of the workflow run
+- In the body of a status check listed on the workflow run
+
+If the test results contain failures, the status check's conclusion will be set to `failure`. If the status check is required and its conclusion is `failure` the PR cannot be merged.  If this required status check behavior is not desired, the `ignore-test-failures` input can be set and the conclusion will be marked as `neutral` if test failures are detected. The status badge that is shown in the comment or status check body will still indicate it was a `failure` though.
 
 ## Limitations
 
-GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action will fail if the test results exceed the GitHub [limit]. To mitigate this size issue only failed tests are included in the output.
+GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action will fail if the test results exceed the GitHub [limit]. To mitigate this size issue only details for failed tests are included in the output in addition to a badge, duration info and outcome info.  If the comment still exceeds that size, it will be truncated with a note to see the remaining output in the log.
 
-If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
+If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks for this action may show on a different workflow run than the run that executed this action.
 
 ## Action Outputs
 
@@ -91,9 +98,14 @@ For failed test runs you can expand each failed test and view more details about
 ### Using the defaults
 
 ```yml
+permissions:
+    contents: read
+    pull_request: write # required if create-pr-comment: true
+    checks: write       # required if create-status-check: true
+
 jobs:
   ci:
-    runs-on: [ubuntu-20.04]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
 
@@ -103,7 +115,7 @@ jobs:
       - name: Process trx reports with default
         if: always()
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.4
+        uses: im-open/process-dotnet-test-results@v2.3.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -111,9 +123,14 @@ jobs:
 ### Specifying additional behavior
 
 ```yml
+permissions:
+    contents: read
+    pull_request: write # required if create-pr-comment: true
+    checks: write       # required if create-status-check: true
+
 jobs:
   advanced-ci:
-    runs-on: [ubuntu-20.04]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
 
@@ -124,16 +141,16 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.4
+        uses: im-open/process-dotnet-test-results@v2.3.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          base-directory: './test-results' # Default: .
-          create-status-check: true # Default: true
-          create-pr-comment: true # Default: true
-          update-comment-if-one-exists: true # Default: true
-          ignore-test-failures: true # Default: false
-          timezone: 'america/denver' # Default: UTC
-          comment-identifier: 'bff-tests' # Default: empty string
+          base-directory: './test-results'
+          create-status-check: true
+          create-pr-comment: true
+          update-comment-if-one-exists: true
+          ignore-test-failures: true
+          timezone: 'america/denver'
+          comment-identifier: 'bff-tests'
 
       # Optional
       - name: Annotate Test Outcome
@@ -162,9 +179,14 @@ jobs:
 ### Using create-results-file
 
 ```yml
+permissions:
+    contents: read
+    pull_request: write # required if create-pr-comment: true
+    checks: write       # required if create-status-check: true
+
 jobs:
   ci:
-    runs-on: [ubuntu-20.04]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v3
 
@@ -175,7 +197,7 @@ jobs:
         if: always()
         id: process-test
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.3.4
+        uses: im-open/process-dotnet-test-results@v2.3.5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           create-status-check: false
@@ -189,6 +211,8 @@ jobs:
 
 The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`. This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
 To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
+<!-- TODO:  Danielle this needs to be much clearer! -->
+
 
 ## Contributing
 
@@ -238,7 +262,7 @@ This project has adopted the [im-open's Code of Conduct](https://github.com/im-o
 
 ## License
 
-Copyright &copy; 2023, Extend Health, LLC. Code released under the [MIT license](LICENSE).
+Copyright &copy; 2024, Extend Health, LLC. Code released under the [MIT license](LICENSE).
 
 <!-- Links -->
 [Incrementing the Version]: #incrementing-the-version

@@ -60,3 +60,293 @@ jobs:
       # The npm script to run to build the action.  This is typically 'npm run build' if the
       # action needs to be compiled.  For composite-run-steps actions this is typically empty.
       build-command: 'npm run build'
+
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      DIR_WITH_NO_TRX: './test/files/dir-with-no-trx-files'
+      
+    steps:
+      #--------------------------------------
+      # SETUP
+      #--------------------------------------
+      - name: Fail test job if fork
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]; then
+            echo "This test job requires the `pull_request: write` & `checks: write` scopes on the GITHUB_TOKEN which PRs from forks do not have.  Before this PR can be merged, the tests should be run on an intermediate branch created by repository owners."
+            exit 1
+          fi
+
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: Setup - Checkout the action
+        uses: actions/checkout@v4
+
+      - name: Setup - Create empty directory
+        run: mkdir -p ${{ env.DIR_WITH_NO_TRX }}
+
+      #--------------------------------------
+      # TEST - MISSING github-token INPUT
+      #--------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a missing github-token input
+        id: missing-github-token
+        if: always()
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: ''
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-github-token.outcome }}"
+
+      - name: And each of the outputs should be empty
+        if: always()
+        run: |
+          ./test/assert-value-is-empty.sh --name "test-outcome output" --value "${{ steps.missing-github-token.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-github-token.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-github-token.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-github-token.outputs.test-results-file-path }}"
+
+      #--------------------------------------
+      # TEST - RANGE ERROR/NO TRX FILES
+      #--------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a base-directory that does not contain trx files
+        if: always()
+        id: range-error
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: ${{ env.DIR_WITH_NO_TRX }}
+
+      - name: Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.range-error.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.range-error.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.range-error.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.range-error.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.range-error.outputs.test-results-truncated }}"
+
+      #-----------------------------------------
+      # TEST - MALFORMED TRX FILES (INVALID XML)
+      #-----------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called to process a malformed trx file (invalid xml)
+        if: always()
+        id: malformed-xml
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          base-directory: './test/files/malformed-xml'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.malformed-xml.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.malformed-xml.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.malformed-xml.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.malformed-xml.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.malformed-xml.outputs.test-results-truncated }}"
+
+      #-----------------------------------------
+      # TEST - TRX MISSING TestRun node
+      #-----------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun node
+        if: always()
+        id: missing-testrun
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/missing-testrun'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-testrun.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-testrun.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-testrun.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-testrun.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-testrun.outputs.test-results-truncated }}"
+
+      #-----------------------------------------
+      # TEST - TRX MISSING TestRun.ResultSummary node
+      #-----------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary node
+        if: always()
+        id: missing-resultsummary
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/missing-resultsummary'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-resultsummary.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-resultsummary.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-resultsummary.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-resultsummary.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-resultsummary.outputs.test-results-truncated }}"
+
+      #-------------------------------------------------------
+      # TEST - TRX MISSING TestRun.ResultSummary.Counters node
+      #-------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.Counters node
+        if: always()
+        id: missing-counters
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/missing-counters'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-counters.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-counters.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-counters.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-counters.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-counters.outputs.test-results-truncated }}"
+      
+      
+      #-------------------------------------------------------
+      # TEST - TRX MISSING TestRun.ResultSummary.RunInfos node
+      #-------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos node
+        if: always()
+        id: missing-runinfos
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/missing-runinfos'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-runinfos.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-runinfos.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfos.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfos.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfos.outputs.test-results-truncated }}"
+      
+      #---------------------------------------------------------------
+      # TEST - TRX MISSING TestRun.ResultSummary.RunInfos.RunInfo node
+      #---------------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos.RunInfo node
+        if: always()
+        id: missing-runinfo
+        continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/missing-runinfo'
+
+      - name: Then the action outcome should be failure
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-runinfo.outcome }}"
+
+      - name: And the other outputs should indicate a failure happened
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-runinfo.outputs.test-outcome }}"
+          ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfo.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfo.outputs.trx-files }}"
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfo.outputs.test-results-truncated }}"
+
+      
+      
+      
+      
+      # Conditions:
+      # empty TestRun.Results && TestRun.TestDefinitions  (format is auto-fixed && report title set to _computerName)
+      # empty TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
+      # present but single entry for TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
+      # using report title filter
+      # no report title filter && defaulting to dll name
+      # has a failing test && create-status-check=true && ignoreTestFailures=false  (test-outcome output = Failed, status check=failure)
+      # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
+      # no failing tests && create-status-check=true (test-outcome output = Passed, status check=success)
+      # creating status check (one per trx)
+      # creating pr comment with normal message && update-comment-if-one-exists=true (test-outcome-truncated output = false)
+      # creating pr comment with normal message && update-comment-if-one-exists=false (test-outcome-truncated output = false)
+      # creating pr comment with truncated message && new comment-identifier (test-outcome-truncated output = true)
+
+      # creating results file - Use this to determine the actual output
+
+      #---------------------------------------------------------------------------------------------
+      #-----------------------------------------
+      # TEST -
+      #-----------------------------------------
+      # - name: '-------------------------------------------------------------------------------------------------------'
+      #   run: echo ""
+
+      # - name: When process-dotnet-test-results is called with
+      #   id: change-me
+      #   uses: ./
+      #   with:
+      #     github-token: '${{ secrets.GITHUB_TOKEN }}'
+      #     base-directory: '${{ env. }}'
+      #     ignore-test-failures: false
+      #     create-status-check: true
+      #     create-pr-comment: true
+      #     create-results-file: true
+      #     update-comment-if-one-exists: true
+      #     timezone: 'America/Denver'
+      #     comment-identifier: 'dotnet-test-results'
+      #     report-title-filter: '?'
+
+      #--------------------------------------
+      # TEARDOWN -
+      #--------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""

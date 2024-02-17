@@ -31,7 +31,7 @@ async function transformAllTrxToJson(trxFiles) {
 async function transformTrxToJson(filePath) {
   let trxDataWrapper;
 
-  core.info(`Transforming file ${filePath}`);
+  core.info(`\nTransforming file ${filePath}`);
 
   const xmlData = fs.readFileSync(filePath, 'utf-8');
   const xmlParser = new XMLParser({
@@ -57,12 +57,19 @@ async function transformTrxToJson(filePath) {
 
   if (XMLValidator.validate(xmlData.toString()) === true) {
     const parsedTrx = xmlParser.parse(xmlData);
+
+    // Verify the parsed data contains all the required items so we can fail fast with more descriptive error messages.
+    if (!isParsedTrxValid(parsedTrx, filePath)) {
+      return;
+    }
+
+    // QUESTION:  Why is this an important thing to note?  Is it just leftover from the original implementation?  Can it be removed?
     const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
     if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
       core.warning('There is trouble');
     }
 
-    const testDefinitionsAreEmpty = parsedTrx && parsedTrx.TestRun && parsedTrx.TestRun.TestDefinitions ? false : true;
+    const testDefinitionsAreEmpty = !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
     populateAndFormatObjects(parsedTrx);
     const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
 
@@ -77,54 +84,75 @@ async function transformTrxToJson(filePath) {
         TrxXmlString: xmlData
       }
     };
+  } else {
+    core.setFailed(`The file '${filePath}' is not valid XML and cannot be parsed.`);
+    return;
   }
+
   return trxDataWrapper;
 }
 
-function populateAndFormatObjects(parsedTrx) {
+function isParsedTrxValid(parsedTrx, filePath) {
+  // Previous versions of the action would have encountered exceptions if the following nodes
+  // weren't present when getReportTitle(), areThereAnyFailingTests(), or getMarkupForTrx() were
+  // called.  The details would have just been swallowed by a more general exception.  So fail
+  // fast with more descriptive error messages by checking for the presence of these items first.
+  let missingElement;
   if (!parsedTrx.TestRun) {
-    parsedTrx.TestRun = {
-      Results: {
-        UnitTestResult: []
-      },
-      TestDefinitions: {
-        UnitTest: []
-      }
-    };
-  } else {
-    if (!parsedTrx.TestRun.Results) {
-      parsedTrx.TestRun.Results = {
-        UnitTestResult: []
-      };
-    } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
-      parsedTrx.TestRun.Results.UnitTestResult = [];
-    }
-
-    if (!parsedTrx.TestRun.TestDefinitions) {
-      parsedTrx.TestRun.TestDefinitions = {
-        UnitTest: []
-      };
-    } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
-      parsedTrx.TestRun.TestDefinitions.UnitTest = [];
-    }
+    missingElement = 'TestRun';
+  } else if (!parsedTrx.TestRun.ResultSummary) {
+    missingElement = 'TestRun.ResultSummary';
+  } else if (!parsedTrx.TestRun.ResultSummary.Counters) {
+    missingElement = 'TestRun.ResultSummary.Counters';
+  } else if (!parsedTrx.TestRun.ResultSummary.RunInfos) {
+    missingElement = 'TestRun.ResultSummary.RunInfos';
+  } else if (!parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
+    missingElement = 'TestRun.ResultSummary.RunInfos.RunInfo';
+  }
+  if (missingElement) {
+    core.setFailed(`The file '${filePath}' does not contain the ${missingElement} element.`);
+    return false;
   }
 
+  return true;
+}
+
+function populateAndFormatObjects(parsedTrx) {
+  // Format TestRun.Results
+  if (!parsedTrx.TestRun.Results) {
+    parsedTrx.TestRun.Results = {
+      UnitTestResult: []
+    };
+  } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
+    parsedTrx.TestRun.Results.UnitTestResult = [];
+  }
   if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
     parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
   }
+
+  // Format TestRun.TestDefinitions
+  if (!parsedTrx.TestRun.TestDefinitions) {
+    parsedTrx.TestRun.TestDefinitions = {
+      UnitTest: []
+    };
+  } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
+    parsedTrx.TestRun.TestDefinitions.UnitTest = [];
+  }
+
   if (!Array.isArray(parsedTrx.TestRun.TestDefinitions.UnitTest)) {
     parsedTrx.TestRun.TestDefinitions.UnitTest = [parsedTrx.TestRun.TestDefinitions.UnitTest];
   }
 }
 
-function getReportTitle(data, isEmpty) {
+function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
   let reportTitle = '';
-  const reportTitleFilter = core.getInput('report-title-filter') || '';
 
-  if (isEmpty) {
-    reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
+  if (testDefinitionsAreEmpty) {
+    reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
   } else {
-    const unitTests = data.TestRun.TestDefinitions.UnitTest;
+    const reportTitleFilter = core.getInput('report-title-filter') || '';
+
+    const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
 
     if (reportTitleFilter != '') {
       const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];

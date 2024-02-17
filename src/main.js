@@ -21,24 +21,35 @@ async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
     const trxToJson = await transformAllTrxToJson(trxFiles);
+    if (trxToJson.some(trx => !trx)) {
+      core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
+      core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
+      return;
+    }
+    core.setOutput('trx-files', trxFiles);
+
     const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
+
     let markupForComment = [];
 
-    let fullMarkupComment;
     for (const data of trxToJson) {
       const markupData = getMarkupForTrx(data);
 
-      let conclusion = 'success';
-      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-      }
+      // The README.md indicates one status check will be created per trx file
       if (shouldCreateStatusCheck) {
+        let conclusion = 'success';
+        if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+        }
         await createStatusCheck(token, data, markupData, conclusion);
       }
 
       markupForComment.push(markupData);
     }
 
+    // The README.md indicates only one per comment per run (so all trx files found)
     if (markupForComment.length > 0 && shouldCreatePRComment) {
       const commentCharacterLimit = 65535;
       let markupComment = markupForComment.join('\n');
@@ -52,18 +63,16 @@ async function run() {
       } else {
         core.setOutput('test-outcome-truncated', 'false');
       }
+
+      // TODO:  implement steve's change for cypress
       await createPrComment(token, markupComment, updateCommentIfOneExists, commentIdentifier);
     }
 
-    const resultsFile = './test-results.md';
-    let resultsFilePath = null;
     if (shouldCreateResultsFile) {
-      resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
+      const resultsFile = './test-results.md';
+      const resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
+      core.setOutput('test-results-file-path', resultsFilePath);
     }
-
-    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
-    core.setOutput('trx-files', trxFiles);
-    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     if (error instanceof RangeError) {
       core.info(error.message);
