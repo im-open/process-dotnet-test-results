@@ -309,6 +309,8 @@ jobs:
       #  - The correct timezone is used
       #  - The computer name is used for report title when there are no tests
       #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
+      #  - The Duration stats are included in the report
+      #  - The Counter stats are included in the report
       #-----------------------------------------------------------------------------------------------------------
       
       - name: '-------------------------------------------------------------------------------------------------------'
@@ -348,7 +350,7 @@ jobs:
         if: always()
         run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
 
-      - name: And the actual test-results.md file should match the expected test-results.md file
+      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
           TARGET_FILE="./test-results.md"
@@ -371,6 +373,8 @@ jobs:
       #  - The default timezone is used
       #  - 'Not Found' is used for report title when there are no tests and no _computerName attr present
       #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
+      #  - The Duration stats are included in the report
+      #  - The Counter stats are included in the report
       #-------------------------------------------------------------------------------------------------------------------------------
       - name: '-------------------------------------------------------------------------------------------------------'
         run: |
@@ -411,7 +415,7 @@ jobs:
         if: always()
         run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
 
-      - name: And the actual test-results.md file should match the expected test-results.md file
+      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
           TARGET_FILE="./test-results.md"
@@ -428,12 +432,76 @@ jobs:
 
           ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
 
+
+      #-------------------------------------------------------------------------------------------------------------------------------
+      # TEST - SINGLE UNIT TEST & DEFAULT REPORT TITLE (single result in TestRun.Results.UnitTestResult)
+      # Comparing the test-results.md file will ensure that:
+      #  - The default timezone is used
+      #  - The dll name is used for report title when a report title filter is not specified
+      #  - The test icon is matches the passed test outcome
+      #  - The Duration stats are included in the report
+      #  - The Counter stats are included in the report
+      #-------------------------------------------------------------------------------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: |
+          echo ""
+          echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
+          rm -f ./test-results.md
+
+      - name: When process-dotnet-test-results is called with a file that reports a single test
+        if: always()
+        id: single-test
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/single-test'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
+
+      - name: Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.single-test.outcome }}"
+
+      - name: And the outputs should indicate a success happened
+        if: always()
+        run : |
+          # Verify the trx-files list matches what we expect
+          ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/single-test/single-test.trx]" --actual "${{ steps.single-test.outputs.trx-files }}"
+          
+          # Verify the test-outcome is passed
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.single-test.outputs.test-outcome }}"
+
+          # Verify the test-results-file-path output and env var should be populated with 'test-results.md'
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.single-test.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+          # Verify this output is not set because we aren't creating a PR comment
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.single-test.outputs.test-results-truncated }}"
+
+      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+        if: always()
+        run: |
+          TARGET_FILE="./test-results.md"
+
+          if [ -f "$TARGET_FILE" ]
+          then
+            echo "$TARGET_FILE exists which is expected."
+            actualContent=$(cat $TARGET_FILE)
+          else
+            echo "$TARGET_FILE does not exist which is not expected"
+            exit 1
+          fi
+          expectedContent=$(cat ./test/files/single-test/expected-test-results.md)
+
+          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
+
+      
+
       # Conditions:
 
-      # empty TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
-      # present but single entry for TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
+      
       # using report title filter
-      # no report title filter && defaulting to dll name
       # has a failing test && create-status-check=true && ignoreTestFailures=false  (test-outcome output = Failed, status check=failure)
       # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
       # no failing tests && create-status-check=true (test-outcome output = Passed, status check=success)
