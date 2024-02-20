@@ -11,6 +11,8 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
 
   const checkTime = new Date().toUTCString();
   core.info(`Check time is: ${checkTime}`);
+
+  let statusCheckId;
   await octokit.rest.checks
     .create({
       owner: github.context.repo.owner,
@@ -27,11 +29,12 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
     })
     .then(response => {
       core.info(`Created check: ${response.data.name} with id ${response.data.id}`);
-      core.setOutput('status-check-id', response.data.id);
+      statusCheckId = response.data.id;
     })
     .catch(error => {
       core.setFailed(`An error occurred trying to create the status check: ${error.message}`);
     });
+  return statusCheckId;
 }
 
 async function lookForExistingComment(octokit, markupPrefix) {
@@ -73,6 +76,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
   const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier} -->`;
   const octokit = github.getOctokit(repoToken);
 
+  let commentIdToReturn;
   let existingCommentId = null;
   if (updateCommentIfOneExists) {
     core.info('Checking for existing comment on PR....');
@@ -81,7 +85,8 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
 
   if (existingCommentId) {
     core.info(`Updating existing PR #${existingCommentId} comment...`);
-    core.setOutput('pr-comment-id', existingCommentId);
+    commentIdToReturn = existingCommentId;
+
     await octokit.rest.issues
       .updateComment({
         owner: github.context.repo.owner,
@@ -106,12 +111,13 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
       })
       .then(response => {
         core.info(`PR comment was created.  ID: ${response.data.id}.`);
-        core.setOutput('pr-comment-id', response.data.id);
+        commentIdToReturn = response.data.id;
       })
       .catch(error => {
         core.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);
       });
   }
+  return commentIdToReturn;
 }
 
 module.exports = {

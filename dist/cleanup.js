@@ -10496,7 +10496,6 @@ Transforming file ${filePath}`);
         }
       });
       resultsFilePath2 = path.resolve(resultsFileName);
-      core2.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath2);
       return resultsFilePath2;
     }
     function deleteResultsFile2(resultsFilePath2) {

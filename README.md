@@ -93,9 +93,8 @@ For failed test runs you can expand each failed test and view more details about
 | `trx-files`              | List of `trx` files that were processed                                                                                                                               |
 | `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                          |
 | `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                             |
-| `status-check-id`        | The ID of the status check that was created.  This is only set if `create-status-check` is true and a status check was created successfully.                          |
+| `status-check-ids`       | The IDs of the status checks that were created.  This is only set if `create-status-check` is true and one or more status checks were created successfully.           |
 | `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is true and a PR was created successfully.                                        |
-
 
 ## Usage Examples
 

@@ -1,7 +1,6 @@
 const core = require('@actions/core');
 const { format, utcToZonedTime } = require('date-fns-tz');
 const timezone = core.getInput('timezone') || 'Etc/UTC';
-//const timezone = 'America/Denver';
 
 function getMarkupForTrx(testData) {
   return `

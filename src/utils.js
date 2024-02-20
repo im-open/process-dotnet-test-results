@@ -203,8 +203,6 @@ function createResultsFile(resultsFileName, results) {
     }
   });
   resultsFilePath = path.resolve(resultsFileName);
-  core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
-
   return resultsFilePath;
 }
 

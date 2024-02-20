@@ -72,15 +72,15 @@ jobs:
       #--------------------------------------
       # SETUP
       #--------------------------------------
-      - name: Fail test job if fork
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: Setup - Fail test job if fork
         run: |
           if [ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]; then
             echo "This test job requires the `pull_request: write` & `checks: write` scopes on the GITHUB_TOKEN which PRs from forks do not have.  Before this PR can be merged, the tests should be run on an intermediate branch created by repository owners."
             exit 1
           fi
-
-      - name: '-------------------------------------------------------------------------------------------------------'
-        run: echo ""
 
       - name: Setup - Checkout the action
         uses: actions/checkout@v4
@@ -88,13 +88,12 @@ jobs:
       - name: Setup - Create empty directory
         run: mkdir -p ${{ env.DIR_WITH_NO_TRX }}
 
-      #--------------------------------------
-      # TEST - MISSING github-token INPUT
-      #--------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                           TEST 1 - MISSING TOKEN                                            '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a missing github-token input
+      - name: 1 - When process-dotnet-test-results is called with a missing github-token input
         id: missing-github-token
         if: always()
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -102,11 +101,11 @@ jobs:
         with:
           github-token: ''
 
-      - name: Then the action outcome should be failure
+      - name: 1 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-github-token.outcome }}"
 
-      - name: And each of the outputs should be empty
+      - name: 1 - And each of the outputs should be empty
         if: always()
         run: |
           ./test/assert-value-is-empty.sh --name "test-outcome output" --value "${{ steps.missing-github-token.outputs.test-outcome }}"
@@ -116,13 +115,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-github-token.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-github-token.outputs.pr-comment-id }}"
 
-      #--------------------------------------
-      # TEST - RANGE ERROR/NO TRX FILES
-      #--------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                            TEST 2 - NO TRX FILES                                            '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a base-directory that does not contain trx files
+      - name: 2 - When process-dotnet-test-results is called with a base-directory that does not contain trx files
         if: always()
         id: range-error
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -131,11 +129,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: ${{ env.DIR_WITH_NO_TRX }}
 
-      - name: Then the action outcome should be success
+      - name: 2 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.range-error.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 2 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.range-error.outputs.test-outcome }}"
@@ -145,13 +143,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.range-error.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.range-error.outputs.pr-comment-id }}"
 
-      #-----------------------------------------
-      # TEST - MALFORMED TRX FILES (INVALID XML)
-      #-----------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                           TEST 3 - MALFORMED TRX                                            '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called to process a malformed trx file (invalid xml)
+      - name: 3 - When process-dotnet-test-results is called to process a malformed trx file (invalid xml)
         if: always()
         id: malformed-xml
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -160,11 +157,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test/files/malformed-xml'
 
-      - name: Then the action outcome should be failure
+      - name: 3 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.malformed-xml.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 3 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.malformed-xml.outputs.test-outcome }}"
@@ -174,13 +171,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.malformed-xml.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.malformed-xml.outputs.pr-comment-id }}"
 
-      #-----------------------------------------
-      # TEST - TRX MISSING TestRun node
-      #-----------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                          TEST 4 - MISSING TestRun                                           '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun node
+      - name: 4 - When process-dotnet-test-results is called with a trx file that is missing the TestRun node
         if: always()
         id: missing-testrun
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -189,11 +185,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: './test/files/missing-testrun'
 
-      - name: Then the action outcome should be failure
+      - name: 4 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-testrun.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 4 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-testrun.outputs.test-outcome }}"
@@ -203,13 +199,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-testrun.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-testrun.outputs.pr-comment-id }}"
 
-      #-----------------------------------------
-      # TEST - TRX MISSING TestRun.ResultSummary node
-      #-----------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                    TEST 5 - MISSING TestRun.ResultSummary                                   '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary node
+      - name: 5 - When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary node
         if: always()
         id: missing-resultsummary
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -218,11 +213,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: './test/files/missing-resultsummary'
 
-      - name: Then the action outcome should be failure
+      - name: 5 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-resultsummary.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 5 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-resultsummary.outputs.test-outcome }}"
@@ -232,13 +227,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-resultsummary.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-resultsummary.outputs.pr-comment-id }}"
 
-      #-------------------------------------------------------
-      # TEST - TRX MISSING TestRun.ResultSummary.Counters node
-      #-------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                               TEST 6 - MISSING TestRun.ResultSummary.Counters                               '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.Counters node
+      - name: 6 - When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.Counters node
         if: always()
         id: missing-counters
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -247,11 +241,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: './test/files/missing-counters'
 
-      - name: Then the action outcome should be failure
+      - name: 6 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-counters.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 6 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-counters.outputs.test-outcome }}"
@@ -261,13 +255,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-counters.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-counters.outputs.pr-comment-id }}"
 
-      #-------------------------------------------------------
-      # TEST - TRX MISSING TestRun.ResultSummary.RunInfos node
-      #-------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                               TEST 7 - MISSING TestRun.ResultSummary.RunInfos                               '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos node
+      - name: 7 - When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos node
         if: always()
         id: missing-runinfos
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -276,11 +269,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: './test/files/missing-runinfos'
 
-      - name: Then the action outcome should be failure
+      - name: 7 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-runinfos.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 7 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-runinfos.outputs.test-outcome }}"
@@ -290,13 +283,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfos.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfos.outputs.pr-comment-id }}"
 
-      #---------------------------------------------------------------
-      # TEST - TRX MISSING TestRun.ResultSummary.RunInfos.RunInfo node
-      #---------------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                           TEST 8 - MISSING TestRun.ResultSummary.RunInfos.RunInfo                           '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos.RunInfo node
+      - name: 8 - When process-dotnet-test-results is called with a trx file that is missing the TestRun.ResultSummary.RunInfos.RunInfo node
         if: always()
         id: missing-runinfo
         continue-on-error: true # This is needed because we expect the step to fail but we need it to "pass" in order for the test job to succeed.
@@ -305,11 +297,11 @@ jobs:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
           base-directory: './test/files/missing-runinfo'
 
-      - name: Then the action outcome should be failure
+      - name: 8 - Then the action outcome should be failure
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "failure" --actual "${{ steps.missing-runinfo.outcome }}"
 
-      - name: And the other outputs should indicate a failure happened
+      - name: 8 - And the other outputs should indicate a failure happened
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.missing-runinfo.outputs.test-outcome }}"
@@ -319,20 +311,12 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfo.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfo.outputs.pr-comment-id }}"
 
-      #-----------------------------------------------------------------------------------------------------------
-      # TEST - NO TESTS BUT CREATE RESULTS FILE (empty TestRun.Results && TestRun.TestDefinitions)
-      # Comparing the test-results.md file will ensure that:
-      #  - The correct timezone is used
-      #  - The computer name is used for report title when there are no tests
-      #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
-      #  - The Duration stats are included in the report
-      #  - The Counter stats are included in the report
-      #-----------------------------------------------------------------------------------------------------------
-      
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                          TEST 9 - NO TESTS IN FILE                                          '
         run: echo ""
 
-      - name: When process-dotnet-test-results is called with a file that does not contain test results or test definitions
+      - name: 9 - When process-dotnet-test-results is called with a file that does not contain test results or test definitions
         if: always()
         id: no-tests
         uses: ./
@@ -344,63 +328,54 @@ jobs:
           create-pr-comment: false
           timezone: 'America/Denver'
 
-      - name: Then the action outcome should be success
+      - name: 9 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.no-tests.outcome }}"
 
-      - name: And the trx-files output should be contain the no-tests.trx file
+      - name: 9 - And the trx-files output should be contain the no-tests.trx file
         if: always()
         run: ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/no-tests/no-tests.trx]" --actual "${{ steps.no-tests.outputs.trx-files }}"
 
-      - name: And the test-outcome output should be Passed because there are no failing tests
+      - name: 9 - And the test-outcome output should be Passed because there are no failing tests
         if: always()
         run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.no-tests.outputs.test-outcome }}"
 
-      - name: And the test-results-file-path output and env var should be populated with 'test-results.md'
+      - name: 9 - And the test-results-file-path output and env var should be populated with 'test-results.md'
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-tests.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-      - name: And the other outputs should be empty because pr comments and status checks are not being created
+      - name: 9 - And the other outputs should be empty because pr comments and status checks are not being created
         if: always()
         run: |
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-tests.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-tests.outputs.pr-comment-id }}"
 
-      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+      - name: 9 - And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
-          TARGET_FILE="./test-results.md"
+          # Comparing the test-results.md file will ensure that:
+          #  - The correct timezone is used
+          #  - The computer name is used for report title when there are no tests
+          #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
 
-          if [ -f "$TARGET_FILE" ]
-          then
-            echo "$TARGET_FILE exists which is expected."
-            actualContent=$(cat $TARGET_FILE)
-          else
-            echo "$TARGET_FILE does not exist which is not expected"
-            exit 1
-          fi
-          expectedContent=$(cat ./test/files/no-tests/expected-test-results.md)
+          expectedFileName="./test/files/no-tests/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
-          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
-
-      #-------------------------------------------------------------------------------------------------------------------------------
-      # TEST - NO UNIT TEST RESULTS BUT CREATE RESULTS FILE(empty TestRun.Results.UnitTestResult && TestRun.TestDefinitions.UnitTest)
-      # Comparing the test-results.md file will ensure that:
-      #  - The default timezone is used
-      #  - 'Not Found' is used for report title when there are no tests and no _computerName attr present
-      #  - The Duration stats are included in the report
-      #  - The Counter stats are included in the report
-      #-------------------------------------------------------------------------------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '--------------------------------------------------------------------------------------------------------------'
         run: |
           echo ""
           echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
           rm -f ./test-results.md
+      - name: '                                       TEST 10 - NO UNIT TESTS IN FILE                                        '
+        run: echo ""
 
-      - name: When process-dotnet-test-results is called with a file that does not contain unit test results or unit test definitions
+      - name: 10 - When process-dotnet-test-results is called with a file that does not contain unit test results or unit test definitions
         if: always()
         id: no-unit-tests
         uses: ./
@@ -411,64 +386,53 @@ jobs:
           create-status-check: false
           create-pr-comment: false
 
-      - name: Then the action outcome should be success
+      - name: 10 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.no-unit-tests.outcome }}"
 
-      - name: And the trx-files output should be contain the no-unit-tests.trx file
+      - name: 10 - And the trx-files output should be contain the no-unit-tests.trx file
         if: always()
         run: ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/no-unit-tests/no-unit-tests.trx]" --actual "${{ steps.no-unit-tests.outputs.trx-files }}"
 
-      - name: And the test-outcome output should be Passed because there are no failing tests
+      - name: 10 - And the test-outcome output should be Passed because there are no failing tests
         if: always()
         run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.no-unit-tests.outputs.test-outcome }}"
 
-      - name: And the test-results-file-path output and env var should be populated with 'test-results.md'
+      - name: 10 - And the test-results-file-path output and env var should be populated with 'test-results.md'
         if: always()
         run: |
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-unit-tests.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-      - name: And the other outputs should be empty because pr comments and status checks are not being created
+      - name: 10 - And the other outputs should be empty because pr comments and status checks are not being created
         if: always()
         run: |
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-unit-tests.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-unit-tests.outputs.pr-comment-id }}"
 
-      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+      - name: 10 - And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
-          TARGET_FILE="./test-results.md"
+          # Comparing the test-results.md file will ensure that:
+          #  - The default timezone is used
+          #  - 'Not Found' is used for report title when there are no tests and no _computerName attr present
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
 
-          if [ -f "$TARGET_FILE" ]
-          then
-            echo "$TARGET_FILE exists which is expected."
-            actualContent=$(cat $TARGET_FILE)
-          else
-            echo "$TARGET_FILE does not exist which is not expected"
-            exit 1
-          fi
-          expectedContent=$(cat ./test/files/no-unit-tests/expected-test-results.md)
+          expectedFileName="./test/files/no-unit-tests/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
-          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
-
-
-      #-------------------------------------------------------------------------------------------------------------------------------
-      # TEST - SINGLE UNIT TEST & DEFAULT REPORT TITLE (single result in TestRun.Results.UnitTestResult)
-      # Comparing the test-results.md file will ensure that:
-      #  - The default timezone is used
-      #  - The dll name is used for report title when a report title filter is not specified
-      #  - The Duration stats are included in the report
-      #  - The Counter stats are included in the report
-      #-------------------------------------------------------------------------------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '--------------------------------------------------------------------------------------------------------------'
         run: |
           echo ""
           echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
           rm -f ./test-results.md
+      - name: '                                            TEST 11 - SINGLE TEST                                             '
+        run: echo ""
 
-      - name: When process-dotnet-test-results is called with a file that reports a single test
+      - name: 11 - When process-dotnet-test-results is called with a file that reports a single test
         if: always()
         id: single-test
         uses: ./
@@ -479,16 +443,16 @@ jobs:
           create-status-check: false
           create-pr-comment: false
 
-      - name: Then the action outcome should be success
+      - name: 11 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.single-test.outcome }}"
 
-      - name: And the outputs should indicate a success happened
+      - name: 11 - And the outputs should indicate a success happened
         if: always()
-        run : |
+        run: |
           # Verify the trx-files list matches what we expect
           ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/single-test/single-test.trx]" --actual "${{ steps.single-test.outputs.trx-files }}"
-          
+
           # Verify the test-outcome is passed
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.single-test.outputs.test-outcome }}"
 
@@ -501,39 +465,28 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.single-test.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.single-test.outputs.pr-comment-id }}"
 
-      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+      - name: 11 - And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
-          TARGET_FILE="./test-results.md"
+          # Comparing the test-results.md file will ensure that:
+          #  - The default timezone is used
+          #  - The dll name is used for report title when a report title filter is not specified
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
 
-          if [ -f "$TARGET_FILE" ]
-          then
-            echo "$TARGET_FILE exists which is expected."
-            actualContent=$(cat $TARGET_FILE)
-          else
-            echo "$TARGET_FILE does not exist which is not expected"
-            exit 1
-          fi
-          expectedContent=$(cat ./test/files/single-test/expected-test-results.md)
+          expectedFileName="./test/files/single-test/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
-          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
-
-      
-      #-------------------------------------------------------------------------------------------------------------------------------
-      # TEST - MULTIPLE UNIT TESTS & REPORT TITLE FILTER (multiple results in TestRun.Results.UnitTestResult)
-      # Comparing the test-results.md file will ensure that:
-      #  - The default timezone is used
-      #  - The report title is simplified when a report title filter is specified
-      #  - The Duration stats are included in the report
-      #  - The Counter stats are included in the report
-      #-------------------------------------------------------------------------------------------------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+      - name: '--------------------------------------------------------------------------------------------------------------'
         run: |
           echo ""
           echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
           rm -f ./test-results.md
+      - name: '                                           TEST 12 - MULTIPLE TESTS                                           '
+        run: echo ""
 
-      - name: When process-dotnet-test-results is called with a file that has multiple tests and a report title filter
+      - name: 12 - When process-dotnet-test-results is called with a file that has multiple tests and a report title filter
         if: always()
         id: multiple-tests
         uses: ./
@@ -545,16 +498,16 @@ jobs:
           create-pr-comment: false
           report-title-filter: 'Tests'
 
-      - name: Then the action outcome should be success
+      - name: 12 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.multiple-tests.outcome }}"
 
-      - name: And the outputs should indicate a success happened
+      - name: 12 - And the outputs should indicate a success happened
         if: always()
-        run : |
+        run: |
           # Verify the trx-files list matches what we expect
           ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/multiple-tests/multiple-tests.trx]" --actual "${{ steps.multiple-tests.outputs.trx-files }}"
-          
+
           # Verify the test-outcome is passed
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.multiple-tests.outputs.test-outcome }}"
 
@@ -567,41 +520,88 @@ jobs:
           ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.multiple-tests.outputs.status-check-id }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.multiple-tests.outputs.pr-comment-id }}"
 
-      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+      - name: 12 - And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
         run: |
-          TARGET_FILE="./test-results.md"
+          # Comparing the test-results.md file will ensure that:
+          #  - The default timezone is used
+          #  - The report title is simplified when a report title filter is specified
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
 
-          if [ -f "$TARGET_FILE" ]
-          then
-            echo "$TARGET_FILE exists which is expected."
-            actualContent=$(cat $TARGET_FILE)
-          else
-            echo "$TARGET_FILE does not exist which is not expected"
-            exit 1
-          fi
-          expectedContent=$(cat ./test/files/multiple-tests/expected-test-results.md)
+          expectedFileName="./test/files/multiple-tests/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
-          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
+      - name: '--------------------------------------------------------------------------------------------------------------'
+        run: |
+          echo ""
+          echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
+          rm -f ./test-results.md
+      - name: '                                             TEST 13 - MULTIPLE TRX                                           '
+        run: echo ""
 
-      
+      - name: 13 - When process-dotnet-test-results is called with multiple passing trx files
+        if: always()
+        id: multiple-trx
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/multiple-trx'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
+
+      - name: 13 -  the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.multiple-trx.outcome }}"
+
+      - name: 13 - And the outputs should indicate a success happened
+        if: always()
+        run: |
+          # Verify the trx-files list matches what we expect
+          fidget="./test/files/multiple-trx/fidget.trx"
+          widget="./test/files/multiple-trx/widget.trx"
+          ./test/assert-values-match.sh --name "trx-files output" --expected "[$fidget,$widget]" --actual "${{ steps.multiple-trx.outputs.trx-files }}"
+
+          # Verify the test-outcome is passed
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.multiple-trx.outputs.test-outcome }}"
+
+          # Verify the test-results-file-path output and env var should be populated with 'test-results.md'
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.multiple-trx.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+          # Verify this output is not set because we aren't creating a PR comment or status check
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.multiple-trx.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.multiple-trx.outputs.pr-comment-id }}"
+          ./test/assert-value-is-not-empty.sh --name "status-check-id output" --value "${{ steps.multiple-trx.outputs.status-check-id }}"
+
+      - name: 13 - And the contents of test-results.md file should match the contents of expected-test-results.md file
+        if: always()
+        run: |
+          # Comparing the test-results.md file will ensure that:
+          #  - The default timezone is used
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
+          #  - There are multiple sections when multiple trx files are processed
+
+          expectedFileName="./test/files/multiple-trx/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
       # Conditions:
       # has a failing test && create-status-check=true && ignoreTestFailures=false  (test-outcome output = Failed, status check=failure)
       # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
-      # no failing tests && create-status-check=true (test-outcome output = Passed, status check=success)
-      # creating status check (one per trx)
+
       # creating pr comment with normal message && update-comment-if-one-exists=true (test-results-truncated output = false)
       # creating pr comment with normal message && update-comment-if-one-exists=false (test-results-truncated output = false)
       # creating pr comment with truncated message && new comment-identifier (test-results-truncated output = true)
-
-      
 
       #---------------------------------------------------------------------------------------------
       #-----------------------------------------
       # TEST -
       #-----------------------------------------
-      # - name: '-------------------------------------------------------------------------------------------------------'
+      # - name: '---------------------------------------------------TEST 1----------------------------------------------------'
       #   run: echo ""
 
       # - name: When process-dotnet-test-results is called with
