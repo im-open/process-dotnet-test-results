@@ -10460,8 +10460,8 @@ Transforming file ${filePath}`);
         const reportTitleFilter = core2.getInput('report-title-filter') || '';
         const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
         if (reportTitleFilter != '') {
-          const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
-          reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+          const nameParts = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+          reportTitle = nameParts.length > 0 ? nameParts[nameParts.indexOf(reportTitleFilter) + 1] : null;
         }
         if (!reportTitle) {
           const storage = unitTests.length > 0 && unitTests[0]._storage ? unitTests[0]._storage : 'NOT FOUND';

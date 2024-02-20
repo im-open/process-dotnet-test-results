@@ -497,11 +497,73 @@ jobs:
           ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
 
       
+      #-------------------------------------------------------------------------------------------------------------------------------
+      # TEST - MULTIPLE UNIT TESTS & REPORT TITLE FILTER (multiple results in TestRun.Results.UnitTestResult)
+      # Comparing the test-results.md file will ensure that:
+      #  - The default timezone is used
+      #  - The report title is simplified when a report title filter is specified
+      #  - The test icon is matches the failed test outcome
+      #  - The Duration stats are included in the report
+      #  - The Counter stats are included in the report
+      #-------------------------------------------------------------------------------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: |
+          echo ""
+          echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
+          rm -f ./test-results.md
 
-      # Conditions:
+      - name: When process-dotnet-test-results is called with a file that has multiple tests and a report title filter
+        if: always()
+        id: multiple-tests
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/multiple-tests'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
+          report-title-filter: 'Tests'
+
+      - name: Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.multiple-tests.outcome }}"
+
+      - name: And the outputs should indicate a success happened
+        if: always()
+        run : |
+          # Verify the trx-files list matches what we expect
+          ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/multiple-tests/multiple-tests.trx]" --actual "${{ steps.multiple-tests.outputs.trx-files }}"
+          
+          # Verify the test-outcome is passed
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.multiple-tests.outputs.test-outcome }}"
+
+          # Verify the test-results-file-path output and env var should be populated with 'test-results.md'
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.multiple-tests.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+          # Verify this output is not set because we aren't creating a PR comment
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.multiple-tests.outputs.test-results-truncated }}"
+
+      - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
+        if: always()
+        run: |
+          TARGET_FILE="./test-results.md"
+
+          if [ -f "$TARGET_FILE" ]
+          then
+            echo "$TARGET_FILE exists which is expected."
+            actualContent=$(cat $TARGET_FILE)
+          else
+            echo "$TARGET_FILE does not exist which is not expected"
+            exit 1
+          fi
+          expectedContent=$(cat ./test/files/multiple-tests/expected-test-results.md)
+
+          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
 
       
-      # using report title filter
+
+      # Conditions:
       # has a failing test && create-status-check=true && ignoreTestFailures=false  (test-outcome output = Failed, status check=failure)
       # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
       # no failing tests && create-status-check=true (test-outcome output = Passed, status check=success)
@@ -510,7 +572,7 @@ jobs:
       # creating pr comment with normal message && update-comment-if-one-exists=false (test-results-truncated output = false)
       # creating pr comment with truncated message && new comment-identifier (test-results-truncated output = true)
 
-      # creating results file - Use this to determine the actual output
+      
 
       #---------------------------------------------------------------------------------------------
       #-----------------------------------------

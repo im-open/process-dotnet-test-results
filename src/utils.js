@@ -157,8 +157,13 @@ function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
     const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
 
     if (reportTitleFilter != '') {
-      const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
-      reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+      // This grabs the name part immediately following the name part passed in
+      // Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive
+      // Filter: Widget     reportTitle: Tests
+      // Filter: Tests      reportTitle: MathTests
+      // Filter: MathTests  reportTitle: OnePlusOneShouldNotEqualFive
+      const nameParts = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+      reportTitle = nameParts.length > 0 ? nameParts[nameParts.indexOf(reportTitleFilter) + 1] : null;
     }
 
     if (!reportTitle) {

@@ -10460,8 +10460,8 @@ Transforming file ${filePath}`);
         const reportTitleFilter = core2.getInput('report-title-filter') || '';
         const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
         if (reportTitleFilter != '') {
-          const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
-          reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+          const nameParts = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+          reportTitle = nameParts.length > 0 ? nameParts[nameParts.indexOf(reportTitleFilter) + 1] : null;
         }
         if (!reportTitle) {
           const storage = unitTests.length > 0 && unitTests[0]._storage ? unitTests[0]._storage : 'NOT FOUND';
@@ -27650,8 +27650,7 @@ var require_markup = __commonJS({
 ${getBadge(testData)}
 ${getTestTimes(testData)}
 ${getTestCounters(testData)}
-${getTestResultsMarkup(testData)}
-`;
+${getFailedAndEmptyTestResultsMarkup(testData)}`;
     }
     function getBadge(testData) {
       const failedCount = testData.TrxData.TestRun.ResultSummary.Counters._failed;
@@ -27749,7 +27748,7 @@ ${getTestResultsMarkup(testData)}
       }
       return '';
     }
-    function getTestResultsMarkup(testData) {
+    function getFailedAndEmptyTestResultsMarkup(testData) {
       let resultsMarkup = '';
       if (testData.IsEmpty) {
         return getNoResultsMarkup(testData);
@@ -27776,7 +27775,8 @@ ${getTestResultsMarkup(testData)}
       <td><code>${runInfo.Text}</code></td>
     </tr>
   </table>
-</details>`;
+</details>
+`;
       return resultsMarkup;
     }
     function getTestOutcomeIcon(testOutcome) {
@@ -27838,7 +27838,8 @@ ${getTestResultsMarkup(testData)}
       <td><code>${data.TestMethod._name}</code></td>
     </tr>${errorMessage}${stacktrace}
   </table>
-</details>`.trim();
+</details>
+`.trim();
     }
     module2.exports = {
       getMarkupForTrx: getMarkupForTrx2

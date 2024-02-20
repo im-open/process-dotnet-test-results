@@ -10,8 +10,7 @@ function getMarkupForTrx(testData) {
 ${getBadge(testData)}
 ${getTestTimes(testData)}
 ${getTestCounters(testData)}
-${getTestResultsMarkup(testData)}
-`;
+${getFailedAndEmptyTestResultsMarkup(testData)}`;
 }
 
 function getBadge(testData) {
@@ -120,7 +119,7 @@ function getTableRowIfHasValue(heading, data) {
   return '';
 }
 
-function getTestResultsMarkup(testData) {
+function getFailedAndEmptyTestResultsMarkup(testData) {
   let resultsMarkup = '';
   if (testData.IsEmpty) {
     return getNoResultsMarkup(testData);
@@ -149,7 +148,8 @@ function getNoResultsMarkup(testData) {
       <td><code>${runInfo.Text}</code></td>
     </tr>
   </table>
-</details>`;
+</details>
+`;
   return resultsMarkup;
 }
 
@@ -217,7 +217,8 @@ function getFailedTestMarkup(data, testResult) {
       <td><code>${data.TestMethod._name}</code></td>
     </tr>${errorMessage}${stacktrace}
   </table>
-</details>`.trim();
+</details>
+`.trim();
 }
 
 module.exports = {

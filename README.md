@@ -22,6 +22,7 @@ If creating status checks is enabled, one status check will be created for each 
     - [Using the defaults](#using-the-defaults)
     - [Specifying additional behavior](#specifying-additional-behavior)
     - [Using create-results-file](#using-create-results-file)
+      - [Report Title](#report-title)
   - [Contributing](#contributing)
     - [Incrementing the Version](#incrementing-the-version)
     - [Source Code Changes](#source-code-changes)
@@ -71,18 +72,18 @@ For failed test runs you can expand each failed test and view more details about
 
 ## Inputs
 
-| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                                                                                                    |
-|--------------------------------|-------------|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                                                                                                      |
-| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                                                                                           |
-| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                                                                                                         |
-| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                                                                                            |
-| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                                                                                                 |
-| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.                                                                            |
-| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                                                                                                        |
-| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                                                                                                 |
-| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                                                                                                |
-| `report-title-filter`          | false       |                                  | Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that you inputted in this field. To find test name(s) run `dotnet test --list-tests`. See examples below for more details. |
+| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                         |
+|--------------------------------|-------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                           |
+| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                |
+| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                              |
+| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                 |
+| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                      |
+| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
+| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
+| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
+| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                     |
+| `report-title-filter`          | false       |                                  | Enables truncating the report title by filtering out previous name parts taken from the trx UnitTest `name`.  See [Report Title](#report-title) below for more information.                      |
 
 ## Outputs
 
@@ -203,16 +204,32 @@ jobs:
           create-status-check: false
           create-pr-comment: false
           create-results-file: true
-          report-title-filter: 'Tests' # See Notes below on title output
+          report-title-filter: 'Tests' # See Report Title Notes below on title output
 
       - name: Annotate Test Results
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
 ```
 
-The value for `report-title-filter` input in the example above will output a report title of `LoginTests` from unit test name of `MyProject.Automation.Test.LoginTests.ValidateLogin`. This input is helpful to differentiate groups of tests in the markdown output to file and pull request comment.
-To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
-<!-- TODO:  Danielle this needs to be much clearer! -->
+#### Report Title
 
+In the example the first test is named: `Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive`.  If `report-title-filter: 'Tests'` is used, then the action will use the next name part (split by `.`) so the title of the report would be `MathTests`.
+
+When `report-title-filter` is provided, the action uses the `name` of the first UnitTest in the `.trx` file.  That name is then split into parts by `.`.  The report title will be set to the value of the name part following the name part that matches the `report-title-filter`.  If that does not result in a value, the action will default to examining the `storage` property of the first UnitTest and setting the report title based on `.dll` name.
+
+Example
+
+- Test Name=`Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive`
+- Test dll=`widget.tests.dll`
+
+  | report-title-filter | Report Title                 |
+  |---------------------|------------------------------|
+  | `Widget`            | Tests                        |
+  | `Tests`             | MathTests                    |
+  | `MathTests`         | OnePlusOneShouldNotEqualFive |
+  | `Other`             | WIDGET.TESTS                 |
+  | _empty_             | WIDGET.TESTS                 |
+
+This input is helpful to differentiate groups of tests in the markdown that is output to a file and the pull request comment.  To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
 
 ## Contributing
 
