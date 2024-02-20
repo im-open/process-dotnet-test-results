@@ -51,6 +51,10 @@ outputs:
     description: 'Boolean if test results was truncated due to markdown exceeding character limit of 65535.'
   test-results-file-path:
     description: 'File path of the test outcome in markdown format.  This is the same output that is posted in the PR comment'
+  status-check-id:
+    description: 'The ID of the status check that was created.  This is only set if `create-status-check` is true and a status check was created successfully.'
+  pr-comment-id:
+    description: 'The ID of the PR comment that was created.  This is only set if `create-pr-comment` is true and a PR was created successfully.'
 
 runs:
   using: 'node16'

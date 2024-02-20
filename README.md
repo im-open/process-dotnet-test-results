@@ -83,7 +83,7 @@ For failed test runs you can expand each failed test and view more details about
 | `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
 | `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
 | `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                     |
-| `report-title-filter`          | false       |                                  | Enables truncating the report title by filtering out previous name parts taken from the trx UnitTest `name`.  See [Report Title](#report-title) below for more information.                      |
+| `report-title-filter`          | false       |                                  | Enables truncating the report title by filtering out previous name parts taken from the trx UnitTest `name`.  See [Report Title](#report-title) below for more information.         |
 
 ## Outputs
 
@@ -93,6 +93,9 @@ For failed test runs you can expand each failed test and view more details about
 | `trx-files`              | List of `trx` files that were processed                                                                                                                               |
 | `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                          |
 | `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                             |
+| `status-check-id`        | The ID of the status check that was created.  This is only set if `create-status-check` is true and a status check was created successfully.                          |
+| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is true and a PR was created successfully.                                        |
+
 
 ## Usage Examples
 

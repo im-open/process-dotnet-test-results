@@ -113,6 +113,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-github-token.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-github-token.outputs.test-results-truncated }}"
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-github-token.outputs.test-results-file-path }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-github-token.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-github-token.outputs.pr-comment-id }}"
 
       #--------------------------------------
       # TEST - RANGE ERROR/NO TRX FILES
@@ -140,6 +142,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.range-error.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.range-error.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.range-error.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.range-error.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.range-error.outputs.pr-comment-id }}"
 
       #-----------------------------------------
       # TEST - MALFORMED TRX FILES (INVALID XML)
@@ -167,6 +171,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.malformed-xml.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.malformed-xml.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.malformed-xml.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.malformed-xml.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.malformed-xml.outputs.pr-comment-id }}"
 
       #-----------------------------------------
       # TEST - TRX MISSING TestRun node
@@ -194,6 +200,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-testrun.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-testrun.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-testrun.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-testrun.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-testrun.outputs.pr-comment-id }}"
 
       #-----------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary node
@@ -221,6 +229,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-resultsummary.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-resultsummary.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-resultsummary.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-resultsummary.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-resultsummary.outputs.pr-comment-id }}"
 
       #-------------------------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary.Counters node
@@ -248,6 +258,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-counters.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-counters.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-counters.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-counters.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-counters.outputs.pr-comment-id }}"
 
       #-------------------------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary.RunInfos node
@@ -275,6 +287,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfos.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfos.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfos.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfos.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfos.outputs.pr-comment-id }}"
 
       #---------------------------------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary.RunInfos.RunInfo node
@@ -302,6 +316,8 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfo.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfo.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfo.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfo.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfo.outputs.pr-comment-id }}"
 
       #-----------------------------------------------------------------------------------------------------------
       # TEST - NO TESTS BUT CREATE RESULTS FILE (empty TestRun.Results && TestRun.TestDefinitions)
@@ -346,9 +362,12 @@ jobs:
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-tests.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-      - name: And the test-results-truncated output should be empty because a PR comment is not being created
+      - name: And the other outputs should be empty because pr comments and status checks are not being created
         if: always()
-        run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
+        run: |
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-tests.outputs.pr-comment-id }}"
 
       - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
@@ -372,7 +391,6 @@ jobs:
       # Comparing the test-results.md file will ensure that:
       #  - The default timezone is used
       #  - 'Not Found' is used for report title when there are no tests and no _computerName attr present
-      #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
       #  - The Duration stats are included in the report
       #  - The Counter stats are included in the report
       #-------------------------------------------------------------------------------------------------------------------------------
@@ -411,9 +429,12 @@ jobs:
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-unit-tests.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-      - name: And the test-results-truncated output should be empty because a PR comment is not being created
+      - name: And the other outputs should be empty because pr comments and status checks are not being created
         if: always()
-        run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
+        run: |
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-unit-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-unit-tests.outputs.pr-comment-id }}"
 
       - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
@@ -438,7 +459,6 @@ jobs:
       # Comparing the test-results.md file will ensure that:
       #  - The default timezone is used
       #  - The dll name is used for report title when a report title filter is not specified
-      #  - The test icon is matches the passed test outcome
       #  - The Duration stats are included in the report
       #  - The Counter stats are included in the report
       #-------------------------------------------------------------------------------------------------------------------------------
@@ -476,8 +496,10 @@ jobs:
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.single-test.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-          # Verify this output is not set because we aren't creating a PR comment
+          # Verify this output is not set because we aren't creating a PR comment or status check
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.single-test.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.single-test.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.single-test.outputs.pr-comment-id }}"
 
       - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
@@ -502,7 +524,6 @@ jobs:
       # Comparing the test-results.md file will ensure that:
       #  - The default timezone is used
       #  - The report title is simplified when a report title filter is specified
-      #  - The test icon is matches the failed test outcome
       #  - The Duration stats are included in the report
       #  - The Counter stats are included in the report
       #-------------------------------------------------------------------------------------------------------------------------------
@@ -541,8 +562,10 @@ jobs:
           ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.multiple-tests.outputs.test-results-file-path }}"
           ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
 
-          # Verify this output is not set because we aren't creating a PR comment
+          # Verify this output is not set because we aren't creating a PR comment or status check
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.multiple-tests.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.multiple-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.multiple-tests.outputs.pr-comment-id }}"
 
       - name: And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()

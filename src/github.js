@@ -26,7 +26,8 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
       }
     })
     .then(response => {
-      core.info(`Created check: ${response.data.name}`);
+      core.info(`Created check: ${response.data.name} with id ${response.data.id}`);
+      core.setOutput('status-check-id', response.data.id);
     })
     .catch(error => {
       core.setFailed(`An error occurred trying to create the status check: ${error.message}`);
@@ -80,6 +81,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
 
   if (existingCommentId) {
     core.info(`Updating existing PR #${existingCommentId} comment...`);
+    core.setOutput('pr-comment-id', existingCommentId);
     await octokit.rest.issues
       .updateComment({
         owner: github.context.repo.owner,
@@ -104,6 +106,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
       })
       .then(response => {
         core.info(`PR comment was created.  ID: ${response.data.id}.`);
+        core.setOutput('pr-comment-id', response.data.id);
       })
       .catch(error => {
         core.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);

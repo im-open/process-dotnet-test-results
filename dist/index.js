@@ -24699,7 +24699,8 @@ var require_github2 = __commonJS({
           }
         })
         .then(response => {
-          core2.info(`Created check: ${response.data.name}`);
+          core2.info(`Created check: ${response.data.name} with id ${response.data.id}`);
+          core2.setOutput('status-check-id', response.data.id);
         })
         .catch(error => {
           core2.setFailed(`An error occurred trying to create the status check: ${error.message}`);
@@ -24746,6 +24747,7 @@ var require_github2 = __commonJS({
       }
       if (existingCommentId) {
         core2.info(`Updating existing PR #${existingCommentId} comment...`);
+        core2.setOutput('pr-comment-id', existingCommentId);
         await octokit.rest.issues
           .updateComment({
             owner: github.context.repo.owner,
@@ -24772,6 +24774,7 @@ ${markupData}`,
           })
           .then(response => {
             core2.info(`PR comment was created.  ID: ${response.data.id}.`);
+            core2.setOutput('pr-comment-id', response.data.id);
           })
           .catch(error => {
             core2.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);
