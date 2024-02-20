@@ -66,7 +66,8 @@ jobs:
 
     env:
       DIR_WITH_NO_TRX: './test/files/dir-with-no-trx-files'
-      
+      COMPUTER_NAME: 'MY-MACHINE'
+
     steps:
       #--------------------------------------
       # SETUP
@@ -247,8 +248,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-counters.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-counters.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-counters.outputs.test-results-truncated }}"
-      
-      
+
       #-------------------------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary.RunInfos node
       #-------------------------------------------------------
@@ -275,7 +275,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfos.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfos.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfos.outputs.test-results-truncated }}"
-      
+
       #---------------------------------------------------------------
       # TEST - TRX MISSING TestRun.ResultSummary.RunInfos.RunInfo node
       #---------------------------------------------------------------
@@ -303,12 +303,133 @@ jobs:
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfo.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfo.outputs.test-results-truncated }}"
 
+      #-----------------------------------------------------------------------------------------------------------
+      # TEST - NO TESTS BUT CREATE RESULTS FILE (empty TestRun.Results && TestRun.TestDefinitions)
+      # Comparing the test-results.md file will ensure that:
+      #  - The correct timezone is used
+      #  - The computer name is used for report title when there are no tests
+      #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
+      #-----------------------------------------------------------------------------------------------------------
       
-      
-      
-      
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+      - name: When process-dotnet-test-results is called with a file that does not contain test results or test definitions
+        if: always()
+        id: no-tests
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/no-tests'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
+          timezone: 'America/Denver'
+
+      - name: Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.no-tests.outcome }}"
+
+      - name: And the trx-files output should be contain the no-tests.trx file
+        if: always()
+        run: ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/no-tests/no-tests.trx]" --actual "${{ steps.no-tests.outputs.trx-files }}"
+
+      - name: And the test-outcome output should be Passed because there are no failing tests
+        if: always()
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.no-tests.outputs.test-outcome }}"
+
+      - name: And the test-results-file-path output and env var should be populated with 'test-results.md'
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-tests.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+      - name: And the test-results-truncated output should be empty because a PR comment is not being created
+        if: always()
+        run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
+
+      - name: And the actual test-results.md file should match the expected test-results.md file
+        if: always()
+        run: |
+          TARGET_FILE="./test-results.md"
+
+          if [ -f "$TARGET_FILE" ]
+          then
+            echo "$TARGET_FILE exists which is expected."
+            actualContent=$(cat $TARGET_FILE)
+          else
+            echo "$TARGET_FILE does not exist which is not expected"
+            exit 1
+          fi
+          expectedContent=$(cat ./test/files/no-tests/expected-test-results.md)
+
+          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
+
+      #-------------------------------------------------------------------------------------------------------------------------------
+      # TEST - NO UNIT TEST RESULTS BUT CREATE RESULTS FILE(empty TestRun.Results.UnitTestResult && TestRun.TestDefinitions.UnitTest)
+      # Comparing the test-results.md file will ensure that:
+      #  - The default timezone is used
+      #  - 'Not Found' is used for report title when there are no tests and no _computerName attr present
+      #  - The test icon is correct when the outcome doesn't match expected scenarios (passed/failed/notexecuted)
+      #-------------------------------------------------------------------------------------------------------------------------------
+      - name: '-------------------------------------------------------------------------------------------------------'
+        run: |
+          echo ""
+          echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
+          rm -f ./test-results.md
+
+      - name: When process-dotnet-test-results is called with a file that does not contain unit test results or unit test definitions
+        if: always()
+        id: no-unit-tests
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/no-unit-tests'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
+
+      - name: Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.no-unit-tests.outcome }}"
+
+      - name: And the trx-files output should be contain the no-unit-tests.trx file
+        if: always()
+        run: ./test/assert-values-match.sh --name "trx-files output" --expected "[./test/files/no-unit-tests/no-unit-tests.trx]" --actual "${{ steps.no-unit-tests.outputs.trx-files }}"
+
+      - name: And the test-outcome output should be Passed because there are no failing tests
+        if: always()
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.no-unit-tests.outputs.test-outcome }}"
+
+      - name: And the test-results-file-path output and env var should be populated with 'test-results.md'
+        if: always()
+        run: |
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.no-unit-tests.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+      - name: And the test-results-truncated output should be empty because a PR comment is not being created
+        if: always()
+        run: ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
+
+      - name: And the actual test-results.md file should match the expected test-results.md file
+        if: always()
+        run: |
+          TARGET_FILE="./test-results.md"
+
+          if [ -f "$TARGET_FILE" ]
+          then
+            echo "$TARGET_FILE exists which is expected."
+            actualContent=$(cat $TARGET_FILE)
+          else
+            echo "$TARGET_FILE does not exist which is not expected"
+            exit 1
+          fi
+          expectedContent=$(cat ./test/files/no-unit-tests/expected-test-results.md)
+
+          ./test/assert-values-match.sh --name "test-results.md content" --expected "$expectedContent" --actual "$actualContent"
+
       # Conditions:
-      # empty TestRun.Results && TestRun.TestDefinitions  (format is auto-fixed && report title set to _computerName)
+
       # empty TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
       # present but single entry for TestRun.Results.UnitTestResult &&TestRun.TestDefinitions.UnitTest (format is auto-fixed)
       # using report title filter
@@ -317,9 +438,9 @@ jobs:
       # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
       # no failing tests && create-status-check=true (test-outcome output = Passed, status check=success)
       # creating status check (one per trx)
-      # creating pr comment with normal message && update-comment-if-one-exists=true (test-outcome-truncated output = false)
-      # creating pr comment with normal message && update-comment-if-one-exists=false (test-outcome-truncated output = false)
-      # creating pr comment with truncated message && new comment-identifier (test-outcome-truncated output = true)
+      # creating pr comment with normal message && update-comment-if-one-exists=true (test-results-truncated output = false)
+      # creating pr comment with normal message && update-comment-if-one-exists=false (test-results-truncated output = false)
+      # creating pr comment with truncated message && new comment-identifier (test-results-truncated output = true)
 
       # creating results file - Use this to determine the actual output
 
@@ -331,11 +452,12 @@ jobs:
       #   run: echo ""
 
       # - name: When process-dotnet-test-results is called with
+      #   if: always()
       #   id: change-me
       #   uses: ./
       #   with:
       #     github-token: '${{ secrets.GITHUB_TOKEN }}'
-      #     base-directory: '${{ env. }}'
+      #     base-directory: './test/files/'
       #     ignore-test-failures: false
       #     create-status-check: true
       #     create-pr-comment: true

@@ -10382,14 +10382,14 @@ Transforming file ${filePath}`);
       });
       if (XMLValidator.validate(xmlData.toString()) === true) {
         const parsedTrx = xmlParser.parse(xmlData);
-        if (!isParsedTrxValid(parsedTrx, filePath)) {
+        if (!doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath)) {
           return;
         }
-        const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
-        if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
-          core2.warning('There is trouble');
-        }
-        const testDefinitionsAreEmpty = !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
+        const testDefinitionsAreEmpty =
+          !parsedTrx.TestRun.TestDefinitions ||
+          parsedTrx.TestRun.TestDefinitions.length === 0 ||
+          !parsedTrx.TestRun.TestDefinitions.UnitTest ||
+          parsedTrx.TestRun.TestDefinitions.UnitTest.length === 0;
         populateAndFormatObjects(parsedTrx);
         const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
         trxDataWrapper = {
@@ -10409,7 +10409,9 @@ Transforming file ${filePath}`);
       }
       return trxDataWrapper;
     }
-    function isParsedTrxValid(parsedTrx, filePath) {
+    function doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath) {
+      const testDefinitionsAreEmpty =
+        !parsedTrx.TestRun || !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
       let missingElement;
       if (!parsedTrx.TestRun) {
         missingElement = 'TestRun';
@@ -10417,9 +10419,9 @@ Transforming file ${filePath}`);
         missingElement = 'TestRun.ResultSummary';
       } else if (!parsedTrx.TestRun.ResultSummary.Counters) {
         missingElement = 'TestRun.ResultSummary.Counters';
-      } else if (!parsedTrx.TestRun.ResultSummary.RunInfos) {
+      } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos) {
         missingElement = 'TestRun.ResultSummary.RunInfos';
-      } else if (!parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
+      } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
         missingElement = 'TestRun.ResultSummary.RunInfos.RunInfo';
       }
       if (missingElement) {
@@ -10453,7 +10455,7 @@ Transforming file ${filePath}`);
     function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
       let reportTitle = '';
       if (testDefinitionsAreEmpty) {
-        reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
+        reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName || 'NOT FOUND';
       } else {
         const reportTitleFilter = core2.getInput('report-title-filter') || '';
         const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;

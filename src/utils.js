@@ -59,17 +59,15 @@ async function transformTrxToJson(filePath) {
     const parsedTrx = xmlParser.parse(xmlData);
 
     // Verify the parsed data contains all the required items so we can fail fast with more descriptive error messages.
-    if (!isParsedTrxValid(parsedTrx, filePath)) {
+    if (!doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath)) {
       return;
     }
 
-    // QUESTION:  Why is this an important thing to note?  Is it just leftover from the original implementation?  Can it be removed?
-    const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
-    if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
-      core.warning('There is trouble');
-    }
-
-    const testDefinitionsAreEmpty = !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
+    const testDefinitionsAreEmpty =
+      !parsedTrx.TestRun.TestDefinitions ||
+      parsedTrx.TestRun.TestDefinitions.length === 0 ||
+      !parsedTrx.TestRun.TestDefinitions.UnitTest ||
+      parsedTrx.TestRun.TestDefinitions.UnitTest.length === 0;
     populateAndFormatObjects(parsedTrx);
     const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
 
@@ -92,11 +90,15 @@ async function transformTrxToJson(filePath) {
   return trxDataWrapper;
 }
 
-function isParsedTrxValid(parsedTrx, filePath) {
+function doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath) {
   // Previous versions of the action would have encountered exceptions if the following nodes
   // weren't present when getReportTitle(), areThereAnyFailingTests(), or getMarkupForTrx() were
   // called.  The details would have just been swallowed by a more general exception.  So fail
   // fast with more descriptive error messages by checking for the presence of these items first.
+
+  const testDefinitionsAreEmpty =
+    !parsedTrx.TestRun || !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
+
   let missingElement;
   if (!parsedTrx.TestRun) {
     missingElement = 'TestRun';
@@ -104,9 +106,9 @@ function isParsedTrxValid(parsedTrx, filePath) {
     missingElement = 'TestRun.ResultSummary';
   } else if (!parsedTrx.TestRun.ResultSummary.Counters) {
     missingElement = 'TestRun.ResultSummary.Counters';
-  } else if (!parsedTrx.TestRun.ResultSummary.RunInfos) {
+  } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos) {
     missingElement = 'TestRun.ResultSummary.RunInfos';
-  } else if (!parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
+  } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
     missingElement = 'TestRun.ResultSummary.RunInfos.RunInfo';
   }
   if (missingElement) {
@@ -148,7 +150,7 @@ function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
   let reportTitle = '';
 
   if (testDefinitionsAreEmpty) {
-    reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
+    reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName || 'NOT FOUND';
   } else {
     const reportTitleFilter = core.getInput('report-title-filter') || '';
 

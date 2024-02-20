@@ -59,9 +59,9 @@ async function run() {
         );
         markupComment = markupComment.substring(0, commentCharacterLimit - 100);
         markupComment = 'Test outcome truncated due to character limit. See full report in output. \n' + markupComment;
-        core.setOutput('test-outcome-truncated', 'true');
+        core.setOutput('test-results-truncated', 'true');
       } else {
-        core.setOutput('test-outcome-truncated', 'false');
+        core.setOutput('test-results-truncated', 'false');
       }
 
       // TODO:  implement steve's change for cypress
@@ -69,13 +69,16 @@ async function run() {
     }
 
     if (shouldCreateResultsFile) {
-      const resultsFile = './test-results.md';
+      const resultsFile = './test-results.md'; // TODO:  if this is called multiple times in one job they will overlap.  Should we fix that?
       const resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
       core.setOutput('test-results-file-path', resultsFilePath);
     }
   } catch (error) {
     if (error instanceof RangeError) {
-      core.info(error.message);
+      core.info(`An error occurred processing the trx files: ${error.message}`);
+      // TODO:  It seems inconsistent that we're saying the step is a success (because we aren't failing) but
+      //        the test-outcome is failure.  Do we need to reconcile this?  It probably needs to happen with
+      //        a breaking change though.
       core.setOutput('test-outcome', 'Failed');
       core.setOutput('test-results-file-path', null);
       return;
