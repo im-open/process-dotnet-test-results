@@ -40,6 +40,7 @@ async function createPRCommentIfRequested(testResultsMarkup) {
   // The README.md indicates only one per comment per run
   // so all the trx markup will be combined into one comment
   let markup = testResultsMarkup;
+  core.info(`\nCreating a PR comment with length ${markup.length}...`);
 
   // GitHub API has a limit of 65535 characters for a comment so truncate the markup if we need to
   const charLimit = 65535;
@@ -56,9 +57,7 @@ async function createPRCommentIfRequested(testResultsMarkup) {
 
   // TODO:  implement steve's change for cypress
   const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
-  if (commentId && commentId.length > 0) {
-    core.setOutput('pr-comment-id', commentId); // This is mainly for testing purposes
-  }
+  core.setOutput('pr-comment-id', commentId); // This is mainly for testing purposes
 }
 
 async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
@@ -82,7 +81,7 @@ async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
 
   if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
     core.info(`\nThe following status check ids were created: ${statusCheckIds.join(',')}`);
-    core.setOutput('status-check-ids', statusCheckIds.join(','));
+    core.setOutput('status-check-ids', statusCheckIds.join(',')); // This is mainly for testing purposes
   }
   return markupForResults.join('\n');
 }

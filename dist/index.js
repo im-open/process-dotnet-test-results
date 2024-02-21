@@ -27898,6 +27898,8 @@ async function createPRCommentIfRequested(testResultsMarkup) {
     return;
   }
   let markup = testResultsMarkup;
+  core.info(`
+Creating a PR comment with length ${markup.length}...`);
   const charLimit = 65535;
   let truncated = false;
   if (markup.length > charLimit) {
@@ -27909,9 +27911,7 @@ async function createPRCommentIfRequested(testResultsMarkup) {
   }
   core.setOutput('test-results-truncated', truncated);
   const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
-  if (commentId && commentId.length > 0) {
-    core.setOutput('pr-comment-id', commentId);
-  }
+  core.setOutput('pr-comment-id', commentId);
 }
 async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
   let markupForResults = [];
