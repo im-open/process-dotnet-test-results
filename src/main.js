@@ -74,14 +74,14 @@ async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
         conclusion = ignoreTestFailures ? 'neutral' : 'failure';
       }
       const checkId = await createStatusCheck(token, data, markupData, conclusion);
-      if (checkId && checkId.length > 0) {
-        statusCheckIds.push(checkId);
-      }
+      statusCheckIds.push(checkId);
     }
 
     markupForResults.push(markupData);
   }
+
   if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
+    core.info(`\nThe following status check ids were created: ${statusCheckIds.join(',')}`);
     core.setOutput('status-check-ids', statusCheckIds.join(','));
   }
   return markupForResults.join('\n');

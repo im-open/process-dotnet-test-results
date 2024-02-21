@@ -10474,7 +10474,8 @@ Transforming file ${filePath}`);
       return reportTitle;
     }
     function areThereAnyFailingTests2(trxJsonReports) {
-      core2.info(`Checking for failing tests..`);
+      core2.info(`
+Checking for failing tests..`);
       for (const trxData of trxJsonReports) {
         if (trxData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
           core2.warning(`At least one failing test was found.`);
@@ -10485,7 +10486,8 @@ Transforming file ${filePath}`);
       return false;
     }
     function createResultsFile2(resultsFileName, results) {
-      core2.info(`Writing results to ${resultsFileName}`);
+      core2.info(`
+Writing results to ${resultsFileName}`);
       let resultsFilePath = null;
       fs.writeFile(resultsFileName, results, err => {
         if (err) {
@@ -24676,30 +24678,42 @@ var require_github2 = __commonJS({
     var core2 = require_core();
     var github = require_github();
     async function createStatusCheck2(repoToken, reportData, markupData, conclusion) {
-      core2.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
+      core2.info(`
+Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
       const octokit = github.getOctokit(repoToken);
       const git_sha =
         github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
-      core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
+      const name = `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`;
+      const status = 'completed';
+      const title = reportData.ReportMetaData.ReportTitle;
       const checkTime = new Date().toUTCString();
-      core2.info(`Check time is: ${checkTime}`);
+      const summary = `This test run completed at \`${checkTime}\``;
+      let propMessage = `  Name: ${name}
+  GitSha: ${git_sha}
+  Event: ${github.context.eventName}
+  Status: ${status}
+  Conclusion: ${conclusion}
+  Check time: ${checkTime}
+  Title: ${title}
+  Summary: ${summary}`;
+      core2.info(propMessage);
       let statusCheckId;
       await octokit.rest.checks
         .create({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
-          name: `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`,
+          name,
           head_sha: git_sha,
-          status: 'completed',
+          status,
           conclusion,
           output: {
-            title: reportData.ReportMetaData.ReportTitle,
-            summary: `This test run completed at \`${checkTime}\``,
+            title,
+            summary,
             text: markupData
           }
         })
         .then(response => {
-          core2.info(`Created check: ${response.data.name} with id ${response.data.id}`);
+          core2.info(`Created check: '${response.data.name}' with id '${response.data.id}'`);
           statusCheckId = response.data.id;
         })
         .catch(error => {
@@ -27910,13 +27924,13 @@ async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
         conclusion = ignoreTestFailures ? 'neutral' : 'failure';
       }
       const checkId = await createStatusCheck(token, data, markupData, conclusion);
-      if (checkId && checkId.length > 0) {
-        statusCheckIds.push(checkId);
-      }
+      statusCheckIds.push(checkId);
     }
     markupForResults.push(markupData);
   }
   if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
+    core.info(`
+The following status check ids were created: ${statusCheckIds.join(',')}`);
     core.setOutput('status-check-ids', statusCheckIds.join(','));
   }
   return markupForResults.join('\n');

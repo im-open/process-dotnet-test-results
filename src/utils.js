@@ -179,7 +179,7 @@ function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
 }
 
 function areThereAnyFailingTests(trxJsonReports) {
-  core.info(`Checking for failing tests..`);
+  core.info(`\nChecking for failing tests..`);
   for (const trxData of trxJsonReports) {
     if (trxData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
       core.warning(`At least one failing test was found.`);
@@ -191,7 +191,7 @@ function areThereAnyFailingTests(trxJsonReports) {
 }
 
 function createResultsFile(resultsFileName, results) {
-  core.info(`Writing results to ${resultsFileName}`);
+  core.info(`\nWriting results to ${resultsFileName}`);
   let resultsFilePath = null;
 
   fs.writeFile(resultsFileName, results, err => {

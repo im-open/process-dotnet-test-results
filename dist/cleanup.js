@@ -10474,7 +10474,8 @@ Transforming file ${filePath}`);
       return reportTitle;
     }
     function areThereAnyFailingTests(trxJsonReports) {
-      core2.info(`Checking for failing tests..`);
+      core2.info(`
+Checking for failing tests..`);
       for (const trxData of trxJsonReports) {
         if (trxData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
           core2.warning(`At least one failing test was found.`);
@@ -10485,7 +10486,8 @@ Transforming file ${filePath}`);
       return false;
     }
     function createResultsFile(resultsFileName, results) {
-      core2.info(`Writing results to ${resultsFileName}`);
+      core2.info(`
+Writing results to ${resultsFileName}`);
       let resultsFilePath2 = null;
       fs.writeFile(resultsFileName, results, err => {
         if (err) {

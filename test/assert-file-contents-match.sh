@@ -34,11 +34,11 @@ Actual file name:   '$actualFileName'"
 if [ -f "$actualFileName" ]
 then
   echo "
-  $actualFileName exists which is expected."
+$actualFileName exists which is expected."
   actualFileContents=$(cat $actualFileName)
 else
   echo "
-  $actualFileName does not exist which is not expected"
+$actualFileName does not exist which is not expected"
   exit 1
 fi
 expectedFileContents=$(cat $expectedFileName)

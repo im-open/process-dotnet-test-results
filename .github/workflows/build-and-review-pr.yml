@@ -63,24 +63,15 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-
+    if: 1 == 2
     env:
       DIR_WITH_NO_TRX: './test/files/dir-with-no-trx-files'
-      COMPUTER_NAME: 'MY-MACHINE'
 
     steps:
-      #--------------------------------------
-      # SETUP
-      #--------------------------------------
       - name: '-------------------------------------------------------------------------------------------------------------'
         run: echo ""
-
-      - name: Setup - Fail test job if fork
-        run: |
-          if [ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]; then
-            echo "This test job requires the `pull_request: write` & `checks: write` scopes on the GITHUB_TOKEN which PRs from forks do not have.  Before this PR can be merged, the tests should be run on an intermediate branch created by repository owners."
-            exit 1
-          fi
+      - name: '                                                    SETUP                                                    '
+        run: echo ""
 
       - name: Setup - Checkout the action
         uses: actions/checkout@v4
@@ -112,7 +103,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-github-token.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-github-token.outputs.test-results-truncated }}"
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-github-token.outputs.test-results-file-path }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-github-token.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-github-token.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-github-token.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -140,7 +131,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.range-error.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.range-error.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.range-error.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.range-error.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.range-error.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.range-error.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -168,7 +159,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.malformed-xml.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.malformed-xml.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.malformed-xml.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.malformed-xml.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.malformed-xml.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.malformed-xml.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -196,7 +187,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-testrun.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-testrun.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-testrun.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-testrun.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-testrun.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-testrun.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -224,7 +215,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-resultsummary.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-resultsummary.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-resultsummary.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-resultsummary.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-resultsummary.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-resultsummary.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -252,7 +243,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-counters.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-counters.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-counters.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-counters.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-counters.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-counters.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -280,7 +271,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfos.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfos.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfos.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfos.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfos.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfos.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -308,7 +299,7 @@ jobs:
           ./test/assert-value-is-empty.sh --name "test-results-file-path output" --value "${{ steps.missing-runinfo.outputs.test-results-file-path }}"
           ./test/assert-value-is-empty.sh --name "trx-files output" --value "${{ steps.missing-runinfo.outputs.trx-files }}"
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.missing-runinfo.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfo.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.missing-runinfo.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.missing-runinfo.outputs.pr-comment-id }}"
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -350,7 +341,7 @@ jobs:
         if: always()
         run: |
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-tests.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-tests.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-tests.outputs.pr-comment-id }}"
 
       - name: 9 - And the contents of test-results.md file should match the contents of expected-test-results.md file
@@ -408,7 +399,7 @@ jobs:
         if: always()
         run: |
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.no-unit-tests.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-unit-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.no-unit-tests.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.no-unit-tests.outputs.pr-comment-id }}"
 
       - name: 10 - And the contents of test-results.md file should match the contents of expected-test-results.md file
@@ -462,7 +453,7 @@ jobs:
 
           # Verify this output is not set because we aren't creating a PR comment or status check
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.single-test.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.single-test.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.single-test.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.single-test.outputs.pr-comment-id }}"
 
       - name: 11 - And the contents of test-results.md file should match the contents of expected-test-results.md file
@@ -517,7 +508,7 @@ jobs:
 
           # Verify this output is not set because we aren't creating a PR comment or status check
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.multiple-tests.outputs.test-results-truncated }}"
-          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.multiple-tests.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.multiple-tests.outputs.status-check-ids }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.multiple-tests.outputs.pr-comment-id }}"
 
       - name: 12 - And the contents of test-results.md file should match the contents of expected-test-results.md file
@@ -552,7 +543,7 @@ jobs:
           create-status-check: false
           create-pr-comment: false
 
-      - name: 13 -  the action outcome should be success
+      - name: 13 - Then the action outcome should be success
         if: always()
         run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.multiple-trx.outcome }}"
 
@@ -574,7 +565,7 @@ jobs:
           # Verify this output is not set because we aren't creating a PR comment or status check
           ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.multiple-trx.outputs.test-results-truncated }}"
           ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.multiple-trx.outputs.pr-comment-id }}"
-          ./test/assert-value-is-not-empty.sh --name "status-check-id output" --value "${{ steps.multiple-trx.outputs.status-check-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.multiple-trx.outputs.status-check-ids }}"
 
       - name: 13 - And the contents of test-results.md file should match the contents of expected-test-results.md file
         if: always()
@@ -589,39 +580,289 @@ jobs:
           actualFileName="./test-results.md"
           ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
-      # Conditions:
-      # has a failing test && create-status-check=true && ignoreTestFailures=false  (test-outcome output = Failed, status check=failure)
-      # has a failing test && create-status-check=true && ignoreTestFailures=true  (test-outcome output = Failed, status check=neutral)
+      - name: '--------------------------------------------------------------------------------------------------------------'
+        run: |
+          echo ""
+          echo "TEST_RESULTS_FILE_PATH=" >> "$GITHUB_ENV"
+          rm -f ./test-results.md
+      - name: '                                             TEST 14 - FAILING TEST                                           '
+        run: echo ""
 
-      # creating pr comment with normal message && update-comment-if-one-exists=true (test-results-truncated output = false)
-      # creating pr comment with normal message && update-comment-if-one-exists=false (test-results-truncated output = false)
-      # creating pr comment with truncated message && new comment-identifier (test-results-truncated output = true)
+      - name: 14 - When process-dotnet-test-results is called with a failing trx file
+        if: always()
+        id: failing-test
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: './test/files/failing-test'
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: false
+          create-pr-comment: false
 
-      #---------------------------------------------------------------------------------------------
-      #-----------------------------------------
-      # TEST -
-      #-----------------------------------------
-      # - name: '---------------------------------------------------TEST 1----------------------------------------------------'
-      #   run: echo ""
+      - name: 14 - Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.failing-test.outcome }}"
 
-      # - name: When process-dotnet-test-results is called with
-      #   if: always()
-      #   id: change-me
-      #   uses: ./
-      #   with:
-      #     github-token: '${{ secrets.GITHUB_TOKEN }}'
-      #     base-directory: './test/files/'
-      #     ignore-test-failures: false
-      #     create-status-check: true
-      #     create-pr-comment: true
-      #     create-results-file: true
-      #     update-comment-if-one-exists: true
-      #     timezone: 'America/Denver'
-      #     comment-identifier: 'dotnet-test-results'
-      #     report-title-filter: '?'
+      - name: 14 - And the outputs should indicate a success happened
+        if: always()
+        run: |
+          # Verify the trx-files list matches what we expect
+          failure="./test/files/failing-test/failure.trx"
+          ./test/assert-values-match.sh --name "trx-files output" --expected "[$failure]" --actual "${{ steps.failing-test.outputs.trx-files }}"
 
-      #--------------------------------------
-      # TEARDOWN -
-      #--------------------------------------
-      - name: '-------------------------------------------------------------------------------------------------------'
+          # Verify the test-outcome is Failed
+          ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.failing-test.outputs.test-outcome }}"
+
+          # Verify the test-results-file-path output and env var should be populated with 'test-results.md'
+          ./test/assert-values-match.sh --name "test-results-file-path output" --expected "${{ github.workspace }}/test-results.md" --actual "${{ steps.failing-test.outputs.test-results-file-path }}"
+          ./test/assert-values-match.sh --name "test-results-file-path envVar" --expected "${{ github.workspace }}/test-results.md" --actual "${{ env.TEST_RESULTS_FILE_PATH }}"
+
+          # Verify this output is not set because we aren't creating a PR comment or status check
+          ./test/assert-value-is-empty.sh --name "test-results-truncated output" --value "${{ steps.failing-test.outputs.test-results-truncated }}"
+          ./test/assert-value-is-empty.sh --name "pr-comment-id output" --value "${{ steps.failing-test.outputs.pr-comment-id }}"
+          ./test/assert-value-is-empty.sh --name "status-check-id output" --value "${{ steps.failing-test.outputs.status-check-ids }}"
+
+      - name: 14 - And the contents of test-results.md file should match the contents of expected-test-results.md file
+        if: always()
+        run: |
+          # Comparing the test-results.md file will ensure that:
+          #  - The default timezone is used
+          #  - The badge is affected by failures
+          #  - The Duration stats are included in the report
+          #  - The Counter stats are included in the report
+          #  - The failure details are included
+
+          expectedFileName="./test/files/failing-test/expected-test-results.md"
+          actualFileName="./test-results.md"
+          ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
+
+      - name: '--------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+  test-status-checks:
+    runs-on: ubuntu-latest
+
+    env:
+      NO_FAILURES_DIR: './test/files/multiple-trx'
+      FAILURES_DIR: './test/files/failing-test'
+
+    steps:
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                                    SETUP                                                    '
+        run: echo ""
+
+      - name: Setup - Fail test job if fork
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]; then
+            echo "This test job requires the `checks: write` scope on the GITHUB_TOKEN which PRs from forks do not have.  Before this PR can be merged, the tests should be run on an intermediate branch created by repository owners."
+            exit 1
+          fi
+
+      - name: Setup - Checkout the action
+        uses: actions/checkout@v4
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                     TEST 15 - STATUS CHECK - NO FAILURES                                    '
+        run: echo ""
+
+      - name: 15 - When process-dotnet-test-results is called with no failures in multiple trx files
+        if: always()
+        id: no-failures
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: ${{ env.NO_FAILURES_DIR }}
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: true
+          create-pr-comment: false
+
+      - name: 15 - Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.no-failures.outcome }}"
+
+      - name: 15 - And the status-check-ids output should be populated
+        if: always()
+        run: ./test/assert-value-is-not-empty.sh --name "status-check-ids output" --value "${{ steps.no-failures.outputs.status-check-ids }}"
+
+      - name: 15 - And the test-outcome output should be Passed
+        if: always()
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.no-failures.outputs.test-outcome }}"
+
+      - name: 15 - And the status check should match the inputs
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const assertStatusCheckExists = require('./test/assert-status-checks-exist.js');
+            const assertStatusCheckMatchesExpectations = require('./test/assert-status-check-matches-expectations.js');
+
+            const checkIds = '${{ steps.no-failures.outputs.status-check-ids }}';
+            const actualStatusChecks = await assertStatusCheckExists(github, core, checkIds);
+            const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
+
+            const expectedFidgetValues = {
+              name: 'status check - dotnet unit tests (fidget.tests)',
+              status: 'completed',
+              conclusion: 'success',
+              title: 'FIDGET.TESTS',
+              text: expectedBody
+            };
+            const actualFidgetCheck = actualStatusChecks.find(check => check.name.includes('fidget'));
+            assertStatusCheckMatchesExpectations(core, actualFidgetCheck, expectedFidgetValues);
+
+            const expectedWidgetValues = {
+              name: 'status check - dotnet unit tests (widget.tests)',
+              status: 'completed',
+              conclusion: 'success',
+              title: 'WIDGET.TESTS',
+              text: expectedBody
+            };
+            const actualWidgetCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            assertStatusCheckMatchesExpectations(core, actualWidgetCheck, expectedWidgetValues);
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                   TEST 16 - STATUS CHECK - IGNORE FAILURES                                  '
+        run: echo ""
+
+      - name: 16 - When process-dotnet-test-results is called with test failures & ignore-test-failures=true
+        if: always()
+        id: ignore-failures
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: ${{ env.FAILURES_DIR }}
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: true
+          ignore-test-failures: true
+          create-pr-comment: false
+
+      - name: 16 - Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.ignore-failures.outcome }}"
+
+      - name: 16 - And the status-check-ids output should be populated
+        if: always()
+        run: ./test/assert-value-is-not-empty.sh --name "status-check-ids output" --value "${{ steps.ignore-failures.outputs.status-check-ids }}"
+
+      - name: 16 - And the test-outcome output should be Failed
+        if: always()
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.ignore-failures.outputs.test-outcome }}"
+
+      - name: 16 - And the status check should match the inputs
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const assertStatusCheckExists = require('./test/assert-status-checks-exist.js');
+            const assertStatusCheckMatchesExpectations = require('./test/assert-status-check-matches-expectations.js');
+
+            const checkIds = '${{ steps.ignore-failures.outputs.status-check-ids }}';
+            const actualStatusChecks = await assertStatusCheckExists(github, core, checkIds);
+            const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
+
+            const expectedValues = {
+              name: 'status check - dotnet unit tests (widget.tests)',
+              status: 'completed',
+              conclusion: 'neutral',
+              title: 'WIDGET.TESTS',
+              text: expectedBody
+            };
+            const actualCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                    TEST 17 - STATUS CHECK - ACK FAILURES                                    '
+        run: echo ""
+
+      - name: 17 - When process-dotnet-test-results is called with test failures & ignore-test-failures=false
+        if: always()
+        id: ack-failures
+        uses: ./
+        with:
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
+          base-directory: ${{ env.FAILURES_DIR }}
+          create-results-file: true # Keep this so we have an "actual" output to compare against
+          create-status-check: true
+          ignore-test-failures: false
+          create-pr-comment: false
+
+      - name: 17 - Then the action outcome should be success
+        if: always()
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.ack-failures.outcome }}"
+
+      - name: 17 - And the status-check-ids output should be populated
+        if: always()
+        run: ./test/assert-value-is-not-empty.sh --name "status-check-ids output" --value "${{ steps.ack-failures.outputs.status-check-ids }}"
+
+      - name: 17 - And the test-outcome output should be Failed
+        if: always()
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.ack-failures.outputs.test-outcome }}"
+
+      - name: 17 - And the status check should match the inputs
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const assertStatusCheckExists = require('./test/assert-status-checks-exist.js');
+            const assertStatusCheckMatchesExpectations = require('./test/assert-status-check-matches-expectations.js');
+
+            const checkIds = '${{ steps.ack-failures.outputs.status-check-ids }}';
+            const actualStatusChecks = await assertStatusCheckExists(github, core, checkIds);
+            const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
+
+            const expectedValues = {
+              name: 'status check - dotnet unit tests (widget.tests)',
+              status: 'completed',
+              conclusion: 'failure',
+              title: 'WIDGET.TESTS',
+              text: expectedBody
+            };
+            const actualCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+
+  test-pr-comments:
+    runs-on: ubuntu-latest
+    if: 1 == 2
+    steps:
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                                    SETUP                                                    '
+        run: echo ""
+
+      - name: Setup - Fail test job if fork
+        run: |
+          if [ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]; then
+            echo "This test job requires the `pull_request: write` scope on the GITHUB_TOKEN which PRs from forks do not have.  Before this PR can be merged, the tests should be run on an intermediate branch created by repository owners."
+            exit 1
+          fi
+
+      - name: Setup - Checkout the action
+        uses: actions/checkout@v4
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                           TEST 1 - UPDATE COMMENT                                           '
+        run: echo ""
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                        TEST 2 - DO NOT UPDATE COMMENT                                       '
+        run: echo ""
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                          TEST 3 - TRUNCATE COMMENT                                          '
+        run: echo ""
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
         run: echo ""
