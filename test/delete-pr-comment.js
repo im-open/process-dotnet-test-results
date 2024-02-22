@@ -1,5 +1,5 @@
-module.exports = async (github, core, token, commentId) => {
-  core.info(`\nDeleteing comment '${commentId}'`);
+module.exports = async (github, core, commentId) => {
+  core.info(`\nDeleting comment '${commentId}'`);
 
   if (!commentId) {
     core.setFailed(`The comment id provided was empty.`);

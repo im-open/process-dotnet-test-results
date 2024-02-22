@@ -120,7 +120,6 @@ function doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath) {
 }
 
 function populateAndFormatObjects(parsedTrx) {
-  // Format TestRun.Results
   if (!parsedTrx.TestRun.Results) {
     parsedTrx.TestRun.Results = {
       UnitTestResult: []
@@ -128,17 +127,17 @@ function populateAndFormatObjects(parsedTrx) {
   } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
     parsedTrx.TestRun.Results.UnitTestResult = [];
   }
-  if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
-    parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
-  }
 
-  // Format TestRun.TestDefinitions
   if (!parsedTrx.TestRun.TestDefinitions) {
     parsedTrx.TestRun.TestDefinitions = {
       UnitTest: []
     };
   } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
     parsedTrx.TestRun.TestDefinitions.UnitTest = [];
+  }
+
+  if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
+    parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
   }
 
   if (!Array.isArray(parsedTrx.TestRun.TestDefinitions.UnitTest)) {

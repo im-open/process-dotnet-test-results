@@ -17,103 +17,78 @@ const shouldCreateResultsFile = core.getBooleanInput('create-results-file');
 const updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 const commentIdentifier = core.getInput('comment-identifier') || '';
 
-async function createResultsFileIfRequested(testResultsMarkup) {
-  if (!shouldCreateResultsFile) {
-    return;
-  }
-
-  // TODO:  if this is called multiple times in one job they will overlap.  Should we fix that?
-  //        Also not sure if the post-job step that deletes this would be working as designed.
-  //        It is only deleted after each step is run, so the first post-step deletes it then
-  //        the rest are run without anything to delete.  (adding something step specific makes sense)
-  const resultsFile = './test-results.md';
-  const resultsFilePath = createResultsFile(resultsFile, testResultsMarkup);
-  core.setOutput('test-results-file-path', resultsFilePath);
-  core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
-}
-
-async function createPRCommentIfRequested(testResultsMarkup) {
-  if (testResultsMarkup.length === 0 || !shouldCreatePRComment) {
-    return;
-  }
-
-  // The README.md indicates only one per comment per run
-  // so all the trx markup will be combined into one comment
-  let markup = testResultsMarkup;
-  core.info(`\nCreating a PR comment with length ${markup.length}...`);
-
-  // GitHub API has a limit of 65535 characters for a comment so truncate the markup if we need to
-  const charLimit = 65535;
-  let truncated = false;
-  if (markup.length > charLimit) {
-    const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
-    core.info(message);
-
-    markup = markup.substring(0, charLimit - 100);
-    markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
-    truncated = true;
-  }
-  core.setOutput('test-results-truncated', truncated);
-
-  // TODO:  implement steve's change for cypress
-  const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
-  core.setOutput('pr-comment-id', commentId); // This is mainly for testing purposes
-}
-
-async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
-  let markupForResults = [];
-  let statusCheckIds = [];
-  for (const data of trxToJson) {
-    const markupData = getMarkupForTrx(data);
-
-    // The README.md indicates one status check will be created per trx file
-    if (shouldCreateStatusCheck) {
-      let conclusion = 'success';
-      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-      }
-      const checkId = await createStatusCheck(token, data, markupData, conclusion);
-      statusCheckIds.push(checkId);
-    }
-
-    markupForResults.push(markupData);
-  }
-
-  if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
-    core.info(`\nThe following status check ids were created: ${statusCheckIds.join(',')}`);
-    core.setOutput('status-check-ids', statusCheckIds.join(',')); // This is mainly for testing purposes
-  }
-  return markupForResults.join('\n');
-}
-
-function setTestOutcomeBasedOnFailingTests(trxToJson) {
-  const failingTestsFound = areThereAnyFailingTests(trxToJson);
-  core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
-}
-
-async function convertTrxToJson() {
-  const trxFiles = findTrxFiles(baseDir);
-  const trxToJson = await transformAllTrxToJson(trxFiles);
-  if (trxToJson.some(trx => !trx)) {
-    core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
-    core.setOutput('test-outcome', 'Failed');
-    core.setOutput('test-results-file-path', null);
-    return;
-  }
-  core.setOutput('trx-files', trxFiles);
-  return trxToJson;
-}
-
 async function run() {
   try {
-    const trxToJson = await convertTrxToJson();
-    if (!trxToJson) return;
+    // 1 - Convert the trx files to JSON
+    const trxFiles = findTrxFiles(baseDir);
+    const trxToJson = await transformAllTrxToJson(trxFiles);
+    if (trxToJson.some(trx => !trx)) {
+      core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
+      core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
+      return;
+    }
+    core.setOutput('trx-files', trxFiles);
 
-    setTestOutcomeBasedOnFailingTests(trxToJson);
+    // 2 - Set the test outcome based on failing tests
+    const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
 
-    const testResultsMarkup = await getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson);
-    await createPRCommentIfRequested(testResultsMarkup);
-    await createResultsFileIfRequested(testResultsMarkup);
+    // 3 - Get markup and create status checks for each trx file
+    let markupForResults = [];
+    let statusCheckIds = [];
+    for (const data of trxToJson) {
+      const markupData = getMarkupForTrx(data);
+      markupForResults.push(markupData);
+
+      if (shouldCreateStatusCheck) {
+        let conclusion = 'success';
+        if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+        }
+        const checkId = await createStatusCheck(token, data, markupData, conclusion);
+        statusCheckIds.push(checkId);
+      }
+    }
+    if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
+      core.info(`\nThe following status check ids were created: ${statusCheckIds.join(',')}`);
+      core.setOutput('status-check-ids', statusCheckIds.join(',')); // This is mainly for testing purposes
+    }
+
+    // 4 - Create a PR comment if requested
+    if (markupForResults.length > 0 && shouldCreatePRComment) {
+      let markup = markupForResults.join('\n');
+      core.info(`\nCreating a PR comment with length ${markup.length}...`);
+
+      // GitHub API has a limit of 65535 characters for a comment so truncate the markup if we need to
+      const charLimit = 65535;
+      let truncated = false;
+      if (markup.length > charLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
+        core.info(message);
+
+        markup = markup.substring(0, charLimit - 100);
+        markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
+        truncated = true;
+      }
+      core.setOutput('test-results-truncated', truncated);
+
+      const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
+      core.setOutput('pr-comment-id', commentId); // This is mainly for testing purposes
+    }
+
+    // 5 - Create a results file if requested
+    if (shouldCreateResultsFile) {
+      // TODO:  if this is called multiple times in one job the file contents will be replaced for each instance.  Should we fix that?
+      //        Along with that, I'm not sure if the post-job step that deletes this file is working as designed or if it makes sense.
+      //        This file is only deleted in a post-job step, so if there are multiple iterations the first post-job step deletes
+      //        the file, then the rest of the post-job steps have nothing to delete.  I'm not sure what the point of it is since
+      //        post-job it doesn't matter whether the file is there are not anyway.  I think we can get rid of post-job step.
+      const resultsFile = './test-results.md';
+      const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
+      core.setOutput('test-results-file-path', resultsFilePath);
+      core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
+    }
   } catch (error) {
     core.setOutput('test-outcome', 'Failed');
     core.setOutput('test-results-file-path', null);

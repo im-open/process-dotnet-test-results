@@ -87,14 +87,14 @@ For failed test runs you can expand each failed test and view more details about
 
 ## Outputs
 
-| Output                   | Description                                                                                                                                                           |
-|--------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed. |
-| `trx-files`              | List of `trx` files that were processed                                                                                                                               |
-| `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                          |
-| `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                             |
-| `status-check-ids`       | The IDs of the status checks that were created.  This is only set if `create-status-check` is true and one or more status checks were created successfully.           |
-| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is true and a PR was created successfully.                                        |
+| Output                   | Description                                                                                                                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.                 |
+| `trx-files`              | List of `trx` files that were processed                                                                                                                                               |
+| `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                                          |
+| `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                                             |
+| `status-check-ids`       | A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully. |
+| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.                                                      |
 
 ## Usage Examples
 
@@ -110,7 +110,7 @@ jobs:
   ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
@@ -135,7 +135,7 @@ jobs:
   advanced-ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Test My Solution
         continue-on-error: true
@@ -163,7 +163,7 @@ jobs:
       # Optional
       - name: Upload Outcome as artifact if character limit reached
         if: steps.process-trx.outputs.test-results-truncated == 'true'
-        uses: actions/upload-artifact@v3.1.1
+        uses: actions/upload-artifact@v4
         with:
           name: Cypress-Results
           path: |
@@ -191,7 +191,7 @@ jobs:
   ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@4
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release

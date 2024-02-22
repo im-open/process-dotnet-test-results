@@ -10438,15 +10438,15 @@ Transforming file ${filePath}`);
       } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
         parsedTrx.TestRun.Results.UnitTestResult = [];
       }
-      if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
-        parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
-      }
       if (!parsedTrx.TestRun.TestDefinitions) {
         parsedTrx.TestRun.TestDefinitions = {
           UnitTest: []
         };
       } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
         parsedTrx.TestRun.TestDefinitions.UnitTest = [];
+      }
+      if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
+        parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
       }
       if (!Array.isArray(parsedTrx.TestRun.TestDefinitions.UnitTest)) {
         parsedTrx.TestRun.TestDefinitions.UnitTest = [parsedTrx.TestRun.TestDefinitions.UnitTest];
@@ -27884,81 +27884,61 @@ var shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
 var shouldCreateResultsFile = core.getBooleanInput('create-results-file');
 var updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
 var commentIdentifier = core.getInput('comment-identifier') || '';
-async function createResultsFileIfRequested(testResultsMarkup) {
-  if (!shouldCreateResultsFile) {
-    return;
-  }
-  const resultsFile = './test-results.md';
-  const resultsFilePath = createResultsFile(resultsFile, testResultsMarkup);
-  core.setOutput('test-results-file-path', resultsFilePath);
-  core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
-}
-async function createPRCommentIfRequested(testResultsMarkup) {
-  if (testResultsMarkup.length === 0 || !shouldCreatePRComment) {
-    return;
-  }
-  let markup = testResultsMarkup;
-  core.info(`
-Creating a PR comment with length ${markup.length}...`);
-  const charLimit = 65535;
-  let truncated = false;
-  if (markup.length > charLimit) {
-    const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
-    core.info(message);
-    markup = markup.substring(0, charLimit - 100);
-    markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
-    truncated = true;
-  }
-  core.setOutput('test-results-truncated', truncated);
-  const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
-  core.setOutput('pr-comment-id', commentId);
-}
-async function getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson) {
-  let markupForResults = [];
-  let statusCheckIds = [];
-  for (const data of trxToJson) {
-    const markupData = getMarkupForTrx(data);
-    if (shouldCreateStatusCheck) {
-      let conclusion = 'success';
-      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-      }
-      const checkId = await createStatusCheck(token, data, markupData, conclusion);
-      statusCheckIds.push(checkId);
-    }
-    markupForResults.push(markupData);
-  }
-  if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
-    core.info(`
-The following status check ids were created: ${statusCheckIds.join(',')}`);
-    core.setOutput('status-check-ids', statusCheckIds.join(','));
-  }
-  return markupForResults.join('\n');
-}
-function setTestOutcomeBasedOnFailingTests(trxToJson) {
-  const failingTestsFound = areThereAnyFailingTests(trxToJson);
-  core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
-}
-async function convertTrxToJson() {
-  const trxFiles = findTrxFiles(baseDir);
-  const trxToJson = await transformAllTrxToJson(trxFiles);
-  if (trxToJson.some(trx => !trx)) {
-    core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
-    core.setOutput('test-outcome', 'Failed');
-    core.setOutput('test-results-file-path', null);
-    return;
-  }
-  core.setOutput('trx-files', trxFiles);
-  return trxToJson;
-}
 async function run() {
   try {
-    const trxToJson = await convertTrxToJson();
-    if (!trxToJson) return;
-    setTestOutcomeBasedOnFailingTests(trxToJson);
-    const testResultsMarkup = await getMarkupAndCreateStatusCheckForEachTrxFile(trxToJson);
-    await createPRCommentIfRequested(testResultsMarkup);
-    await createResultsFileIfRequested(testResultsMarkup);
+    const trxFiles = findTrxFiles(baseDir);
+    const trxToJson = await transformAllTrxToJson(trxFiles);
+    if (trxToJson.some(trx => !trx)) {
+      core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
+      core.setOutput('test-outcome', 'Failed');
+      core.setOutput('test-results-file-path', null);
+      return;
+    }
+    core.setOutput('trx-files', trxFiles);
+    const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
+    let markupForResults = [];
+    let statusCheckIds = [];
+    for (const data of trxToJson) {
+      const markupData = getMarkupForTrx(data);
+      markupForResults.push(markupData);
+      if (shouldCreateStatusCheck) {
+        let conclusion = 'success';
+        if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+        }
+        const checkId = await createStatusCheck(token, data, markupData, conclusion);
+        statusCheckIds.push(checkId);
+      }
+    }
+    if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
+      core.info(`
+The following status check ids were created: ${statusCheckIds.join(',')}`);
+      core.setOutput('status-check-ids', statusCheckIds.join(','));
+    }
+    if (markupForResults.length > 0 && shouldCreatePRComment) {
+      let markup = markupForResults.join('\n');
+      core.info(`
+Creating a PR comment with length ${markup.length}...`);
+      const charLimit = 65535;
+      let truncated = false;
+      if (markup.length > charLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
+        core.info(message);
+        markup = markup.substring(0, charLimit - 100);
+        markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
+        truncated = true;
+      }
+      core.setOutput('test-results-truncated', truncated);
+      const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
+      core.setOutput('pr-comment-id', commentId);
+    }
+    if (shouldCreateResultsFile) {
+      const resultsFile = './test-results.md';
+      const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
+      core.setOutput('test-results-file-path', resultsFilePath);
+      core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
+    }
   } catch (error) {
     core.setOutput('test-outcome', 'Failed');
     core.setOutput('test-results-file-path', null);
