@@ -10500,23 +10500,11 @@ Writing results to ${resultsFileName}`);
       resultsFilePath = path.resolve(resultsFileName);
       return resultsFilePath;
     }
-    function deleteResultsFile(resultsFilePath) {
-      core2.info(`Removing markdown file: ${resultsFilePath}`);
-      if (fs.existsSync(resultsFilePath)) {
-        fs.unlink(resultsFilePath, err => {
-          if (err) {
-            core2.error(`Error in deleting file ${resultsFilePath}.  Error: ${err}`);
-          }
-          core2.info(`Successfully deleted results file: ${resultsFilePath}`);
-        });
-      }
-    }
     module2.exports = {
       findTrxFiles: findTrxFiles2,
       transformAllTrxToJson: transformAllTrxToJson2,
       areThereAnyFailingTests: areThereAnyFailingTests2,
-      createResultsFile: createResultsFile2,
-      deleteResultsFile
+      createResultsFile: createResultsFile2
     };
   }
 });

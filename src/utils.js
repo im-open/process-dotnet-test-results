@@ -205,22 +205,9 @@ function createResultsFile(resultsFileName, results) {
   return resultsFilePath;
 }
 
-function deleteResultsFile(resultsFilePath) {
-  core.info(`Removing markdown file: ${resultsFilePath}`);
-  if (fs.existsSync(resultsFilePath)) {
-    fs.unlink(resultsFilePath, err => {
-      if (err) {
-        core.error(`Error in deleting file ${resultsFilePath}.  Error: ${err}`);
-      }
-      core.info(`Successfully deleted results file: ${resultsFilePath}`);
-    });
-  }
-}
-
 module.exports = {
   findTrxFiles,
   transformAllTrxToJson,
   areThereAnyFailingTests,
-  createResultsFile,
-  deleteResultsFile
+  createResultsFile
 };

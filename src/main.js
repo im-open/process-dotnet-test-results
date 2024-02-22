@@ -79,11 +79,7 @@ async function run() {
 
     // 5 - Create a results file if requested
     if (shouldCreateResultsFile) {
-      // TODO:  if this is called multiple times in one job the file contents will be replaced for each instance.  Should we fix that?
-      //        Along with that, I'm not sure if the post-job step that deletes this file is working as designed or if it makes sense.
-      //        This file is only deleted in a post-job step, so if there are multiple iterations the first post-job step deletes
-      //        the file, then the rest of the post-job steps have nothing to delete.  I'm not sure what the point of it is since
-      //        post-job it doesn't matter whether the file is there are not anyway.  I think we can get rid of post-job step.
+      // QUESTION:  if this is called multiple times in one job the file contents will be replaced for each instance.  Should we fix that?
       const resultsFile = './test-results.md';
       const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
       core.setOutput('test-results-file-path', resultsFilePath);
@@ -94,7 +90,7 @@ async function run() {
     core.setOutput('test-results-file-path', null);
 
     if (error instanceof RangeError) {
-      // TODO:  It seems inconsistent that we're saying the step is a success (core.info instead of core.setFailed)
+      // QUESTION:  It seems inconsistent that we're saying the step is a success (core.info instead of core.setFailed)
       //        but the test-outcome is Failed.  Do we need to reconcile this?  That's probably a breaking change.
       core.info(`An error occurred processing the trx files: ${error.message}`);
     } else {
