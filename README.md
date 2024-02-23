@@ -44,7 +44,7 @@ If the test results contain failures, the status check's conclusion will be set 
 
 ## Limitations
 
-GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action will fail if the test results exceed the GitHub [limit]. To mitigate this size issue only details for failed tests are included in the output in addition to a badge, duration info and outcome info.  If the comment still exceeds that size, it will be truncated with a note to see the remaining output in the log.
+GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action woudl fail if the test results exceeded the GitHub [limit]. To mitigate this size issue only details for failed tests are included in the output in addition to a badge, duration info and outcome info.  If the comment still exceeds that size, it will be truncated with a note to see the remaining output in the log.
 
 If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks for this action may show on a different workflow run than the run that executed this action.
 
@@ -87,14 +87,14 @@ For failed test runs you can expand each failed test and view more details about
 
 ## Outputs
 
-| Output                   | Description                                                                                                                                                                           |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.                 |
-| `trx-files`              | List of `trx` files that were processed                                                                                                                                               |
-| `test-results-file-path` | File path for test results file. This will be `null` when the input `create-results-file` is set to `false`.                                                                          |
-| `test-results-truncated` | `true` or `false`. Test results was truncated due to test-results markdown exceeding character limit of 65535 characters.                                                             |
-| `status-check-ids`       | A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully. |
-| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.                                                      |
+| Output                   | Description                                                                                                                                                                                                                    |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.                                                          |
+| `trx-files`              | List of `trx` files that were processed                                                                                                                                                                                        |
+| `test-results-file-path` | File path for the file that contains the pre-truncated test results in markdown format.  This is the same output that is posted in the PR comment. This will be `null` when the input `create-results-file` is set to `false`. |
+| `test-results-truncated` | Flag indicating whether test results were truncated due to markdown exceeding character limit of 65535.                                                                                                                        |
+| `status-check-ids`       | A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully.                                          |
+| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.                                                                                               |
 
 ## Usage Examples
 

@@ -48,9 +48,9 @@ outputs:
   trx-files:
     description: 'List of trx files that were processed'
   test-results-truncated:
-    description: 'Boolean if test results was truncated due to markdown exceeding character limit of 65535.'
+    description: 'Flag indicating whether test results were truncated due to markdown exceeding character limit of 65535.'
   test-results-file-path:
-    description: 'File path of the test outcome in markdown format.  This is the same output that is posted in the PR comment'
+    description: 'File path for the file that contains the pre-truncated test results in markdown format.  This is the same output that is posted in the PR comment.'
   status-check-ids:
     description: 'A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is true and one or more status checks were created successfully.'
   pr-comment-id:
