@@ -5,12 +5,12 @@
     <Deployment runDeploymentRoot="myuser_MY-MACHINE_2024-02-20_12_39_54" />
   </TestSettings>
   <Results>
-    <UnitTestResult executionId="1cb0e28f-f003-4728-88e5-cd447fddc9a5" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0010362" startTime="2024-02-20T12:39:54.3830052-07:00" endTime="2024-02-20T12:39:54.3830209-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
+    <UnitTestResult executionId="1cb0e28f-f003-4728-88e5-cd447fddc9a5" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Digit.Tests.MathTests.OnePlusOneShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0010362" startTime="2024-02-20T12:39:54.3830052-07:00" endTime="2024-02-20T12:39:54.3830209-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
   </Results>
   <TestDefinitions>
-    <UnitTest name="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
+    <UnitTest name="Digit.Tests.MathTests.OnePlusOneShouldNotEqualFive" storage="c:\code\widget\bin\release\net6.0\digit.Tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
       <Execution id="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
-      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="OnePlusOneShouldNotEqualFive" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Digit.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Digit.Tests.MathTests" name="OnePlusOneShouldNotEqualFive" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>

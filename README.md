@@ -48,6 +48,8 @@ GitHub does have a size limitation of 65535 characters for a Status Check body o
 
 If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks for this action may show on a different workflow run than the run that executed this action.
 
+Currently when a results file is created, the contents are written to `./test-results.md`.  If this action is called multiple times in one job, the file is overwritten each time.  If the contents are needed, they should be retrieved before the next invocation of this action.
+
 ## Action Outputs
 
 ### Pull Request Comment

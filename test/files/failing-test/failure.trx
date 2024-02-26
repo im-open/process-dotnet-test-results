@@ -5,36 +5,36 @@
     <Deployment runDeploymentRoot="myuser_MY-MACHINE_2024-02-21_13_43_46" />
   </TestSettings>
   <Results>
-    <UnitTestResult executionId="9ded150c-bff5-4b72-8799-9bc97925a61a" testId="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" computerName="MY-MACHINE" duration="00:00:00.0000344" startTime="2024-02-21T13:43:46.3594854-07:00" endTime="2024-02-21T13:43:46.3594855-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9ded150c-bff5-4b72-8799-9bc97925a61a" />
-    <UnitTestResult executionId="1da09059-c2e3-488d-9b7b-ce42d8098ef3" testId="be281ffb-a4d6-67ab-d9af-941232c31283" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" computerName="MY-MACHINE" duration="00:00:00.0000121" startTime="2024-02-21T13:43:46.3595538-07:00" endTime="2024-02-21T13:43:46.3595539-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1da09059-c2e3-488d-9b7b-ce42d8098ef3" />
-    <UnitTestResult executionId="d0645693-6e82-4808-9e27-06ce699950af" testId="9631a370-9720-44c9-70b2-11e51e32ba9f" testName="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" computerName="MY-MACHINE" duration="00:00:00.0077834" startTime="2024-02-21T13:43:46.3551315-07:00" endTime="2024-02-21T13:43:46.3551534-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d0645693-6e82-4808-9e27-06ce699950af" />
-    <UnitTestResult executionId="49f53981-a391-4a96-b0d1-dfc1f2efbd58" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0065475" startTime="2024-02-21T13:43:46.3841020-07:00" endTime="2024-02-21T13:43:46.3841023-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="49f53981-a391-4a96-b0d1-dfc1f2efbd58">
+    <UnitTestResult executionId="9ded150c-bff5-4b72-8799-9bc97925a61a" testId="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6" testName="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" computerName="MY-MACHINE" duration="00:00:00.0000344" startTime="2024-02-21T13:43:46.3594854-07:00" endTime="2024-02-21T13:43:46.3594855-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9ded150c-bff5-4b72-8799-9bc97925a61a" />
+    <UnitTestResult executionId="1da09059-c2e3-488d-9b7b-ce42d8098ef3" testId="be281ffb-a4d6-67ab-d9af-941232c31283" testName="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" computerName="MY-MACHINE" duration="00:00:00.0000121" startTime="2024-02-21T13:43:46.3595538-07:00" endTime="2024-02-21T13:43:46.3595539-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1da09059-c2e3-488d-9b7b-ce42d8098ef3" />
+    <UnitTestResult executionId="d0645693-6e82-4808-9e27-06ce699950af" testId="9631a370-9720-44c9-70b2-11e51e32ba9f" testName="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" computerName="MY-MACHINE" duration="00:00:00.0077834" startTime="2024-02-21T13:43:46.3551315-07:00" endTime="2024-02-21T13:43:46.3551534-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d0645693-6e82-4808-9e27-06ce699950af" />
+    <UnitTestResult executionId="49f53981-a391-4a96-b0d1-dfc1f2efbd58" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0065475" startTime="2024-02-21T13:43:46.3841020-07:00" endTime="2024-02-21T13:43:46.3841023-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="49f53981-a391-4a96-b0d1-dfc1f2efbd58">
       <Output>
         <ErrorInfo>
           <Message>Assert.NotEqual() Failure: Values are equal&#xD;
 Expected: Not 2&#xD;
 Actual:       2</Message>
-          <StackTrace>   at Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive() in C:\code\widget\MathTests.cs:line 19</StackTrace>
+          <StackTrace>   at Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive() in C:\code\widget\MathTests.cs:line 19</StackTrace>
         </ErrorInfo>
       </Output>
     </UnitTestResult>
   </Results>
   <TestDefinitions>
-    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="be281ffb-a4d6-67ab-d9af-941232c31283">
+    <UnitTest name="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 2, expectedValue: 3)" storage="c:\code\widget\bin\release\net6.0\purposely.failing.tests.dll" id="be281ffb-a4d6-67ab-d9af-941232c31283">
       <Execution id="1da09059-c2e3-488d-9b7b-ce42d8098ef3" />
-      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Purposely.Failing.tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Purposely.Failing.Tests.MathTests" name="AddShouldReturnCorrectValue" />
     </UnitTest>
-    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6">
+    <UnitTest name="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 960, number2: 4, expectedValue: 964)" storage="c:\code\widget\bin\release\net6.0\purposely.failing.tests.dll" id="9af6d3c7-0160-1c91-e2c9-1f3b63cd4ca6">
       <Execution id="9ded150c-bff5-4b72-8799-9bc97925a61a" />
-      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Purposely.Failing.tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Purposely.Failing.Tests.MathTests" name="AddShouldReturnCorrectValue" />
     </UnitTest>
-    <UnitTest name="Widget.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="9631a370-9720-44c9-70b2-11e51e32ba9f">
+    <UnitTest name="Purposely.Failing.Tests.MathTests.AddShouldReturnCorrectValue(number1: 1, number2: 1, expectedValue: 2)" storage="c:\code\widget\bin\release\net6.0\purposely.failing.tests.dll" id="9631a370-9720-44c9-70b2-11e51e32ba9f">
       <Execution id="d0645693-6e82-4808-9e27-06ce699950af" />
-      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="AddShouldReturnCorrectValue" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Purposely.Failing.tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Purposely.Failing.Tests.MathTests" name="AddShouldReturnCorrectValue" />
     </UnitTest>
-    <UnitTest name="Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive" storage="c:\code\widget\bin\release\net6.0\widget.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
+    <UnitTest name="Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive" storage="c:\code\widget\bin\release\net6.0\purposely.failing.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
       <Execution id="49f53981-a391-4a96-b0d1-dfc1f2efbd58" />
-      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Widget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Widget.Tests.MathTests" name="OnePlusOneShouldNotEqualFive" />
+      <TestMethod codeBase="C:\code\widget\bin\Release\net6.0\Purposely.Failing.tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Purposely.Failing.Tests.MathTests" name="OnePlusOneShouldNotEqualFive" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>
@@ -51,7 +51,7 @@ Actual:       2</Message>
     <Counters total="4" executed="4" passed="3" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
     <RunInfos>
       <RunInfo computerName="MY-MACHINE" outcome="Error" timestamp="2024-02-21T13:43:46.3794356-07:00">
-        <Text>[xUnit.net 00:00:00.26]     Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive [FAIL]</Text>
+        <Text>[xUnit.net 00:00:00.26]     Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive [FAIL]</Text>
       </RunInfo>
     </RunInfos>
   </ResultSummary>

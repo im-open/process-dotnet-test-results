@@ -1,5 +1,5 @@
 
-# WIDGET.TESTS
+# PURPOSELY.FAILING.TESTS
 
 ![Generic badge](https://img.shields.io/badge/1/4-FAILED-red.svg)
 <details>
@@ -49,11 +49,11 @@
   </table>
 </details>
 <details>
-  <summary>:x: Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive</summary>
+  <summary>:x: Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive</summary>
   <table>
     <tr>
       <th>Name:</th>
-      <td><code>Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive</code></td>
+      <td><code>Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive</code></td>
     </tr>
     <tr>
       <th>Outcome:</th>
@@ -73,11 +73,11 @@
     </tr>
     <tr>
       <th>Code Base</th>
-      <td><code>C:\code\widget\bin\Release\net6.0\Widget.Tests.dll</code></td>
+      <td><code>C:\code\widget\bin\Release\net6.0\Purposely.Failing.Tests.dll</code></td>
     </tr>
     <tr>
       <th>Class Name</th>
-      <td><code>Widget.Tests.MathTests</code></td>
+      <td><code>Purposely.Failing.Tests.MathTests</code></td>
     </tr>
     <tr>
       <th>Method Name</th>

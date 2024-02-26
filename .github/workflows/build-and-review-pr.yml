@@ -14,6 +14,7 @@ on:
   # and complication we will request those changes be manually made by the PR author.
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
   # paths:
   #   Do not include specific paths here.  We always want this build to run and produce a
   #   status check which are branch protection rules can use.  If this is skipped because of
@@ -764,23 +765,23 @@ jobs:
             const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
 
             const expectedValues = {
-              name: 'status check - dotnet unit tests (widget.tests)',
+              name: 'status check - dotnet unit tests (purposely.failing.tests)',
               status: 'completed',
               conclusion: 'neutral',
-              title: 'WIDGET.TESTS',
+              title: 'PURPOSELY.FAILING.TESTS',
               text: expectedBody
             };
-            const actualCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            const actualCheck = actualStatusChecks.find(check => check.name.includes('purposely'));
             assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
 
       - name: '-------------------------------------------------------------------------------------------------------------'
         run: echo ""
-      - name: '                                    TEST 17 - STATUS CHECK - ACK FAILURES                                    '
+      - name: '                                    TEST 17 - STATUS CHECK - ALLOW FAILURES                                    '
         run: echo ""
 
       - name: 17 - When process-dotnet-test-results is called with test failures & ignore-test-failures=false
         if: always()
-        id: ack-failures
+        id: allow-failures
         uses: ./
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
@@ -792,15 +793,15 @@ jobs:
 
       - name: 17 - Then the action outcome should be success
         if: always()
-        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.ack-failures.outcome }}"
+        run: ./test/assert-values-match.sh --name "step outcome" --expected "success" --actual "${{ steps.allow-failures.outcome }}"
 
       - name: 17 - And the status-check-ids output should be populated
         if: always()
-        run: ./test/assert-value-is-not-empty.sh --name "status-check-ids output" --value "${{ steps.ack-failures.outputs.status-check-ids }}"
+        run: ./test/assert-value-is-not-empty.sh --name "status-check-ids output" --value "${{ steps.allow-failures.outputs.status-check-ids }}"
 
       - name: 17 - And the test-outcome output should be Failed
         if: always()
-        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.ack-failures.outputs.test-outcome }}"
+        run: ./test/assert-values-match.sh --name "test-outcome output" --expected "Failed" --actual "${{ steps.allow-failures.outputs.test-outcome }}"
 
       - name: 17 - And the status check should match the inputs
         if: always()
@@ -811,19 +812,34 @@ jobs:
             const assertStatusCheckExists = require('./test/assert-status-checks-exist.js');
             const assertStatusCheckMatchesExpectations = require('./test/assert-status-check-matches-expectations.js');
 
-            const checkIds = '${{ steps.ack-failures.outputs.status-check-ids }}';
+            const checkIds = '${{ steps.allow-failures.outputs.status-check-ids }}';
             const actualStatusChecks = await assertStatusCheckExists(github, core, checkIds);
             const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
 
             const expectedValues = {
-              name: 'status check - dotnet unit tests (widget.tests)',
+              name: 'status check - dotnet unit tests (purposely.failing.tests)',
               status: 'completed',
               conclusion: 'failure',
-              title: 'WIDGET.TESTS',
+              title: 'PURPOSELY.FAILING.TESTS',
               text: expectedBody
             };
             const actualCheck = actualStatusChecks.find(check => check.name.includes('widget'));
             assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
+
+      - name: '-------------------------------------------------------------------------------------------------------------'
+        run: echo ""
+      - name: '                                                   TEARDOWN                                                  '
+        run: echo ""
+
+      - name: Teardown - Modify failing Status Check conclusion
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const updateFailingStatusCheck = require('./test/update-failing-status-check.js');
+
+            await updateFailingStatusCheck(github, core, '${{ steps.allow-failures.outputs.status-check-ids }}');
 
       - name: '-------------------------------------------------------------------------------------------------------------'
         run: echo ""
