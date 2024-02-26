@@ -10357,7 +10357,8 @@ var require_utils2 = __commonJS({
     }
     async function transformTrxToJson(filePath) {
       let trxDataWrapper;
-      core2.info(`Transforming file ${filePath}`);
+      core2.info(`
+Transforming file ${filePath}`);
       const xmlData = fs.readFileSync(filePath, 'utf-8');
       const xmlParser = new XMLParser({
         attributeNamePrefix: '_',
@@ -10381,11 +10382,14 @@ var require_utils2 = __commonJS({
       });
       if (XMLValidator.validate(xmlData.toString()) === true) {
         const parsedTrx = xmlParser.parse(xmlData);
-        const runInfos = parsedTrx.TestRun.ResultSummary.RunInfos;
-        if (runInfos && runInfos.RunInfo._outcome === 'Failed') {
-          core2.warning('There is trouble');
+        if (!doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath)) {
+          return;
         }
-        const testDefinitionsAreEmpty = parsedTrx && parsedTrx.TestRun && parsedTrx.TestRun.TestDefinitions ? false : true;
+        const testDefinitionsAreEmpty =
+          !parsedTrx.TestRun.TestDefinitions ||
+          parsedTrx.TestRun.TestDefinitions.length === 0 ||
+          !parsedTrx.TestRun.TestDefinitions.UnitTest ||
+          parsedTrx.TestRun.TestDefinitions.UnitTest.length === 0;
         populateAndFormatObjects(parsedTrx);
         const reportTitle = getReportTitle(parsedTrx, testDefinitionsAreEmpty);
         trxDataWrapper = {
@@ -10399,34 +10403,47 @@ var require_utils2 = __commonJS({
             TrxXmlString: xmlData
           }
         };
+      } else {
+        core2.setFailed(`The file '${filePath}' is not valid XML and cannot be parsed.`);
+        return;
       }
       return trxDataWrapper;
     }
-    function populateAndFormatObjects(parsedTrx) {
+    function doesParsedTrxHaveAllRequiredProps(parsedTrx, filePath) {
+      const testDefinitionsAreEmpty =
+        !parsedTrx.TestRun || !parsedTrx.TestRun.TestDefinitions || parsedTrx.TestRun.TestDefinitions.length === 0;
+      let missingElement;
       if (!parsedTrx.TestRun) {
-        parsedTrx.TestRun = {
-          Results: {
-            UnitTestResult: []
-          },
-          TestDefinitions: {
-            UnitTest: []
-          }
+        missingElement = 'TestRun';
+      } else if (!parsedTrx.TestRun.ResultSummary) {
+        missingElement = 'TestRun.ResultSummary';
+      } else if (!parsedTrx.TestRun.ResultSummary.Counters) {
+        missingElement = 'TestRun.ResultSummary.Counters';
+      } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos) {
+        missingElement = 'TestRun.ResultSummary.RunInfos';
+      } else if (testDefinitionsAreEmpty && !parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo) {
+        missingElement = 'TestRun.ResultSummary.RunInfos.RunInfo';
+      }
+      if (missingElement) {
+        core2.setFailed(`The file '${filePath}' does not contain the ${missingElement} element.`);
+        return false;
+      }
+      return true;
+    }
+    function populateAndFormatObjects(parsedTrx) {
+      if (!parsedTrx.TestRun.Results) {
+        parsedTrx.TestRun.Results = {
+          UnitTestResult: []
         };
-      } else {
-        if (!parsedTrx.TestRun.Results) {
-          parsedTrx.TestRun.Results = {
-            UnitTestResult: []
-          };
-        } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
-          parsedTrx.TestRun.Results.UnitTestResult = [];
-        }
-        if (!parsedTrx.TestRun.TestDefinitions) {
-          parsedTrx.TestRun.TestDefinitions = {
-            UnitTest: []
-          };
-        } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
-          parsedTrx.TestRun.TestDefinitions.UnitTest = [];
-        }
+      } else if (!parsedTrx.TestRun.Results.UnitTestResult) {
+        parsedTrx.TestRun.Results.UnitTestResult = [];
+      }
+      if (!parsedTrx.TestRun.TestDefinitions) {
+        parsedTrx.TestRun.TestDefinitions = {
+          UnitTest: []
+        };
+      } else if (!parsedTrx.TestRun.TestDefinitions.UnitTest) {
+        parsedTrx.TestRun.TestDefinitions.UnitTest = [];
       }
       if (!Array.isArray(parsedTrx.TestRun.Results.UnitTestResult)) {
         parsedTrx.TestRun.Results.UnitTestResult = [parsedTrx.TestRun.Results.UnitTestResult];
@@ -10435,16 +10452,16 @@ var require_utils2 = __commonJS({
         parsedTrx.TestRun.TestDefinitions.UnitTest = [parsedTrx.TestRun.TestDefinitions.UnitTest];
       }
     }
-    function getReportTitle(data, isEmpty) {
+    function getReportTitle(parsedTrx, testDefinitionsAreEmpty) {
       let reportTitle = '';
-      const reportTitleFilter = core2.getInput('report-title-filter') || '';
-      if (isEmpty) {
-        reportTitle = data.TestRun.ResultSummary.RunInfos.RunInfo._computerName;
+      if (testDefinitionsAreEmpty) {
+        reportTitle = parsedTrx.TestRun.ResultSummary.RunInfos.RunInfo._computerName || 'NOT FOUND';
       } else {
-        const unitTests = data.TestRun.TestDefinitions.UnitTest;
+        const reportTitleFilter = core2.getInput('report-title-filter') || '';
+        const unitTests = parsedTrx.TestRun.TestDefinitions.UnitTest;
         if (reportTitleFilter != '') {
-          const unitTestNames = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
-          reportTitle = unitTestNames.length > 0 ? unitTestNames[unitTestNames.indexOf(reportTitleFilter) + 1] : null;
+          const nameParts = unitTests.length > 0 ? unitTests[0]._name.split('.') : [];
+          reportTitle = nameParts.length > 0 ? nameParts[nameParts.indexOf(reportTitleFilter) + 1] : null;
         }
         if (!reportTitle) {
           const storage = unitTests.length > 0 && unitTests[0]._storage ? unitTests[0]._storage : 'NOT FOUND';
@@ -10457,7 +10474,8 @@ var require_utils2 = __commonJS({
       return reportTitle;
     }
     function areThereAnyFailingTests2(trxJsonReports) {
-      core2.info(`Checking for failing tests..`);
+      core2.info(`
+Checking for failing tests..`);
       for (const trxData of trxJsonReports) {
         if (trxData.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
           core2.warning(`At least one failing test was found.`);
@@ -10468,7 +10486,8 @@ var require_utils2 = __commonJS({
       return false;
     }
     function createResultsFile2(resultsFileName, results) {
-      core2.info(`Writing results to ${resultsFileName}`);
+      core2.info(`
+Writing results to ${resultsFileName}`);
       let resultsFilePath = null;
       fs.writeFile(resultsFileName, results, err => {
         if (err) {
@@ -10479,26 +10498,13 @@ var require_utils2 = __commonJS({
         }
       });
       resultsFilePath = path.resolve(resultsFileName);
-      core2.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
       return resultsFilePath;
-    }
-    function deleteResultsFile(resultsFilePath) {
-      core2.info(`Removing markdown file: ${resultsFilePath}`);
-      if (fs.existsSync(resultsFilePath)) {
-        fs.unlink(resultsFilePath, err => {
-          if (err) {
-            core2.error(`Error in deleting file ${resultsFilePath}.  Error: ${err}`);
-          }
-          core2.info(`Successfully deleted results file: ${resultsFilePath}`);
-        });
-      }
     }
     module2.exports = {
       findTrxFiles: findTrxFiles2,
       transformAllTrxToJson: transformAllTrxToJson2,
       areThereAnyFailingTests: areThereAnyFailingTests2,
-      createResultsFile: createResultsFile2,
-      deleteResultsFile
+      createResultsFile: createResultsFile2
     };
   }
 });
@@ -24660,33 +24666,48 @@ var require_github2 = __commonJS({
     var core2 = require_core();
     var github = require_github();
     async function createStatusCheck2(repoToken, reportData, markupData, conclusion) {
-      core2.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
+      core2.info(`
+Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
       const octokit = github.getOctokit(repoToken);
       const git_sha =
         github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
-      core2.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
+      const name = `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`;
+      const status = 'completed';
+      const title = reportData.ReportMetaData.ReportTitle;
       const checkTime = new Date().toUTCString();
-      core2.info(`Check time is: ${checkTime}`);
+      const summary = `This test run completed at \`${checkTime}\``;
+      let propMessage = `  Name: ${name}
+  GitSha: ${git_sha}
+  Event: ${github.context.eventName}
+  Status: ${status}
+  Conclusion: ${conclusion}
+  Check time: ${checkTime}
+  Title: ${title}
+  Summary: ${summary}`;
+      core2.info(propMessage);
+      let statusCheckId;
       await octokit.rest.checks
         .create({
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
-          name: `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`,
+          name,
           head_sha: git_sha,
-          status: 'completed',
+          status,
           conclusion,
           output: {
-            title: reportData.ReportMetaData.ReportTitle,
-            summary: `This test run completed at \`${checkTime}\``,
+            title,
+            summary,
             text: markupData
           }
         })
         .then(response => {
-          core2.info(`Created check: ${response.data.name}`);
+          core2.info(`Created check: '${response.data.name}' with id '${response.data.id}'`);
+          statusCheckId = response.data.id;
         })
         .catch(error => {
           core2.setFailed(`An error occurred trying to create the status check: ${error.message}`);
         });
+      return statusCheckId;
     }
     async function lookForExistingComment(octokit, markupPrefix) {
       let commentId = null;
@@ -24722,6 +24743,7 @@ var require_github2 = __commonJS({
       }
       const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier2} -->`;
       const octokit = github.getOctokit(repoToken);
+      let commentIdToReturn;
       let existingCommentId = null;
       if (updateCommentIfOneExists2) {
         core2.info('Checking for existing comment on PR....');
@@ -24729,6 +24751,7 @@ var require_github2 = __commonJS({
       }
       if (existingCommentId) {
         core2.info(`Updating existing PR #${existingCommentId} comment...`);
+        commentIdToReturn = existingCommentId;
         await octokit.rest.issues
           .updateComment({
             owner: github.context.repo.owner,
@@ -24755,11 +24778,13 @@ ${markupData}`,
           })
           .then(response => {
             core2.info(`PR comment was created.  ID: ${response.data.id}.`);
+            commentIdToReturn = response.data.id;
           })
           .catch(error => {
             core2.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);
           });
       }
+      return commentIdToReturn;
     }
     module2.exports = {
       createStatusCheck: createStatusCheck2,
@@ -27628,12 +27653,12 @@ var require_markup = __commonJS({
     var timezone = core2.getInput('timezone') || 'Etc/UTC';
     function getMarkupForTrx2(testData) {
       return `
-  # ${testData.ReportMetaData.ReportTitle}
-  ${getBadge(testData)}
-  ${getTestTimes(testData)}
-  ${getTestCounters(testData)}
-  ${getTestResultsMarkup(testData)}
-  `;
+# ${testData.ReportMetaData.ReportTitle}
+
+${getBadge(testData)}
+${getTestTimes(testData)}
+${getTestCounters(testData)}
+${getFailedAndEmptyTestResultsMarkup(testData)}`;
     }
     function getBadge(testData) {
       const failedCount = testData.TrxData.TestRun.ResultSummary.Counters._failed;
@@ -27657,33 +27682,31 @@ var require_markup = __commonJS({
       const startTimeSeconds = new Date(testData.TrxData.TestRun.Times._start).valueOf();
       const endTimeSeconds = new Date(testData.TrxData.TestRun.Times._finish).valueOf();
       const duration = (endTimeSeconds - startTimeSeconds) / 1e3;
-      return `
-  <details>  
-    <summary> Duration: ${duration} seconds </summary>
-    <table>
-      <tr>
-          <th>Start:</th>
-          <td><code>${formatDate(testData.TrxData.TestRun.Times._start)}</code></td>
-      </tr>
-      <tr>
-          <th>Creation:</th>
-          <td><code>${formatDate(testData.TrxData.TestRun.Times._creation)}</code></td>
-      </tr>
-      <tr>
-          <th>Queuing:</th>
-          <td><code>${formatDate(testData.TrxData.TestRun.Times._queuing)}</code></td>
-      </tr>
-      <tr>
-          <th>Finish:</th>
-          <td><code>${formatDate(testData.TrxData.TestRun.Times._finish)}</code></td>    
-      </tr>
-      <tr>
-          <th>Duration:</th>
-          <td><code>${duration} seconds</code></td>
-      </tr>
-    </table>
-  </details>
-  `;
+      return `<details>
+  <summary>Duration: ${duration} seconds</summary>
+  <table>
+    <tr>
+      <th>Start:</th>
+      <td><code>${formatDate(testData.TrxData.TestRun.Times._start)}</code></td>
+    </tr>
+    <tr>
+      <th>Creation:</th>
+      <td><code>${formatDate(testData.TrxData.TestRun.Times._creation)}</code></td>
+    </tr>
+    <tr>
+      <th>Queuing:</th>
+      <td><code>${formatDate(testData.TrxData.TestRun.Times._queuing)}</code></td>
+    </tr>
+    <tr>
+      <th>Finish:</th>
+      <td><code>${formatDate(testData.TrxData.TestRun.Times._finish)}</code></td>
+    </tr>
+    <tr>
+      <th>Duration:</th>
+      <td><code>${duration} seconds</code></td>
+    </tr>
+  </table>
+</details>`;
     }
     function getTestCounters(testData) {
       let extraProps = getTableRowIfHasValue('Error:', testData.TrxData.TestRun.ResultSummary.Counters._error);
@@ -27701,30 +27724,27 @@ var require_markup = __commonJS({
       extraProps += getTableRowIfHasValue('Completed:', testData.TrxData.TestRun.ResultSummary.Counters._completed);
       extraProps += getTableRowIfHasValue('InProgress:', testData.TrxData.TestRun.ResultSummary.Counters._inProgress);
       extraProps += getTableRowIfHasValue('Pending:', testData.TrxData.TestRun.ResultSummary.Counters._pending);
-      return `
-  <details>
-    <summary> Outcome: ${testData.TrxData.TestRun.ResultSummary._outcome} | Total Tests: ${testData.TrxData.TestRun.ResultSummary.Counters._total} | Passed: ${testData.TrxData.TestRun.ResultSummary.Counters._passed} | Failed: ${testData.TrxData.TestRun.ResultSummary.Counters._failed} </summary>
-    <table>
-      <tr>
-         <th>Total:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._total}</td>
-      </tr>
-      <tr>
-         <th>Executed:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._executed}</td>
-      </tr>
-      <tr>
-         <th>Passed:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._passed}</td>
-      </tr>
-      <tr>
-         <th>Failed:</th>
-         <td>${testData.TrxData.TestRun.ResultSummary.Counters._failed}</td>    
-      </tr>${extraProps}
-    </table>
-  </details>
-
-  `;
+      return `<details>
+  <summary>Outcome: ${testData.TrxData.TestRun.ResultSummary._outcome} | Total Tests: ${testData.TrxData.TestRun.ResultSummary.Counters._total} | Passed: ${testData.TrxData.TestRun.ResultSummary.Counters._passed} | Failed: ${testData.TrxData.TestRun.ResultSummary.Counters._failed}</summary>
+  <table>
+    <tr>
+      <th>Total:</th>
+      <td>${testData.TrxData.TestRun.ResultSummary.Counters._total}</td>
+    </tr>
+    <tr>
+      <th>Executed:</th>
+      <td>${testData.TrxData.TestRun.ResultSummary.Counters._executed}</td>
+    </tr>
+    <tr>
+      <th>Passed:</th>
+      <td>${testData.TrxData.TestRun.ResultSummary.Counters._passed}</td>
+    </tr>
+    <tr>
+      <th>Failed:</th>
+      <td>${testData.TrxData.TestRun.ResultSummary.Counters._failed}</td>
+    </tr>${extraProps}
+  </table>
+</details>`;
     }
     function getTableRowIfHasValue(heading, data) {
       if (data && data.length > 0 && parseInt(data) > 0) {
@@ -27736,7 +27756,7 @@ var require_markup = __commonJS({
       }
       return '';
     }
-    function getTestResultsMarkup(testData) {
+    function getFailedAndEmptyTestResultsMarkup(testData) {
       let resultsMarkup = '';
       if (testData.IsEmpty) {
         return getNoResultsMarkup(testData);
@@ -27755,17 +27775,16 @@ var require_markup = __commonJS({
     function getNoResultsMarkup(testData) {
       const runInfo = testData.TrxData.TestRun.ResultSummary.RunInfos.RunInfo;
       const testResultIcon = getTestOutcomeIcon(runInfo._outcome);
-      const resultsMarkup = `
-  <details>
-    <summary>${testResultIcon} ${runInfo._computerName}</summary> 
-    <table>
-      <tr>
-        <th>Run Info</th>
-        <td><code>${runInfo.Text}</code></td>
-      </tr>
-    </table>      
-    </details>
-  `;
+      const resultsMarkup = `<details>
+  <summary>${testResultIcon} ${runInfo._computerName}</summary>
+  <table>
+    <tr>
+      <th>Run Info</th>
+      <td><code>${runInfo.Text}</code></td>
+    </tr>
+  </table>
+</details>
+`;
       return resultsMarkup;
     }
     function getTestOutcomeIcon(testOutcome) {
@@ -27780,56 +27799,55 @@ var require_markup = __commonJS({
       let stacktrace = '';
       let errorMessage = '';
       if (testResult && testResult.Output) {
-        stacktrace = `<tr>
-        <th>Stack Trace:</th>
-        <td><pre>${testResult.Output.ErrorInfo.StackTrace}</pre></td>
-      </tr>`;
-        errorMessage = `<tr>
-        <th>Error Message:</th>
-        <td><pre>${testResult.Output.ErrorInfo.Message}</pre></td>
-      </tr>`;
+        stacktrace = `
+<tr>
+  <th>Stack Trace:</th>
+  <td><pre>${testResult.Output.ErrorInfo.StackTrace}</pre></td>
+</tr>`;
+        errorMessage = `
+<tr>
+  <th>Error Message:</th>
+  <td><pre>${testResult.Output.ErrorInfo.Message}</pre></td>
+</tr>`;
       }
-      return `
-  <details>
-    <summary>${testResultIcon} ${data._name}</summary>    
-    <table>
-      <tr>
-         <th>Name:</th>
-         <td><code>${data._name}</code></td>
-      </tr>
-      <tr>
-         <th>Outcome:</th>
-         <td><code>${testResult._outcome}</code></td>
-      </tr>
-      <tr>
-         <th>Start:</th>
-         <td><code>${formatDate(testResult._startTime)}</code></td>
-      </tr>
-      <tr>
-         <th>End:</th>
-         <td><code>${formatDate(testResult._endTime)}</code></td>
-      </tr>
-      <tr>
-         <th>Duration:</th>
-         <td><code>${testResult._duration}</code></td>
-      </tr>
-      <tr>
-        <th>Code Base</th>
-        <td><code>${data.TestMethod._codeBase}</code></td>
-      </tr>
-      <tr>
-        <th>Class Name</th>
-        <td><code>${data.TestMethod._className}</code></td>
-      </tr>
-      <tr>
-        <th>Method Name</th>
-        <td><code>${data.TestMethod._name}</code></td>
-      </tr>
-      ${errorMessage}
-      ${stacktrace}
-    </table>
-  </details>
-  `.trim();
+      return `<details>
+  <summary>${testResultIcon} ${data._name}</summary>
+  <table>
+    <tr>
+      <th>Name:</th>
+      <td><code>${data._name}</code></td>
+    </tr>
+    <tr>
+      <th>Outcome:</th>
+      <td><code>${testResult._outcome}</code></td>
+    </tr>
+    <tr>
+      <th>Start:</th>
+      <td><code>${formatDate(testResult._startTime)}</code></td>
+    </tr>
+    <tr>
+      <th>End:</th>
+      <td><code>${formatDate(testResult._endTime)}</code></td>
+    </tr>
+    <tr>
+      <th>Duration:</th>
+      <td><code>${testResult._duration}</code></td>
+    </tr>
+    <tr>
+      <th>Code Base</th>
+      <td><code>${data.TestMethod._codeBase}</code></td>
+    </tr>
+    <tr>
+      <th>Class Name</th>
+      <td><code>${data.TestMethod._className}</code></td>
+    </tr>
+    <tr>
+      <th>Method Name</th>
+      <td><code>${data.TestMethod._name}</code></td>
+    </tr>${errorMessage}${stacktrace}
+  </table>
+</details>
+`.trim();
     }
     module2.exports = {
       getMarkupForTrx: getMarkupForTrx2
@@ -27858,53 +27876,64 @@ async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
     const trxToJson = await transformAllTrxToJson(trxFiles);
-    const failingTestsFound = areThereAnyFailingTests(trxToJson);
-    let markupForComment = [];
-    let fullMarkupComment;
-    for (const data of trxToJson) {
-      const markupData = getMarkupForTrx(data);
-      let conclusion = 'success';
-      if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
-        conclusion = ignoreTestFailures ? 'neutral' : 'failure';
-      }
-      if (shouldCreateStatusCheck) {
-        await createStatusCheck(token, data, markupData, conclusion);
-      }
-      markupForComment.push(markupData);
-    }
-    if (markupForComment.length > 0 && shouldCreatePRComment) {
-      const commentCharacterLimit = 65535;
-      let markupComment = markupForComment.join('\n');
-      if (markupComment.length > commentCharacterLimit) {
-        core.info(
-          `Truncating markup data due to character limit exceeded for github api.  Markup data length: ${markupComment.length}/${commentCharacterLimit}`
-        );
-        markupComment = markupComment.substring(0, commentCharacterLimit - 100);
-        markupComment = 'Test outcome truncated due to character limit. See full report in output. \n' + markupComment;
-        core.setOutput('test-outcome-truncated', 'true');
-      } else {
-        core.setOutput('test-outcome-truncated', 'false');
-      }
-      await createPrComment(token, markupComment, updateCommentIfOneExists, commentIdentifier);
-    }
-    const resultsFile = './test-results.md';
-    let resultsFilePath = null;
-    if (shouldCreateResultsFile) {
-      resultsFilePath = createResultsFile(resultsFile, markupForComment.join('\n'));
-    }
-    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
-    core.setOutput('trx-files', trxFiles);
-    core.setOutput('test-results-file-path', resultsFilePath);
-  } catch (error) {
-    if (error instanceof RangeError) {
-      core.info(error.message);
+    if (trxToJson.some(trx => !trx)) {
+      core.setFailed('\nOne or more files could not be parsed.  Please check the logs for more information.');
       core.setOutput('test-outcome', 'Failed');
       core.setOutput('test-results-file-path', null);
       return;
+    }
+    core.setOutput('trx-files', trxFiles);
+    const failingTestsFound = areThereAnyFailingTests(trxToJson);
+    core.setOutput('test-outcome', failingTestsFound ? 'Failed' : 'Passed');
+    let markupForResults = [];
+    let statusCheckIds = [];
+    for (const data of trxToJson) {
+      const markupData = getMarkupForTrx(data);
+      markupForResults.push(markupData);
+      if (shouldCreateStatusCheck) {
+        let conclusion = 'success';
+        if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
+          conclusion = ignoreTestFailures ? 'neutral' : 'failure';
+        }
+        const checkId = await createStatusCheck(token, data, markupData, conclusion);
+        statusCheckIds.push(checkId);
+      }
+    }
+    if (shouldCreateStatusCheck && statusCheckIds.length > 0) {
+      core.info(`
+The following status check ids were created: ${statusCheckIds.join(',')}`);
+      core.setOutput('status-check-ids', statusCheckIds.join(','));
+    }
+    if (markupForResults.length > 0 && shouldCreatePRComment) {
+      let markup = markupForResults.join('\n');
+      core.info(`
+Creating a PR comment with length ${markup.length}...`);
+      const charLimit = 65535;
+      let truncated = false;
+      if (markup.length > charLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
+        core.info(message);
+        markup = markup.substring(0, charLimit - 100);
+        markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
+        truncated = true;
+      }
+      core.setOutput('test-results-truncated', truncated);
+      const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
+      core.setOutput('pr-comment-id', commentId);
+    }
+    if (shouldCreateResultsFile) {
+      const resultsFile = './test-results.md';
+      const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
+      core.setOutput('test-results-file-path', resultsFilePath);
+      core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
+    }
+  } catch (error) {
+    core.setOutput('test-outcome', 'Failed');
+    core.setOutput('test-results-file-path', null);
+    if (error instanceof RangeError) {
+      core.info(`An error occurred processing the trx files: ${error.message}`);
     } else {
       core.setFailed(`An error occurred processing the trx files: ${error.message}`);
-      core.setOutput('test-outcome', 'Failed');
-      core.setOutput('test-results-file-path', null);
     }
   }
 }

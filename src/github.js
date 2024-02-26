@@ -2,35 +2,50 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 
 async function createStatusCheck(repoToken, reportData, markupData, conclusion) {
-  core.info(`Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
+  core.info(`\nCreating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
   const octokit = github.getOctokit(repoToken);
 
   const git_sha =
     github.context.eventName === 'pull_request' ? github.context.payload.pull_request.head.sha : github.context.sha;
-  core.info(`Creating status check for GitSha: ${git_sha} on a ${github.context.eventName} event.`);
-
+  const name = `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`;
+  const status = 'completed';
+  const title = reportData.ReportMetaData.ReportTitle;
   const checkTime = new Date().toUTCString();
-  core.info(`Check time is: ${checkTime}`);
+  const summary = `This test run completed at \`${checkTime}\``;
+
+  let propMessage = `  Name: ${name}
+  GitSha: ${git_sha}
+  Event: ${github.context.eventName}
+  Status: ${status}
+  Conclusion: ${conclusion}
+  Check time: ${checkTime}
+  Title: ${title}
+  Summary: ${summary}`;
+  core.info(propMessage);
+
+  let statusCheckId;
   await octokit.rest.checks
     .create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      name: `status check - ${reportData.ReportMetaData.ReportName.toLowerCase()}`,
+      name: name,
       head_sha: git_sha,
-      status: 'completed',
+      status: status,
       conclusion: conclusion,
       output: {
-        title: reportData.ReportMetaData.ReportTitle,
-        summary: `This test run completed at \`${checkTime}\``,
+        title: title,
+        summary: summary,
         text: markupData
       }
     })
     .then(response => {
-      core.info(`Created check: ${response.data.name}`);
+      core.info(`Created check: '${response.data.name}' with id '${response.data.id}'`);
+      statusCheckId = response.data.id;
     })
     .catch(error => {
       core.setFailed(`An error occurred trying to create the status check: ${error.message}`);
     });
+  return statusCheckId;
 }
 
 async function lookForExistingComment(octokit, markupPrefix) {
@@ -72,6 +87,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
   const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier} -->`;
   const octokit = github.getOctokit(repoToken);
 
+  let commentIdToReturn;
   let existingCommentId = null;
   if (updateCommentIfOneExists) {
     core.info('Checking for existing comment on PR....');
@@ -80,6 +96,8 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
 
   if (existingCommentId) {
     core.info(`Updating existing PR #${existingCommentId} comment...`);
+    commentIdToReturn = existingCommentId;
+
     await octokit.rest.issues
       .updateComment({
         owner: github.context.repo.owner,
@@ -104,11 +122,13 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
       })
       .then(response => {
         core.info(`PR comment was created.  ID: ${response.data.id}.`);
+        commentIdToReturn = response.data.id;
       })
       .catch(error => {
         core.setFailed(`An error occurred trying to create the PR comment: ${error.message}`);
       });
   }
+  return commentIdToReturn;
 }
 
 module.exports = {
