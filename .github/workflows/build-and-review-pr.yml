@@ -14,7 +14,6 @@ on:
   # and complication we will request those changes be manually made by the PR author.
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
   # paths:
   #   Do not include specific paths here.  We always want this build to run and produce a
   #   status check which are branch protection rules can use.  If this is skipped because of
