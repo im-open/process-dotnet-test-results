@@ -1,5 +1,5 @@
 
-# PURPOSELY.FAILING.TESTS
+# Ignore.Failures
 
 ![Generic badge](https://img.shields.io/badge/1/4-FAILED-red.svg)
 <details>
@@ -28,19 +28,19 @@
   </table>
 </details>
 <details>
-  <summary>Outcome: Failed | Total Tests: 4 | Passed: 3 | Failed: 1</summary>
+  <summary>Outcome: Failed | Total Tests: 2 | Passed: 1 | Failed: 1</summary>
   <table>
     <tr>
       <th>Total:</th>
-      <td>4</td>
+      <td>2</td>
     </tr>
     <tr>
       <th>Executed:</th>
-      <td>4</td>
+      <td>2</td>
     </tr>
     <tr>
       <th>Passed:</th>
-      <td>3</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>Failed:</th>
@@ -49,11 +49,11 @@
   </table>
 </details>
 <details>
-  <summary>:x: Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive</summary>
+  <summary>:x: Ignore.Failures.MathTests.OnePlusOneShouldNotEqualFive</summary>
   <table>
     <tr>
       <th>Name:</th>
-      <td><code>Purposely.Failing.Tests.MathTests.OnePlusOneShouldNotEqualFive</code></td>
+      <td><code>Ignore.Failures.MathTests.OnePlusOneShouldNotEqualFive</code></td>
     </tr>
     <tr>
       <th>Outcome:</th>
@@ -73,11 +73,11 @@
     </tr>
     <tr>
       <th>Code Base</th>
-      <td><code>C:\code\widget\bin\Release\net6.0\Purposely.Failing.Tests.dll</code></td>
+      <td><code>C:\code\widget\bin\Release\net6.0\Ignore.Failures.dll</code></td>
     </tr>
     <tr>
       <th>Class Name</th>
-      <td><code>Purposely.Failing.Tests.MathTests</code></td>
+      <td><code>Ignore.Failures.MathTests</code></td>
     </tr>
     <tr>
       <th>Method Name</th>

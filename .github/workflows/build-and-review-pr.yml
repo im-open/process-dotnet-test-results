@@ -606,7 +606,7 @@ jobs:
         if: always()
         run: |
           # Verify the trx-files list matches what we expect
-          failure="./test/files/failing-test/failure.trx"
+          failure="./test/files/failing-test-ignore/failure.trx"
           ./test/assert-values-match.sh --name "trx-files output" --expected "[$failure]" --actual "${{ steps.failing-test.outputs.trx-files }}"
 
           # Verify the test-outcome is Failed
@@ -631,7 +631,7 @@ jobs:
           #  - The Counter stats are included in the report
           #  - The failure details are included
 
-          expectedFileName="./test/files/failing-test/expected-test-results.md"
+          expectedFileName="./test/files/failing-test-ignore/expected-test-results.md"
           actualFileName="./test-results.md"
           ./test/assert-file-contents-match.sh --expectedFileName $expectedFileName --actualFileName $actualFileName
 
@@ -642,7 +642,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NO_FAILURES_DIR: './test/files/multiple-trx'
-      FAILURES_DIR: './test/files/failing-test'
+      ALLOW_FAILURES_DIR: './test/files/failing-test-allow'
+      IGNORE_FAILURES_DIR: './test/files/failing-test-ignore'
 
     steps:
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -732,7 +733,7 @@ jobs:
         uses: ./
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
-          base-directory: ${{ env.FAILURES_DIR }}
+          base-directory: ${{ env.IGNORE_FAILURES_DIR }}
           create-results-file: true # Keep this so we have an "actual" output to compare against
           create-status-check: true
           ignore-test-failures: true
@@ -764,13 +765,13 @@ jobs:
             const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
 
             const expectedValues = {
-              name: 'status check - dotnet unit tests (purposely.failing.tests)',
+              name: 'status check - dotnet unit tests (ignore.failures)',
               status: 'completed',
               conclusion: 'neutral',
-              title: 'PURPOSELY.FAILING.TESTS',
+              title: 'IGNORE.FAILURES',
               text: expectedBody
             };
-            const actualCheck = actualStatusChecks.find(check => check.name.includes('purposely'));
+            const actualCheck = actualStatusChecks.find(check => check.name.includes('ignore'));
             assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
 
       - name: '-------------------------------------------------------------------------------------------------------------'
@@ -784,7 +785,7 @@ jobs:
         uses: ./
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
-          base-directory: ${{ env.FAILURES_DIR }}
+          base-directory: ${{ env.ALLOW_FAILURES_DIR }}
           create-results-file: true # Keep this so we have an "actual" output to compare against
           create-status-check: true
           ignore-test-failures: false
@@ -816,13 +817,13 @@ jobs:
             const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
 
             const expectedValues = {
-              name: 'status check - dotnet unit tests (purposely.failing.tests)',
+              name: 'status check - dotnet unit tests (allow.failures)',
               status: 'completed',
               conclusion: 'failure',
-              title: 'PURPOSELY.FAILING.TESTS',
+              title: 'ALLOW.FAILURES',
               text: expectedBody
             };
-            const actualCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            const actualCheck = actualStatusChecks.find(check => check.name.includes('allow'));
             assertStatusCheckMatchesExpectations(core, actualCheck, expectedValues);
 
       - name: '-------------------------------------------------------------------------------------------------------------'
