@@ -1,5 +1,5 @@
 
-# FIDGET.TESTS
+# MULTIPLE.TRX1.TESTS
 
 ![Generic badge](https://img.shields.io/badge/1/1-PASSED-brightgreen.svg)
 <details>
@@ -50,7 +50,7 @@
 </details>
 
 
-# WIDGET.TESTS
+# MULTIPLE.TRX2.TESTS
 
 ![Generic badge](https://img.shields.io/badge/4/4-PASSED-brightgreen.svg)
 <details>

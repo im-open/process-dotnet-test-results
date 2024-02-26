@@ -550,9 +550,9 @@ jobs:
         if: always()
         run: |
           # Verify the trx-files list matches what we expect
-          fidget="./test/files/multiple-trx/fidget.trx"
-          widget="./test/files/multiple-trx/widget.trx"
-          ./test/assert-values-match.sh --name "trx-files output" --expected "[$fidget,$widget]" --actual "${{ steps.multiple-trx.outputs.trx-files }}"
+          trx1="./test/files/multiple-trx/trx1.trx"
+          trx2="./test/files/multiple-trx/trx2.trx"
+          ./test/assert-values-match.sh --name "trx-files output" --expected "[$trx1,$trx2]" --actual "${{ steps.multiple-trx.outputs.trx-files }}"
 
           # Verify the test-outcome is passed
           ./test/assert-values-match.sh --name "test-outcome output" --expected "Passed" --actual "${{ steps.multiple-trx.outputs.test-outcome }}"
@@ -593,7 +593,7 @@ jobs:
         uses: ./
         with:
           github-token: '${{ secrets.GITHUB_TOKEN }}'
-          base-directory: './test/files/failing-test'
+          base-directory: './test/files/failing-test-ignore'
           create-results-file: true # Keep this so we have an "actual" output to compare against
           create-status-check: false
           create-pr-comment: false
@@ -703,23 +703,23 @@ jobs:
             const expectedBody = fs.readFileSync('./test-results.md', 'utf8');
 
             const expectedFidgetValues = {
-              name: 'status check - dotnet unit tests (fidget.tests)',
+              name: 'status check - dotnet unit tests (multiple.trx1.tests)',
               status: 'completed',
               conclusion: 'success',
-              title: 'FIDGET.TESTS',
+              title: 'MULTIPLE.TRX1.TESTS',
               text: expectedBody
             };
-            const actualFidgetCheck = actualStatusChecks.find(check => check.name.includes('fidget'));
+            const actualFidgetCheck = actualStatusChecks.find(check => check.name.includes('trx1'));
             assertStatusCheckMatchesExpectations(core, actualFidgetCheck, expectedFidgetValues);
 
             const expectedWidgetValues = {
-              name: 'status check - dotnet unit tests (widget.tests)',
+              name: 'status check - dotnet unit tests (multiple.trx2.tests)',
               status: 'completed',
               conclusion: 'success',
-              title: 'WIDGET.TESTS',
+              title: 'MULTIPLE.TRX2.TESTS',
               text: expectedBody
             };
-            const actualWidgetCheck = actualStatusChecks.find(check => check.name.includes('widget'));
+            const actualWidgetCheck = actualStatusChecks.find(check => check.name.includes('trx2'));
             assertStatusCheckMatchesExpectations(core, actualWidgetCheck, expectedWidgetValues);
 
       - name: '-------------------------------------------------------------------------------------------------------------'

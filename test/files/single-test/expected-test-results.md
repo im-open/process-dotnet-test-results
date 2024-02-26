@@ -1,5 +1,5 @@
 
-# DIGIT.TESTS
+# SINGLE.TESTS
 
 ![Generic badge](https://img.shields.io/badge/1/1-PASSED-brightgreen.svg)
 <details>

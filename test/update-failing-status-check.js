@@ -27,6 +27,9 @@ module.exports = async (github, core, statusCheckId) => {
     return;
   }
 
+  const updatedText = `> [!IMPORTANT]
+> This status check was purposely created with a \`failure\` conclusion.  We don't want this to prevent the PR from being merged though, so change the conclusion to \`neutral\` after the tests have run.
+${actualCheck.output.text}`;
   await github.rest.checks
     .update({
       owner: 'im-open',
@@ -35,9 +38,9 @@ module.exports = async (github, core, statusCheckId) => {
       name: `${actualCheck.name} - UPDATED`,
       conclusion: 'neutral',
       output: {
-        title: `${actualCheck.output.title} - Updated`,
-        summary: `${actualCheck.output.summary} - Updated`,
-        text: `# Test Update\n> [!IMPORTANT]\n> This status check has been modified with a \`neutral\` status.  It was purposely created with a 'failure' conclusion but we don't want this to prevent the PR from being merged.\n${actualCheck.output.text}`
+        title: `${actualCheck.output.title}`,
+        summary: `${actualCheck.output.summary}`,
+        text: updatedText
       }
     })
     .then(() => {

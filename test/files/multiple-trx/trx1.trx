@@ -5,12 +5,12 @@
     <Deployment runDeploymentRoot="myuser_MY-MACHINE_2024-02-20_12_39_54" />
   </TestSettings>
   <Results>
-    <UnitTestResult executionId="1cb0e28f-f003-4728-88e5-cd447fddc9a5" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Fidget.Tests.MathTests.TwoPlusTwoShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0010362" startTime="2024-02-20T12:39:54.3830052-07:00" endTime="2024-02-20T12:39:54.3830209-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
+    <UnitTestResult executionId="1cb0e28f-f003-4728-88e5-cd447fddc9a5" testId="09917f6f-ce84-0a6f-b407-bec561fda4c1" testName="Multiple.Trx1.Tests.MathTests.TwoPlusTwoShouldNotEqualFive" computerName="MY-MACHINE" duration="00:00:00.0010362" startTime="2024-02-20T12:39:54.3830052-07:00" endTime="2024-02-20T12:39:54.3830209-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
   </Results>
   <TestDefinitions>
-    <UnitTest name="Fidget.Tests.MathTests.TwoPlusTwoShouldNotEqualFive" storage="c:\code\Fidget\bin\release\net6.0\Fidget.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
+    <UnitTest name="Multiple.Trx1.Tests.MathTests.TwoPlusTwoShouldNotEqualFive" storage="c:\code\Multiple.Trx1\bin\release\net6.0\Multiple.Trx1.tests.dll" id="09917f6f-ce84-0a6f-b407-bec561fda4c1">
       <Execution id="1cb0e28f-f003-4728-88e5-cd447fddc9a5" />
-      <TestMethod codeBase="C:\code\Fidget\bin\Release\net6.0\Fidget.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Fidget.Tests.MathTests" name="TwoPlusTwoShouldNotEqualFive" />
+      <TestMethod codeBase="C:\code\Multiple.Trx1\bin\Release\net6.0\Multiple.Trx1.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="Multiple.Trx1.Tests.MathTests" name="TwoPlusTwoShouldNotEqualFive" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>
