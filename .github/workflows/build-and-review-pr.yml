@@ -688,7 +688,8 @@ jobs:
               status: 'completed',
               conclusion: 'success',
               title: 'MULTIPLE.TRX1.TESTS',
-              text: expectedBody
+              text: expectedBody,
+              multipleChecks: true
             };
             const actualTrx1Check = actualStatusChecks.find(check => check.name.includes('trx1'));
             assertStatusCheckMatchesExpectations(core, actualTrx1Check, expectedTrx1Values);
@@ -698,7 +699,8 @@ jobs:
               status: 'completed',
               conclusion: 'success',
               title: 'MULTIPLE.TRX2.TESTS',
-              text: expectedBody
+              text: expectedBody,
+              multipleChecks: true
             };
             const actualTrx2Check = actualStatusChecks.find(check => check.name.includes('trx2'));
             assertStatusCheckMatchesExpectations(core, actualTrx2Check, expectedTrx2Values);
