@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-async function createStatusCheck(repoToken, reportData, markupData, conclusion) {
+async function createStatusCheck(repoToken, reportData, markdown, conclusion) {
   core.info(`\nCreating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
   const octokit = github.getOctokit(repoToken);
 
@@ -13,7 +13,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
   const checkTime = new Date().toUTCString();
   const summary = `This test run completed at \`${checkTime}\``;
 
-  let propMessage = `  Name: ${name}
+  const propMessage = `  Name: ${name}
   GitSha: ${git_sha}
   Event: ${github.context.eventName}
   Status: ${status}
@@ -35,7 +35,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
       output: {
         title: title,
         summary: summary,
-        text: markupData
+        text: markdown
       }
     })
     .then(response => {
@@ -48,7 +48,7 @@ async function createStatusCheck(repoToken, reportData, markupData, conclusion) 
   return statusCheckId;
 }
 
-async function lookForExistingComment(octokit, markupPrefix) {
+async function lookForExistingComment(octokit, markdownPrefix) {
   let commentId = null;
 
   await octokit
@@ -61,7 +61,7 @@ async function lookForExistingComment(octokit, markupPrefix) {
       if (comments.length === 0) {
         core.info('There are no comments on the PR.  A new comment will be created.');
       } else {
-        const existingComment = comments.find(c => c.body.startsWith(markupPrefix));
+        const existingComment = comments.find(c => c.body.startsWith(markdownPrefix));
         if (existingComment) {
           core.info(`An existing comment (${existingComment.id}) was found and will be updated.`);
           commentId = existingComment.id;
@@ -79,19 +79,22 @@ async function lookForExistingComment(octokit, markupPrefix) {
   return commentId;
 }
 
-async function createPrComment(repoToken, markupData, updateCommentIfOneExists, commentIdentifier) {
+async function createPrComment(repoToken, markdown, updateCommentIfOneExists, commentIdentifier) {
   if (github.context.eventName != 'pull_request') {
     core.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
     return;
   }
-  const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier} -->`;
+
+  const markdownPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier} -->`;
+  core.info(`The markdown prefix will be: '${markdownPrefix}'`);
+
   const octokit = github.getOctokit(repoToken);
 
   let commentIdToReturn;
   let existingCommentId = null;
   if (updateCommentIfOneExists) {
     core.info('Checking for existing comment on PR....');
-    existingCommentId = await lookForExistingComment(octokit, markupPrefix);
+    existingCommentId = await lookForExistingComment(octokit, markdownPrefix);
   }
 
   if (existingCommentId) {
@@ -102,7 +105,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
       .updateComment({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        body: `${markupPrefix}\n${markupData}`,
+        body: `${markdownPrefix}\n${markdown}`,
         comment_id: existingCommentId
       })
       .then(response => {
@@ -117,7 +120,7 @@ async function createPrComment(repoToken, markupData, updateCommentIfOneExists, 
       .createComment({
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
-        body: `${markupPrefix}\n${markupData}`,
+        body: `${markdownPrefix}\n${markdown}`,
         issue_number: github.context.payload.pull_request.number
       })
       .then(response => {

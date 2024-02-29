@@ -1,42 +1,45 @@
-module.exports = async (github, core, statusCheckIds) => {
-  core.info(`\nAsserting that checks with the following ids exist: '${statusCheckIds}'`);
+module.exports = async (github, context, core, statusCheckIdsString) => {
+  core.info(`\nAsserting that checks with the following ids exist: '${statusCheckIdsString}'`);
 
   const actualChecks = [];
-  const checkIds = statusCheckIds.split(',');
-  for (const checkId of checkIds) {
-    if (!checkId || checkId.trim() === '') {
+  const statusCheckIds = statusCheckIdsString.split(',');
+
+  for (const statusCheckId of statusCheckIds) {
+    if (!statusCheckId || statusCheckId.trim() === '') {
       continue;
     }
 
-    core.startGroup(`Checking for the existence of status check ${checkId}.`);
-    const checkResponse = await github.rest.checks.get({
-      owner: 'im-open',
-      repo: 'process-dotnet-test-results',
-      check_run_id: checkId.trim()
-    });
-    if (!checkResponse && !checkResponse.data) {
-      core.setFailed(`Status Check ${checkId} does not appear to exist.`);
-    } else {
-      core.info(`Status Check ${checkId} exists.`);
-      let rawCheck = checkResponse.data;
+    core.info(`\nChecking for the existence of status check ${statusCheckId}.`);
+    await github.rest.checks
+      .get({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        check_run_id: statusCheckId.trim()
+      })
+      .then(checkResponse => {
+        core.info(`Status Check ${statusCheckId} exists.`);
+        const rawCheck = checkResponse.data;
 
-      const check = {
-        id: rawCheck.id,
-        name: rawCheck.name,
-        status: rawCheck.status,
-        conclusion: rawCheck.conclusion,
-        startedAt: rawCheck.started_at,
-        completedAt: rawCheck.completed_at,
-        title: rawCheck.output.title,
-        summary: rawCheck.output.summary,
-        prNumber: rawCheck.pull_requests.length > 0 ? rawCheck.pull_requests[0].number : null,
-        text: rawCheck.output.text
-      };
-      core.info(`Check ${check.id} details:`);
-      console.log(check);
-      actualChecks.push(check);
-    }
-    core.endGroup();
+        const statusCheckToReturn = {
+          id: rawCheck.id,
+          name: rawCheck.name,
+          status: rawCheck.status,
+          conclusion: rawCheck.conclusion,
+          startedAt: rawCheck.started_at,
+          completedAt: rawCheck.completed_at,
+          title: rawCheck.output.title,
+          summary: rawCheck.output.summary,
+          prNumber: rawCheck.pull_requests.length > 0 ? rawCheck.pull_requests[0].number : null,
+          text: rawCheck.output.text
+        };
+        core.startGroup(`Check ${statusCheckId} details:`);
+        console.log(statusCheckToReturn);
+        core.endGroup();
+        actualChecks.push(statusCheckToReturn);
+      })
+      .catch(error => {
+        core.setFailed(`An error occurred retrieving status check ${statusCheckId}.  Error: ${error.message}`);
+      });
   }
   return actualChecks;
 };
