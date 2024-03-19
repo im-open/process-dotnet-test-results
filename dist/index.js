@@ -10485,7 +10485,8 @@ Checking for failing tests..`);
       core2.info(`There are no failing tests.`);
       return false;
     }
-    function createResultsFile2(resultsFileName, results) {
+    function createResultsFile2(results, jobAndStep2) {
+      const resultsFileName = `test-results-${jobAndStep2}.md`;
       core2.info(`
 Writing results to ${resultsFileName}`);
       let resultsFilePath = null;
@@ -24665,7 +24666,7 @@ var require_github2 = __commonJS({
   'src/github.js'(exports2, module2) {
     var core2 = require_core();
     var github = require_github();
-    async function createStatusCheck2(repoToken, reportData, markupData, conclusion) {
+    async function createStatusCheck2(repoToken, reportData, markdown, conclusion) {
       core2.info(`
 Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
       const octokit = github.getOctokit(repoToken);
@@ -24676,7 +24677,7 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
       const title = reportData.ReportMetaData.ReportTitle;
       const checkTime = new Date().toUTCString();
       const summary = `This test run completed at \`${checkTime}\``;
-      let propMessage = `  Name: ${name}
+      const propMessage = `  Name: ${name}
   GitSha: ${git_sha}
   Event: ${github.context.eventName}
   Status: ${status}
@@ -24697,7 +24698,7 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
           output: {
             title,
             summary,
-            text: markupData
+            text: markdown
           }
         })
         .then(response => {
@@ -24709,7 +24710,7 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
         });
       return statusCheckId;
     }
-    async function lookForExistingComment(octokit, markupPrefix) {
+    async function lookForExistingComment(octokit, markdownPrefix) {
       let commentId = null;
       await octokit
         .paginate(octokit.rest.issues.listComments, {
@@ -24721,7 +24722,7 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
           if (comments.length === 0) {
             core2.info('There are no comments on the PR.  A new comment will be created.');
           } else {
-            const existingComment = comments.find(c => c.body.startsWith(markupPrefix));
+            const existingComment = comments.find(c => c.body.startsWith(markdownPrefix));
             if (existingComment) {
               core2.info(`An existing comment (${existingComment.id}) was found and will be updated.`);
               commentId = existingComment.id;
@@ -24736,18 +24737,19 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
       core2.info(`Finished getting comments for PR #${github.context.payload.pull_request.number}.`);
       return commentId;
     }
-    async function createPrComment2(repoToken, markupData, updateCommentIfOneExists2, commentIdentifier2) {
+    async function createPrComment2(repoToken, markdown, updateCommentIfOneExists2, commentIdentifier2) {
       if (github.context.eventName != 'pull_request') {
         core2.info('This event was not triggered by a pull_request.  No comment will be created or updated.');
         return;
       }
-      const markupPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier2} -->`;
+      const markdownPrefix = `<!-- im-open/process-dotnet-test-results ${commentIdentifier2} -->`;
+      core2.info(`The markdown prefix will be: '${markdownPrefix}'`);
       const octokit = github.getOctokit(repoToken);
       let commentIdToReturn;
       let existingCommentId = null;
       if (updateCommentIfOneExists2) {
         core2.info('Checking for existing comment on PR....');
-        existingCommentId = await lookForExistingComment(octokit, markupPrefix);
+        existingCommentId = await lookForExistingComment(octokit, markdownPrefix);
       }
       if (existingCommentId) {
         core2.info(`Updating existing PR #${existingCommentId} comment...`);
@@ -24756,8 +24758,8 @@ Creating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
           .updateComment({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            body: `${markupPrefix}
-${markupData}`,
+            body: `${markdownPrefix}
+${markdown}`,
             comment_id: existingCommentId
           })
           .then(response => {
@@ -24772,8 +24774,8 @@ ${markupData}`,
           .createComment({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
-            body: `${markupPrefix}
-${markupData}`,
+            body: `${markdownPrefix}
+${markdown}`,
             issue_number: github.context.payload.pull_request.number
           })
           .then(response => {
@@ -27869,9 +27871,9 @@ var baseDir = core.getInput('base-directory') || '.';
 var ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
 var shouldCreateStatusCheck = core.getBooleanInput('create-status-check');
 var shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
-var shouldCreateResultsFile = core.getBooleanInput('create-results-file');
 var updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
-var commentIdentifier = core.getInput('comment-identifier') || '';
+var jobAndStep = `${process.env.GITHUB_JOB}_${process.env.GITHUB_ACTION}`;
+var commentIdentifier = core.getInput('comment-identifier') || jobAndStep;
 async function run() {
   try {
     const trxFiles = findTrxFiles(baseDir);
@@ -27888,14 +27890,14 @@ async function run() {
     let markupForResults = [];
     let statusCheckIds = [];
     for (const data of trxToJson) {
-      const markupData = getMarkupForTrx(data);
-      markupForResults.push(markupData);
+      const markupData2 = getMarkupForTrx(data);
+      markupForResults.push(markupData2);
       if (shouldCreateStatusCheck) {
         let conclusion = 'success';
         if (data.TrxData.TestRun.ResultSummary._outcome === 'Failed') {
           conclusion = ignoreTestFailures ? 'neutral' : 'failure';
         }
-        const checkId = await createStatusCheck(token, data, markupData, conclusion);
+        const checkId = await createStatusCheck(token, data, markupData2, conclusion);
         statusCheckIds.push(checkId);
       }
     }
@@ -27904,29 +27906,29 @@ async function run() {
 The following status check ids were created: ${statusCheckIds.join(',')}`);
       core.setOutput('status-check-ids', statusCheckIds.join(','));
     }
-    if (markupForResults.length > 0 && shouldCreatePRComment) {
-      let markup = markupForResults.join('\n');
+    const markupData = markupForResults.join('\n');
+    if (shouldCreatePRComment) {
       core.info(`
-Creating a PR comment with length ${markup.length}...`);
-      const charLimit = 65535;
+Creating a PR comment with length ${markupData.length}...`);
+      const characterLimit = 65535;
       let truncated = false;
-      if (markup.length > charLimit) {
-        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
+      let mdForComment = markupData;
+      if (mdForComment.length > characterLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${mdForComment.length}/${characterLimit}`;
         core.info(message);
-        markup = markup.substring(0, charLimit - 100);
-        markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
         truncated = true;
+        const truncatedMessage = `> [!Important]
+> Test results truncated due to character limit.  See full report in output.
+`;
+        mdForComment = `${truncatedMessage}
+${mdForComment.substring(0, characterLimit - 100)}`;
       }
       core.setOutput('test-results-truncated', truncated);
-      const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
+      const commentId = await createPrComment(token, mdForComment, updateCommentIfOneExists, commentIdentifier);
       core.setOutput('pr-comment-id', commentId);
     }
-    if (shouldCreateResultsFile) {
-      const resultsFile = './test-results.md';
-      const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
-      core.setOutput('test-results-file-path', resultsFilePath);
-      core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
-    }
+    const resultsFilePath = createResultsFile(markupData, jobAndStep);
+    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     core.setOutput('test-outcome', 'Failed');
     core.setOutput('test-results-file-path', null);

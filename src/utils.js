@@ -189,7 +189,9 @@ function areThereAnyFailingTests(trxJsonReports) {
   return false;
 }
 
-function createResultsFile(resultsFileName, results) {
+function createResultsFile(results, jobAndStep) {
+  const resultsFileName = `test-results-${jobAndStep}.md`;
+
   core.info(`\nWriting results to ${resultsFileName}`);
   let resultsFilePath = null;
 

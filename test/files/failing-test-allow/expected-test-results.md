@@ -1,7 +1,7 @@
 
-# Allow.Failures
+# ALLOW.FAILURES
 
-![Generic badge](https://img.shields.io/badge/1/4-FAILED-red.svg)
+![Generic badge](https://img.shields.io/badge/1/1-FAILED-red.svg)
 <details>
   <summary>Duration: 0.805 seconds</summary>
   <table>

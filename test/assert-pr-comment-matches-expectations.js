@@ -1,10 +1,10 @@
-module.exports = async (core, comment, expectedValues) => {
+module.exports = async (core, actualComment, actualTestResults, expectedComment) => {
   function assertCreatedAndUpdatedMatch(created, updated) {
     core.info(`\n\tCreated: '${created}'`);
-    core.info(`\tUpdated:   '${updated}'`);
+    core.info(`\tUpdated: '${updated}'`);
 
     if (created != updated) {
-      core.setFailed(`\tThe created and updated dates should match, which is NOT expected.`);
+      core.setFailed(`\tThe created and updated dates do not match, which is NOT expected.`);
     } else {
       core.info(`\tThe created and updated dates match, which is expected.`);
     }
@@ -12,7 +12,7 @@ module.exports = async (core, comment, expectedValues) => {
 
   function assertUpdatedIsAfterCreated(created, updated) {
     core.info(`\n\tCreated: '${created}'`);
-    core.info(`\tUpdated:   '${updated}'`);
+    core.info(`\tUpdated: '${updated}'`);
 
     if (created >= updated) {
       core.setFailed(`\tThe created date is on or after the updated date, which is NOT expected.`);
@@ -21,37 +21,55 @@ module.exports = async (core, comment, expectedValues) => {
     }
   }
 
-  function assertValueContainsSubstring(variableName, value, substring) {
-    core.startGroup(`\n\tChecking ${variableName} contains the substring.`);
+  function assertValueContainsSubstring(valueName, value, substringName, substring) {
     if (value.includes(substring)) {
-      core.info(`\tThe ${variableName} string contains the substring.`);
+      core.info(`\n\tChecking ${valueName} contains the ${substringName} substring.`);
+      core.info(`\tThe ${valueName} string contains the substring, which is expected.`);
     } else {
-      core.setFailed(`\tThe ${variableName} string does not contain the substring.`);
-      core.info(`\n\tExpected ${variableName}: '${value}'`);
-      core.info(`\tActual ${variableName}:   '${substring}'`);
+      core.info(`\n\tChecking ${valueName} contains the ${substringName} substring.`);
+      core.setFailed(`\tThe ${valueName} string does not contain the ${substringName} substring, which is not expected.`);
+      core.startGroup(`\t${valueName} contents:`);
+      core.info(`'${value}'`);
+      core.endGroup();
+
+      core.startGroup(`\t${substringName} contents:`);
+      core.info(`'${substring}'`);
+      core.endGroup();
     }
-    core.endGroup();
   }
 
   function validateProps() {
     core.info(`\nAsserting that PR Comment properties match the expected values.`);
-    core.info(`Comment ID: ${comment.id}`);
 
-    assertValueContainsSubstring('Body', expectedValues['prefixAndBody'], comment.body);
+    const expectedPrefix = expectedComment.prefix;
+    const expectedFullMd = expectedComment.fullMarkdown;
+    const expectedTruncatedMd = expectedComment.truncatedMarkdown;
+    const isTruncated = expectedComment.truncated;
 
-    switch (expectedValues.action) {
+    // Check the actual comment's body
+    assertValueContainsSubstring('PR Comment', actualComment.body, 'Expected Prefix', expectedPrefix);
+    if (isTruncated) {
+      assertValueContainsSubstring('PR Comment', actualComment.body, 'Expected Body', expectedTruncatedMd);
+    } else {
+      assertValueContainsSubstring('PR Comment', actualComment.body, 'Expected Body', expectedFullMd);
+    }
+
+    // Check the test-results.md file
+    assertValueContainsSubstring('test-results.md', actualTestResults, 'Expected Body', expectedFullMd);
+
+    // Doublecheck the timestamps are generally what we expected based on created/updated status
+    switch (expectedComment.action) {
       case 'updated':
-        assertUpdatedIsAfterCreated(comment.createdAt, comment.updatedAt);
+        assertUpdatedIsAfterCreated(actualComment.createdAt, actualComment.updatedAt);
         break;
       case 'created':
-        assertCreatedAndUpdatedMatch(comment.createdAt, comment.updatedAt);
+        assertCreatedAndUpdatedMatch(actualComment.createdAt, actualComment.updatedAt);
         break;
       default:
-        core.setFailed(`The action '${expectedValues.action}' is not supported.`);
+        core.setFailed(`The action '${expectedComment.action}' is not supported.`);
         break;
     }
   }
 
   validateProps();
-  await new Promise(r => setTimeout(r, 5 * 1000));
 };

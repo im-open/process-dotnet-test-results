@@ -10,16 +10,18 @@ module.exports = async (core, statusCheck, expectedValues) => {
     }
   }
 
-  function assertValueContainsSubstring(variableName, value, substring) {
-    core.startGroup(`\tChecking ${variableName} contains the substring.`);
+  function assertValueContainsSubstring(valueName, value, substringName, substring) {
     if (value.includes(substring)) {
-      core.info(`\tThe ${variableName} string contains the substring.`);
+      core.info(`\n\tChecking ${valueName} contains the ${substringName} substring.`);
+      core.info(`\tThe ${valueName} string contains the substring.`);
     } else {
-      core.setFailed(`\tThe ${variableName} string does not contain the substring.`);
-      core.info(`\n\tExpected ${variableName}: '${value}'`);
-      core.info(`\tActual ${variableName}:   '${substring}'`);
+      core.info(`\n\tChecking ${valueName} contains the ${substringName} substring.`);
+      core.setFailed(`\tThe ${valueName} string does not contain the ${substringName} substring.`);
+      core.startGroup('\tString and substring Details');
+      core.info(`\n\t${valueName}: '${value}'`);
+      core.info(`\t${substringName}: '${substring}'`);
+      core.endGroup();
     }
-    core.endGroup();
   }
 
   function validateProps() {
@@ -31,13 +33,17 @@ module.exports = async (core, statusCheck, expectedValues) => {
     assertValuesMatch('Conclusion', expectedValues['conclusion'], statusCheck.conclusion);
     assertValuesMatch('Title', expectedValues['title'], statusCheck.title);
 
+    // If there are multiple checks, then the expectedText will contain md for all of the trx
+    // files, so we have to check substrings instead. Othersie, we can check for direct equality.
+    if (expectedValues['multipleChecks']) {
+      assertValueContainsSubstring('Text', expectedValues['text'], 'Text for single trx file', statusCheck.text);
+    } else {
+      assertValuesMatch('Text', expectedValues['text'], statusCheck.text);
+    }
+
     // The summary should be something like: 'This test run completed at `Wed, 21 Feb 2024 20:21:48 GMT`'
     // so just check that it contains the static portion.
-    assertValueContainsSubstring('Summary', statusCheck.summary, 'This test run completed at `');
-
-    // The text will be a just the markdown for a single trx file.  Check that the expected text
-    // (which is the markdown for all trx files) contains the subset.
-    assertValueContainsSubstring('Text', expectedValues['text'], statusCheck.text);
+    assertValueContainsSubstring('Summary', statusCheck.summary, 'Partial Test Run Text', 'This test run completed at `');
   }
 
   validateProps();

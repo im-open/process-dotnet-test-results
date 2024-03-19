@@ -13,9 +13,10 @@ const baseDir = core.getInput('base-directory') || '.';
 const ignoreTestFailures = core.getBooleanInput('ignore-test-failures');
 const shouldCreateStatusCheck = core.getBooleanInput('create-status-check');
 const shouldCreatePRComment = core.getBooleanInput('create-pr-comment');
-const shouldCreateResultsFile = core.getBooleanInput('create-results-file');
 const updateCommentIfOneExists = core.getBooleanInput('update-comment-if-one-exists');
-const commentIdentifier = core.getInput('comment-identifier') || '';
+
+const jobAndStep = `${process.env.GITHUB_JOB}_${process.env.GITHUB_ACTION}`;
+const commentIdentifier = core.getInput('comment-identifier') || jobAndStep;
 
 async function run() {
   try {
@@ -54,44 +55,39 @@ async function run() {
       core.info(`\nThe following status check ids were created: ${statusCheckIds.join(',')}`);
       core.setOutput('status-check-ids', statusCheckIds.join(',')); // This is mainly for testing purposes
     }
+    const markupData = markupForResults.join('\n');
 
     // 4 - Create a PR comment if requested
-    if (markupForResults.length > 0 && shouldCreatePRComment) {
-      let markup = markupForResults.join('\n');
-      core.info(`\nCreating a PR comment with length ${markup.length}...`);
+    if (shouldCreatePRComment) {
+      core.info(`\nCreating a PR comment with length ${markupData.length}...`);
 
       // GitHub API has a limit of 65535 characters for a comment so truncate the markup if we need to
-      const charLimit = 65535;
+      const characterLimit = 65535;
       let truncated = false;
-      if (markup.length > charLimit) {
-        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${markup.length}/${charLimit}`;
+      let mdForComment = markupData;
+
+      if (mdForComment.length > characterLimit) {
+        const message = `Truncating markup data due to character limit exceeded for GitHub API.  Markup data length: ${mdForComment.length}/${characterLimit}`;
         core.info(message);
 
-        markup = markup.substring(0, charLimit - 100);
-        markup = 'Test results truncated due to character limit. See full report in output. \n' + markup;
         truncated = true;
+        const truncatedMessage = `> [!Important]\n> Test results truncated due to character limit.  See full report in output.\n`;
+        mdForComment = `${truncatedMessage}\n${mdForComment.substring(0, characterLimit - 100)}`;
       }
       core.setOutput('test-results-truncated', truncated);
 
-      const commentId = await createPrComment(token, markup, updateCommentIfOneExists, commentIdentifier);
+      const commentId = await createPrComment(token, mdForComment, updateCommentIfOneExists, commentIdentifier);
       core.setOutput('pr-comment-id', commentId); // This is mainly for testing purposes
     }
 
-    // 5 - Create a results file if requested
-    if (shouldCreateResultsFile) {
-      // QUESTION:  if this is called multiple times in one job the file contents will be replaced for each instance.  Should we fix that?
-      const resultsFile = './test-results.md';
-      const resultsFilePath = createResultsFile(resultsFile, markupForResults.join('\n'));
-      core.setOutput('test-results-file-path', resultsFilePath);
-      core.exportVariable('TEST_RESULTS_FILE_PATH', resultsFilePath);
-    }
+    // 5 - Create a results file automatically to facilitate testing
+    const resultsFilePath = createResultsFile(markupData, jobAndStep);
+    core.setOutput('test-results-file-path', resultsFilePath);
   } catch (error) {
     core.setOutput('test-outcome', 'Failed');
     core.setOutput('test-results-file-path', null);
 
     if (error instanceof RangeError) {
-      // QUESTION:  It seems inconsistent that we're saying the step is a success (core.info instead of core.setFailed)
-      //        but the test-outcome is Failed.  Do we need to reconcile this?  That's probably a breaking change.
       core.info(`An error occurred processing the trx files: ${error.message}`);
     } else {
       core.setFailed(`An error occurred processing the trx files: ${error.message}`);

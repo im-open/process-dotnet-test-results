@@ -1,4 +1,4 @@
-module.exports = async (github, core, statusCheckId) => {
+module.exports = async (github, context, core, statusCheckId) => {
   core.info(`\nUpdate purposely failing status checks: '${statusCheckId}'`);
 
   if (!statusCheckId || statusCheckId.trim() === '') {
@@ -8,14 +8,12 @@ module.exports = async (github, core, statusCheckId) => {
   let actualCheck;
   await github.rest.checks
     .get({
-      owner: 'im-open',
-      repo: 'process-dotnet-test-results',
+      owner: context.repo.owner,
+      repo: context.repo.repo,
       check_run_id: statusCheckId
     })
     .then(response => {
       core.info(`Status Check ${statusCheckId} exists.`);
-      console.log('respose:');
-      console.log(response.data);
       actualCheck = response.data;
     })
     .catch(error => {
@@ -32,8 +30,8 @@ module.exports = async (github, core, statusCheckId) => {
 ${actualCheck.output.text}`;
   await github.rest.checks
     .update({
-      owner: 'im-open',
-      repo: 'process-dotnet-test-results',
+      owner: context.repo.owner,
+      repo: context.repo.repo,
       check_run_id: statusCheckId,
       name: `${actualCheck.name} - UPDATED`,
       conclusion: 'neutral',

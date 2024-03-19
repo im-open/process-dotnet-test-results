@@ -7,41 +7,46 @@ description: |
 
 inputs:
   github-token:
-    description: 'Used for the GitHub Checks API.  Generally secrets.GITHUB_TOKEN.'
+    description: 'Token used to interact with the repository.  Generally `secrets.GITHUB_TOKEN.`'
     required: true
   base-directory:
     description: 'The base directory of where to look for .trx files.  Defaults to the root directory of the repository.'
     required: false
-  ignore-test-failures:
-    description: 'When set to true the status check is set to neutral when there are test failures and it will not block pull requests.'
+  report-title-filter:
+    description: 'Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that was inputed in this field.'
     required: false
-    default: 'false'
   create-status-check:
     description: 'Flag indicating whether a status check with test results should be generated.'
     required: true
     default: 'true'
+  ignore-test-failures:
+    description: |
+      If there are test failures, the check's conclusion is set to `neutral` so it will not block pull requests.
+      *Only applicable when `create-status-check` is true.*
+    required: false
+    default: 'false'
   create-pr-comment:
     description: 'Flag indicating whether a PR comment with test results should be generated.   When `true` the default behavior is to update an existing comment if one exists.'
     required: true
     default: 'true'
-  create-results-file:
-    description: 'Flag indicating whether a results file in markdown should be generated.'
-    required: false
-    default: 'false'
   update-comment-if-one-exists:
-    description: 'When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior.'
+    description: |
+      This flag determines whether a new comment is created or if the action updates an existing comment (*if one is found*).
+      *Only applicable when `create-pr-comment` is true.*
     required: true
     default: 'true'
+  comment-identifier:
+    description: |
+      A unique identifier which will be added to the generated markdown as a comment (*it will not be visible in the PR comment*).
+      This identifier enables creating then updating separate results comments on the PR if more than one instance of this action is included in a single job.
+      This can be helpful when there are multiple test projects that run separately but are part of the same job.
+      Defaults to GITHUB_JOB_GITHUB_ACTION if not provided.
+      *Only applicable when `create-pr-comment` is true.*
+    required: false
   timezone:
     description: 'IANA time zone name (e.g. America/Denver) to display dates in.  If timezone is not provided, dates will be shown in UTC.'
     required: false
-  comment-identifier:
-    description: 'Used when there are multiple test projects that run separately but are part of the same CI run.'
-    required: false
-  report-title-filter:
-    description: 'Sets the report title in markdown to the `Unit Test Name`. This splits the Unit Test Name by `.` and gets the next word in the name that was inputed in this field.'
-    required: false
-
+  
 outputs:
   test-outcome:
     description: 'Test outcome based on presence of failing tests: Failed|Passed.  If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.'
@@ -52,9 +57,9 @@ outputs:
   test-results-file-path:
     description: 'File path for the file that contains the pre-truncated test results in markdown format.  This is the same output that is posted in the PR comment.'
   status-check-ids:
-    description: 'A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is true and one or more status checks were created successfully.'
+    description: 'A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully.'
   pr-comment-id:
-    description: 'The ID of the PR comment that was created.  This is only set if `create-pr-comment` is true and a PR was created successfully.'
+    description: 'The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.'
 
 runs:
   using: 'node20'

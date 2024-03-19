@@ -21,8 +21,10 @@ If creating status checks is enabled, one status check will be created for each 
   - [Usage Examples](#usage-examples)
     - [Using the defaults](#using-the-defaults)
     - [Specifying additional behavior](#specifying-additional-behavior)
-    - [Using create-results-file](#using-create-results-file)
-      - [Report Title](#report-title)
+    - [Using test-results-file-path](#using-test-results-file-path)
+    - [Report Title](#report-title)
+  - [Breaking Changes](#breaking-changes)
+    - [2.4.0 to 3.0.0](#240-to-300)
   - [Contributing](#contributing)
     - [Incrementing the Version](#incrementing-the-version)
     - [Source Code Changes](#source-code-changes)
@@ -46,9 +48,7 @@ If the test results contain failures, the status check's conclusion will be set 
 
 GitHub does have a size limitation of 65535 characters for a Status Check body or a PR Comment. This action would fail if the test results exceeded the GitHub [limit]. To mitigate this size issue only details for failed tests are included in the output in addition to a badge, duration info and outcome info.  If the comment still exceeds that size, it will be truncated with a note to see the remaining output in the log.
 
-If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit. The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks for this action may show on a different workflow run than the run that executed this action.
-
-Currently when a results file is created, the contents are written to `./test-results.md`.  If this action is called multiple times in one job, the file is overwritten each time.  If the contents are needed, they should be retrieved before the next invocation of this action.
+If you have multiple workflows triggered by the same `pull_request` or `push` event, GitHub creates one checksuite for that commit.  The checksuite gets assigned to one of the workflows randomly and all status checks for that commit are reported to that checksuite. That means if there are multiple workflows with the same trigger, your status checks may show on a different workflow run than the run that created them.
 
 ## Action Outputs
 
@@ -74,29 +74,28 @@ For failed test runs you can expand each failed test and view more details about
 
 ## Inputs
 
-| Parameter                      | Is Required | Default                          | Description                                                                                                                                                                         |
-|--------------------------------|-------------|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `github-token`                 | true        | N/A                              | Used for the GitHub Checks API. Value is generally: secrets.GITHUB_TOKEN.                                                                                                           |
-| `base-directory`               | false       | `.` Root Directory of repository | The base directory of where to look for `trx` files.                                                                                                                                |
-| `create-status-check`          | false       | true                             | Flag indicating whether a status check with code coverage results should be generated.                                                                                              |
-| `create-pr-comment`            | false       | true                             | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                 |
-| `create-results-file`          | false       | false                            | Flag indicating whether a results file in markdown format should be generated.                                                                                                      |
-| `update-comment-if-one-exists` | false       | true                             | When `create-pr-comment` is true, this flag determines whether a new comment is created or if the action updates an existing comment if one is found which is the default behavior. |
-| `ignore-test-failures`         | false       | `false`                          | When set to true the check status is set to `Neutral` when there are test failures and it will not block pull requests.                                                             |
-| `timezone`                     | false       | `UTC`                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                      |
-| `comment-identifier`           | false       | ``                               | Used when there are multiple test projects that run separately but are part of the same CI run.                                                                                     |
-| `report-title-filter`          | false       |                                  | Enables truncating the report title by filtering out previous name parts taken from the trx UnitTest `name`.  See [Report Title](#report-title) below for more information.         |
+| Parameter                      | Is Required | Default                                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|--------------------------------|-------------|--------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `github-token`                 | true        | N/A                                              | Used for the GitHub Checks API. Value is generally: `secrets.GITHUB_TOKEN`.                                                                                                                                                                                                                                                                                                                                                                                             |
+| `base-directory`               | false       | `.` Root Directory of repository                 | The base directory of where to look for `trx` files.                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `report-title-filter`          | false       |                                                  | Enables truncating the report title by filtering out previous name parts taken from the trx UnitTest `name`.  See [Report Title](#report-title) below for more information.                                                                                                                                                                                                                                                                                             |
+| `create-status-check`          | false       | `true`                                           | Flag indicating whether a status check with dotnet test results should be generated.                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ignore-test-failures`         | false       | `false`                                          | If there are test failures, the check's conclusion is set to `neutral` so it will not block pull requests.<br/><br/>*Only applicable when `create-status-check` is true.*                                                                                                                                                                                                                                                                                               |
+| `create-pr-comment`            | false       | `true`                                           | Flag indicating whether a PR comment with dotnet test results should be generated. When `true` the default behavior is to update an existing comment if one exists.                                                                                                                                                                                                                                                                                                     |
+| `update-comment-if-one-exists` | false       | `true`                                           | This flag determines whether a new comment is created or if the action updates an existing comment (*if one is found*).<br/><br/>*Only applicable when `create-pr-comment` is true.*                                                                                                                                                                                                                                                                                    |
+| `comment-identifier`           | false       | `${{ env.GITHUB-JOB }}_${{ env.GITHUB-ACTION }}` | A unique identifier which will be added to the generated markdown as a comment (*it will not be visible in the PR comment*).<br/><br/>This identifier enables creating then updating separate results comments on the PR if more than one instance of this action is included in a single job. This can be helpful when there are multiple test projects that run separately but are part of the same job.<br/><br/>*Only applicable when `create-pr-comment` is true.* |
+| `timezone`                     | false       | `UTC`                                            | IANA time zone name (e.g. America/Denver) to display dates in.                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## Outputs
 
-| Output                   | Description                                                                                                                                                                                                                    |
-|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `test-outcome`           | Test outcome based on presence of failing tests: _Failed,Passed_<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.                                                          |
-| `trx-files`              | List of `trx` files that were processed                                                                                                                                                                                        |
-| `test-results-file-path` | File path for the file that contains the pre-truncated test results in markdown format.  This is the same output that is posted in the PR comment. This will be `null` when the input `create-results-file` is set to `false`. |
-| `test-results-truncated` | Flag indicating whether test results were truncated due to markdown exceeding character limit of 65535.                                                                                                                        |
-| `status-check-ids`       | A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully.                                          |
-| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.                                                                                               |
+| Output                   | Description                                                                                                                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `test-outcome`           | Test outcome based on presence of failing tests: *Failed,Passed*<br/>If exceptions are thrown or if it exits early because of argument errors, this is set to Failed.                 |
+| `trx-files`              | List of `trx` files that were processed                                                                                                                                               |
+| `test-results-truncated` | Flag indicating whether test results were truncated due to markdown exceeding character limit of 65535.                                                                               |
+| `test-results-file-path` | File path for the file that contains the pre-truncated test results in markdown format.  This is the same output that is posted in the PR comment.                                    |
+| `status-check-ids`       | A comma-separated string of IDs for any status checks that were created. This is only set if `create-status-check` is `true` and one or more status checks were created successfully. |
+| `pr-comment-id`          | The ID of the PR comment that was created.  This is only set if `create-pr-comment` is `true` and a PR was created successfully.                                                      |
 
 ## Usage Examples
 
@@ -120,7 +119,7 @@ jobs:
       - name: Process trx reports with default
         if: always()
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.4.0
+        uses: im-open/process-dotnet-test-results@v3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -146,7 +145,7 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.4.0
+        uses: im-open/process-dotnet-test-results@v3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'
@@ -181,7 +180,7 @@ jobs:
           exit 1
 ```
 
-### Using create-results-file
+### Using test-results-file-path
 
 ```yml
 permissions:
@@ -202,21 +201,18 @@ jobs:
         if: always()
         id: process-test
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v2.4.0
+        uses: im-open/process-dotnet-test-results@v3.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           create-status-check: false
           create-pr-comment: false
-          create-results-file: true
           report-title-filter: 'Tests' # See Report Title Notes below on title output
 
       - name: Annotate Test Results
         run: cat ${{ steps.process-test.outputs.test-results-file-path }} > $GITHUB_STEP_SUMMARY
 ```
 
-#### Report Title
-
-In the example the first test is named: `Widget.Tests.MathTests.OnePlusOneShouldNotEqualFive`.  If `report-title-filter: 'Tests'` is used, then the action will use the next name part (split by `.`) so the title of the report would be `MathTests`.
+### Report Title
 
 When `report-title-filter` is provided, the action uses the `name` of the first UnitTest in the `.trx` file.  That name is then split into parts by `.`.  The report title will be set to the value of the name part following the name part that matches the `report-title-filter`.  If that does not result in a value, the action will default to examining the `storage` property of the first UnitTest and setting the report title based on `.dll` name.
 
@@ -231,9 +227,17 @@ Example
   | `Tests`             | MathTests                    |
   | `MathTests`         | OnePlusOneShouldNotEqualFive |
   | `Other`             | WIDGET.TESTS                 |
-  | _empty_             | WIDGET.TESTS                 |
+  | *empty*             | WIDGET.TESTS                 |
 
 This input is helpful to differentiate groups of tests in the markdown that is output to a file and the pull request comment.  To get a list of Unit Test names run `dotnet test --list-tests` in the cli.
+
+## Breaking Changes
+
+### 2.4.0 to 3.0.0
+
+- The `create-results-file` input was removed.  The action will automatically create this test results file.  
+- `TEST_RESULTS_FILE_PATH` environment variable output was removed.  Use `test-results-file-path` output instead.
+- The action now incorporates the job & action names as part of the test results file name.  This allows the action to be called multiple times in one job without overriding previous test results file contents.  Use the `test-results-file-path` output to get the file path.
 
 ## Contributing
 
@@ -254,7 +258,7 @@ This repo uses [git-version-lite] in its workflows to examine commit messages to
 | major          | +semver:major                               |
 | minor          | +semver:feature                             |
 | minor          | +semver:minor                               |
-| patch          | _default increment type, no comment needed_ |
+| patch          | *default increment type, no comment needed* |
 
 ### Source Code Changes
 
