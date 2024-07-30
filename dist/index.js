@@ -4719,6 +4719,12 @@ var require_validator = __commonJS({
                   "Closing tag '" + tagName + "' can't have attributes or invalid starting.",
                   getLineNumberForPosition(xmlData, tagStartPos)
                 );
+              } else if (tags.length === 0) {
+                return getErrorObject(
+                  'InvalidTag',
+                  "Closing tag '" + tagName + "' has not been opened.",
+                  getLineNumberForPosition(xmlData, tagStartPos)
+                );
               } else {
                 const otg = tags.pop();
                 if (tagName !== otg.tagName) {
@@ -5330,10 +5336,6 @@ var require_OrderedObjParser = __commonJS({
     var xmlNode = require_xmlNode();
     var readDocType = require_DocTypeReader();
     var toNumber = require_strnum();
-    var regx = '<((!\\[CDATA\\[([\\s\\S]*?)(]]>))|((NAME:)?(NAME))([^>]*)>|((\\/)(NAME)\\s*>))([^<]*)'.replace(
-      /NAME/g,
-      util.nameRegexp
-    );
     var OrderedObjParser = class {
       constructor(options) {
         this.options = options;
@@ -5355,7 +5357,9 @@ var require_OrderedObjParser = __commonJS({
           euro: { regex: /&(euro|#8364);/g, val: '\u20AC' },
           copyright: { regex: /&(copy|#169);/g, val: '\xA9' },
           reg: { regex: /&(reg|#174);/g, val: '\xAE' },
-          inr: { regex: /&(inr|#8377);/g, val: '\u20B9' }
+          inr: { regex: /&(inr|#8377);/g, val: '\u20B9' },
+          num_dec: { regex: /&#([0-9]{1,7});/g, val: (_, str) => String.fromCharCode(Number.parseInt(str, 10)) },
+          num_hex: { regex: /&#x([0-9a-fA-F]{1,6});/g, val: (_, str) => String.fromCharCode(Number.parseInt(str, 16)) }
         };
         this.addExternalEntities = addExternalEntities;
         this.parseXml = parseXml;
@@ -5530,17 +5534,18 @@ var require_OrderedObjParser = __commonJS({
             const closeIndex = findClosingIndex(xmlData, ']]>', i, 'CDATA is not closed.') - 2;
             const tagExp = xmlData.substring(i + 9, closeIndex);
             textData = this.saveTextToParentTag(textData, currentNode, jPath);
+            let val2 = this.parseTextData(tagExp, currentNode.tagname, jPath, true, false, true, true);
+            if (val2 == void 0) val2 = '';
             if (this.options.cdataPropName) {
               currentNode.add(this.options.cdataPropName, [{ [this.options.textNodeName]: tagExp }]);
             } else {
-              let val2 = this.parseTextData(tagExp, currentNode.tagname, jPath, true, false, true);
-              if (val2 == void 0) val2 = '';
               currentNode.add(this.options.textNodeName, val2);
             }
             i = closeIndex + 2;
           } else {
             let result = readTagExp(xmlData, i, this.options.removeNSPrefix);
             let tagName = result.tagName;
+            const rawTagName = result.rawTagName;
             let tagExp = result.tagExp;
             let attrExpPresent = result.attrExpPresent;
             let closeIndex = result.closeIndex;
@@ -5563,12 +5568,19 @@ var require_OrderedObjParser = __commonJS({
             if (this.isItStopNode(this.options.stopNodes, jPath, tagName)) {
               let tagContent = '';
               if (tagExp.length > 0 && tagExp.lastIndexOf('/') === tagExp.length - 1) {
+                if (tagName[tagName.length - 1] === '/') {
+                  tagName = tagName.substr(0, tagName.length - 1);
+                  jPath = jPath.substr(0, jPath.length - 1);
+                  tagExp = tagName;
+                } else {
+                  tagExp = tagExp.substr(0, tagExp.length - 1);
+                }
                 i = result.closeIndex;
               } else if (this.options.unpairedTags.indexOf(tagName) !== -1) {
                 i = result.closeIndex;
               } else {
-                const result2 = this.readStopNodeData(xmlData, tagName, closeIndex + 1);
-                if (!result2) throw new Error(`Unexpected end of ${tagName}`);
+                const result2 = this.readStopNodeData(xmlData, rawTagName, closeIndex + 1);
+                if (!result2) throw new Error(`Unexpected end of ${rawTagName}`);
                 i = result2.i;
                 tagContent = result2.tagContent;
               }
@@ -5586,6 +5598,7 @@ var require_OrderedObjParser = __commonJS({
               if (tagExp.length > 0 && tagExp.lastIndexOf('/') === tagExp.length - 1) {
                 if (tagName[tagName.length - 1] === '/') {
                   tagName = tagName.substr(0, tagName.length - 1);
+                  jPath = jPath.substr(0, jPath.length - 1);
                   tagExp = tagName;
                 } else {
                   tagExp = tagExp.substr(0, tagExp.length - 1);
@@ -5718,9 +5731,10 @@ var require_OrderedObjParser = __commonJS({
       let tagName = tagExp;
       let attrExpPresent = true;
       if (separatorIndex !== -1) {
-        tagName = tagExp.substr(0, separatorIndex).replace(/\s\s*$/, '');
-        tagExp = tagExp.substr(separatorIndex + 1);
+        tagName = tagExp.substring(0, separatorIndex);
+        tagExp = tagExp.substring(separatorIndex + 1).trimStart();
       }
+      const rawTagName = tagName;
       if (removeNSPrefix) {
         const colonIndex = tagName.indexOf(':');
         if (colonIndex !== -1) {
@@ -5732,7 +5746,8 @@ var require_OrderedObjParser = __commonJS({
         tagName,
         tagExp,
         closeIndex,
-        attrExpPresent
+        attrExpPresent,
+        rawTagName
       };
     }
     function readStopNodeData(xmlData, tagName, i) {
@@ -5949,6 +5964,7 @@ var require_orderedJs2Xml = __commonJS({
       for (let i = 0; i < arr.length; i++) {
         const tagObj = arr[i];
         const tagName = propName(tagObj);
+        if (tagName === void 0) continue;
         let newJPath = '';
         if (jPath.length === 0) newJPath = tagName;
         else newJPath = `${jPath}.${tagName}`;
@@ -6015,6 +6031,7 @@ var require_orderedJs2Xml = __commonJS({
       const keys = Object.keys(obj);
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
+        if (!obj.hasOwnProperty(key)) continue;
         if (key !== ':@') return key;
       }
     }
@@ -6022,6 +6039,7 @@ var require_orderedJs2Xml = __commonJS({
       let attrStr = '';
       if (attrMap && !options.ignoreAttributes) {
         for (let attr in attrMap) {
+          if (!attrMap.hasOwnProperty(attr)) continue;
           let attrVal = options.attributeValueProcessor(attr, attrMap[attr]);
           attrVal = replaceEntitiesValue(attrVal, options);
           if (attrVal === true && options.suppressBooleanAttributes) {
@@ -6129,10 +6147,19 @@ var require_json2xml = __commonJS({
       let attrStr = '';
       let val2 = '';
       for (let key in jObj) {
+        if (!Object.prototype.hasOwnProperty.call(jObj, key)) continue;
         if (typeof jObj[key] === 'undefined') {
+          if (this.isAttribute(key)) {
+            val2 += '';
+          }
         } else if (jObj[key] === null) {
-          if (key[0] === '?') val2 += this.indentate(level) + '<' + key + '?' + this.tagEndChar;
-          else val2 += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
+          if (this.isAttribute(key)) {
+            val2 += '';
+          } else if (key[0] === '?') {
+            val2 += this.indentate(level) + '<' + key + '?' + this.tagEndChar;
+          } else {
+            val2 += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
+          }
         } else if (jObj[key] instanceof Date) {
           val2 += this.buildTextValNode(jObj[key], key, '', level);
         } else if (typeof jObj[key] !== 'object') {
@@ -6150,6 +6177,7 @@ var require_json2xml = __commonJS({
         } else if (Array.isArray(jObj[key])) {
           const arrLen = jObj[key].length;
           let listTagVal = '';
+          let listTagAttr = '';
           for (let j = 0; j < arrLen; j++) {
             const item = jObj[key][j];
             if (typeof item === 'undefined') {
@@ -6158,16 +6186,26 @@ var require_json2xml = __commonJS({
               else val2 += this.indentate(level) + '<' + key + '/' + this.tagEndChar;
             } else if (typeof item === 'object') {
               if (this.options.oneListGroup) {
-                listTagVal += this.j2x(item, level + 1).val;
+                const result = this.j2x(item, level + 1);
+                listTagVal += result.val;
+                if (this.options.attributesGroupName && item.hasOwnProperty(this.options.attributesGroupName)) {
+                  listTagAttr += result.attrStr;
+                }
               } else {
                 listTagVal += this.processTextOrObjNode(item, key, level);
               }
             } else {
-              listTagVal += this.buildTextValNode(item, key, '', level);
+              if (this.options.oneListGroup) {
+                let textValue = this.options.tagValueProcessor(key, item);
+                textValue = this.replaceEntitiesValue(textValue);
+                listTagVal += textValue;
+              } else {
+                listTagVal += this.buildTextValNode(item, key, '', level);
+              }
             }
           }
           if (this.options.oneListGroup) {
-            listTagVal = this.buildObjectNode(listTagVal, key, '', level);
+            listTagVal = this.buildObjectNode(listTagVal, key, listTagAttr, level);
           }
           val2 += listTagVal;
         } else {
@@ -6212,7 +6250,7 @@ var require_json2xml = __commonJS({
           piClosingChar = '?';
           tagEndExp = '';
         }
-        if (attrStr && val2.indexOf('<') === -1) {
+        if ((attrStr || attrStr === '') && val2.indexOf('<') === -1) {
           return this.indentate(level) + '<' + key + attrStr + piClosingChar + '>' + val2 + tagEndExp;
         } else if (
           this.options.commentPropName !== false &&
@@ -6276,7 +6314,7 @@ var require_json2xml = __commonJS({
       return this.options.indentBy.repeat(level);
     }
     function isAttribute(name) {
-      if (name.startsWith(this.options.attributeNamePrefix)) {
+      if (name.startsWith(this.options.attributeNamePrefix) && name !== this.options.textNodeName) {
         return name.substr(this.attrPrefixLen);
       } else {
         return false;
