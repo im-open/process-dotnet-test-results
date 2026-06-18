@@ -1,5 +1,5 @@
-const core = require('@actions/core');
-const github = require('@actions/github');
+import * as core from '@actions/core';
+import * as github from '@actions/github';
 
 async function createStatusCheck(repoToken, reportData, markdown, conclusion) {
   core.info(`\nCreating Status check for ${reportData.ReportMetaData.ReportTitle}...`);
@@ -134,7 +134,4 @@ async function createPrComment(repoToken, markdown, updateCommentIfOneExists, co
   return commentIdToReturn;
 }
 
-module.exports = {
-  createStatusCheck,
-  createPrComment
-};
+export { createStatusCheck, createPrComment };

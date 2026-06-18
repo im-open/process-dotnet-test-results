@@ -34,7 +34,7 @@ jobs:
     # This workflow assumes:
     #  - The main README.md is at the root of the repo
     #  - The README contains a contribution guidelines and usage examples section
-    uses: im-open/.github/.github/workflows/reusable-build-and-review-pr.yml@v1
+    uses: im-open/.github/.github/workflows/reusable-build-and-review-pr.yml@v2
     with:
       action-name: ${{ github.repository }}
       default-branch: main
@@ -73,7 +73,7 @@ jobs:
         run: echo ""
 
       - name: Setup - Checkout the action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup - Create empty directory
         run: mkdir -p ${{ env.DIR_WITH_NO_TRX }}
@@ -641,7 +641,7 @@ jobs:
           fi
 
       - name: Setup - Checkout the action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: '-------------------------------------------------------------------------------------------------------------'
         run: echo ""
@@ -672,7 +672,7 @@ jobs:
 
       - name: 15e - And the status check should match the inputs
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -735,7 +735,7 @@ jobs:
 
       - name: 16e - And the status check should match the inputs
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -786,7 +786,7 @@ jobs:
 
       - name: 17e - And the status check should match the inputs
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -814,7 +814,7 @@ jobs:
 
       - name: Teardown - Modify failing Status Check conclusion
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -853,11 +853,11 @@ jobs:
           fi
 
       - name: Setup - Checkout the action
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup - Delete pre-existing process-dotnet-test-results PR Comments
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deletePrComments = require('./test/delete-pre-existing-comments.js');
@@ -865,7 +865,7 @@ jobs:
 
       - name: Setup - Create a process-dotnet-test-results comment that can be updated
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.issues.createComment({
@@ -913,7 +913,7 @@ jobs:
 
       - name: 18e - And the pr-comment should match the match the expected values
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -965,7 +965,7 @@ jobs:
 
       - name: 19e - And the pr-comment should match the expected values
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -1016,7 +1016,7 @@ jobs:
 
       - name: 20e - And the pr-comment should match the expected values
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -1068,7 +1068,7 @@ jobs:
 
       - name: 21e - And the pr-comment should match the expected values
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -1099,7 +1099,7 @@ jobs:
 
       - name: Teardown - Delete PR Comments
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

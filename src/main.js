@@ -1,7 +1,7 @@
-const core = require('@actions/core');
-const { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests, createResultsFile } = require('./utils');
-const { createStatusCheck, createPrComment } = require('./github');
-const { getMarkupForTrx } = require('./markup');
+import * as core from '@actions/core';
+import { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests, createResultsFile } from './utils';
+import { createStatusCheck, createPrComment } from './github';
+import getMarkupForTrx from './markup';
 
 const requiredArgOptions = {
   required: true,

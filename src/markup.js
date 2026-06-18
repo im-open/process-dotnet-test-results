@@ -1,8 +1,9 @@
-const core = require('@actions/core');
-const { format, utcToZonedTime } = require('date-fns-tz');
+import * as core from '@actions/core';
+import { format, utcToZonedTime } from 'date-fns-tz';
+
 const timezone = core.getInput('timezone') || 'Etc/UTC';
 
-function getMarkupForTrx(testData) {
+export default function getMarkupForTrx(testData) {
   return `
 # ${testData.ReportMetaData.ReportTitle}
 
@@ -219,7 +220,3 @@ function getFailedTestMarkup(data, testResult) {
 </details>
 `.trim();
 }
-
-module.exports = {
-  getMarkupForTrx
-};

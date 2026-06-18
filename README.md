@@ -111,7 +111,7 @@ jobs:
   ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
@@ -119,7 +119,7 @@ jobs:
       - name: Process trx reports with default
         if: always()
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v4.0.0
+        uses: im-open/process-dotnet-test-results@v5.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -136,7 +136,7 @@ jobs:
   advanced-ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Test My Solution
         continue-on-error: true
@@ -145,7 +145,7 @@ jobs:
       - name: Process trx reports
         id: process-trx
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v4.0.0
+        uses: im-open/process-dotnet-test-results@v5.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           base-directory: './test-results'
@@ -164,7 +164,7 @@ jobs:
       # Optional
       - name: Upload Outcome as artifact if character limit reached
         if: steps.process-trx.outputs.test-results-truncated == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Cypress-Results
           path: |
@@ -192,7 +192,7 @@ jobs:
   ci:
     runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@4
+      - uses: actions/checkout@6
 
       - name: dotnet test with coverage
         run: dotnet test './src/MyProj.sln' --logger trx --configuration Release
@@ -201,7 +201,7 @@ jobs:
         if: always()
         id: process-test
         # You may also reference just the major or major.minor version
-        uses: im-open/process-dotnet-test-results@v4.0.0
+        uses: im-open/process-dotnet-test-results@v5.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           create-status-check: false
