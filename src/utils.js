@@ -1,9 +1,9 @@
-const core = require('@actions/core');
-const fs = require('fs');
-const glob = require('glob');
-const { XMLParser, XMLValidator } = require('fast-xml-parser');
-const he = require('he');
-const path = require('path');
+import * as core from '@actions/core';
+import fs from 'fs';
+import glob from 'glob';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import he from 'he';
+import path from 'path';
 
 function findTrxFiles(baseDir) {
   core.info(`Looking for trx files in '${baseDir}'...`);
@@ -207,9 +207,4 @@ function createResultsFile(results, jobAndStep) {
   return resultsFilePath;
 }
 
-module.exports = {
-  findTrxFiles,
-  transformAllTrxToJson,
-  areThereAnyFailingTests,
-  createResultsFile
-};
+export { findTrxFiles, transformAllTrxToJson, areThereAnyFailingTests, createResultsFile };
